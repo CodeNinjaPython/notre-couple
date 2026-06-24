@@ -1,0 +1,25 @@
+{
+  "name": "Notre rythme",
+  "short_name": "Notre rythme",
+  "description": "Suivi de cycle en couple — symétrique et privé",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0E0A07",
+  "theme_color": "#0E0A07",
+  "orientation": "portrait",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

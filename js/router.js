@@ -1,0 +1,36 @@
+const NAV_VIEWS = ['today', 'calendar', 'nous'];
+const viewInits = {};
+
+export function registerView(name, initFn) {
+  viewInits[name] = initFn;
+}
+
+export function navigate(name, params = {}) {
+  const tpl = document.getElementById(`tpl-${name}`);
+  const container = document.getElementById('view');
+  const nav = document.getElementById('main-nav');
+
+  if (!tpl || !container) return;
+
+  container.innerHTML = '';
+  container.appendChild(tpl.content.cloneNode(true));
+
+  if (NAV_VIEWS.includes(name)) {
+    nav.classList.add('visible');
+    nav.querySelectorAll('button').forEach(btn =>
+      btn.classList.toggle('on', btn.dataset.nav === name)
+    );
+  } else {
+    nav.classList.remove('visible');
+  }
+
+  if (viewInits[name]) viewInits[name](params);
+
+  window.location.hash = name;
+}
+
+export function initNavButtons() {
+  document.getElementById('main-nav').querySelectorAll('button[data-nav]').forEach(btn => {
+    btn.addEventListener('click', () => navigate(btn.dataset.nav));
+  });
+}
