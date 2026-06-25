@@ -217,7 +217,14 @@ function seed() {
   if (ls.get('seeded') === '2') return; // version 2 du seed
 
   const T  = new Date();
-  const dt = off => { const d = new Date(T); d.setDate(d.getDate() + off); return d.toISOString().split('T')[0]; };
+  // Utilise la date locale pour éviter le décalage UTC (important UTC+4)
+  const dt = off => {
+    const d = new Date(T);
+    d.setDate(d.getDate() + off);
+    return d.getFullYear() + '-'
+      + String(d.getMonth() + 1).padStart(2, '0') + '-'
+      + String(d.getDate()).padStart(2, '0');
+  };
 
   const ELLE = 'demo-elle';
   const LUI  = 'demo-lui';

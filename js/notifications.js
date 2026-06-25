@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js';
+import { localDateStr } from './date-utils.js';
 
 const STORAGE_KEY = 'notif-asked';
 
@@ -43,7 +44,7 @@ export async function maybeRemindToLog() {
   const hour = new Date().getHours();
   if (hour < (settings.hour || 19)) return;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const { data } = await supabase
     .from('log_entries').select('id').eq('log_date', today).limit(1);
 
@@ -55,7 +56,7 @@ export async function maybeRemindToLog() {
 // Vérifie si le partenaire a saisi aujourd'hui (pour toast in-app)
 export async function checkPartnerLoggedToday(partnerUserId) {
   if (!partnerUserId) return false;
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const { data } = await supabase
     .from('log_entries')
     .select('id')

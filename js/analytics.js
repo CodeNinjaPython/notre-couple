@@ -5,8 +5,8 @@
 import { supabase } from './supabase.js';
 import { localDateStr, daysAgo, diffDays } from './date-utils.js';
 
-// ─── Pearson ───────────────────────────────────────────────────────────────
-function pearson(xs, ys) {
+// ─── Pearson (exporté pour réutilisation dans nous.js) ────────────────────
+export function pearson(xs, ys) {
   const n = xs.length;
   if (n < 5) return null;
   const mx = xs.reduce((a, b) => a + b, 0) / n;
@@ -21,14 +21,14 @@ function pearson(xs, ys) {
   return den === 0 ? null : num / den;
 }
 
-function buildMap(entries, uid, cat) {
+export function buildMap(entries, uid, cat) {
   const m = {};
   entries.filter(e => e.user_id === uid && e.category_id === cat)
     .forEach(e => { m[e.log_date] = Number(e.value?.v ?? e.value); });
   return m;
 }
 
-function align(ma, mb) {
+export function align(ma, mb) {
   const dates = Object.keys(ma).filter(d => mb[d] != null);
   return { xs: dates.map(d => ma[d]), ys: dates.map(d => mb[d]), n: dates.length };
 }

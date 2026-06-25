@@ -1,6 +1,7 @@
 import { supabase } from './supabase.js';
 import { getMyMembership } from './pairing.js';
 import { getCycleHistory, predictNextPeriod } from './cycles.js';
+import { localDateStr } from './date-utils.js';
 
 const PHASES = [
   [1,  5,  'Menstruelle',  '#E53935'],
@@ -37,7 +38,7 @@ export async function initCalendar() {
 async function loadMonthEntries() {
   const firstDay = `${calState.year}-${String(calState.month + 1).padStart(2,'0')}-01`;
   const last = new Date(calState.year, calState.month + 1, 0);
-  const lastDay = last.toISOString().split('T')[0];
+  const lastDay = localDateStr(last);
 
   const { data } = await supabase
     .from('log_entries')
@@ -65,7 +66,7 @@ function renderMonthGrid() {
 
   title.textContent = `${MONTH_FR[calState.month]} ${calState.year}`;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const firstWeekday = (new Date(calState.year, calState.month, 1).getDay() + 6) % 7; // 0=Mon
   const daysInMonth  = new Date(calState.year, calState.month + 1, 0).getDate();
 
@@ -133,7 +134,7 @@ function buildPhaseMap() {
     // Jour 1 = period_start
     for (let d = 0; d <= 90; d++) {
       const date = new Date(start.getTime() + d * 864e5);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = localDateStr(date);
       if (date > end && d > 7) break; // au-delà de la fin des règles, pas de marqueur flow
       const cycleDay = d + 1;
       const phase = PHASES.find(([a,b]) => cycleDay >= a && cycleDay <= b);
@@ -152,13 +153,13 @@ function buildPredictionMap() {
   const nextPeriod = new Date(p.nextPeriodDate);
   for (let i = 0; i < 5; i++) {
     const d = new Date(nextPeriod.getTime() + i * 864e5);
-    map[d.toISOString().split('T')[0]] = 'period';
+    map[localDateStr(d)] = 'period';
   }
   // Fenêtre fertile : 5 jours avant ovulation jusqu'à ovulation
   const fertile = new Date(p.fertileStart);
   const ovul    = new Date(p.ovulationDate);
   for (let d = fertile; d <= ovul; d = new Date(d.getTime() + 864e5)) {
-    const s = d.toISOString().split('T')[0];
+    const s = localDateStr(d);
     if (!map[s]) map[s] = 'fertile';
   }
   return map;

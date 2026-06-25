@@ -1,7 +1,8 @@
 import { supabase } from './supabase.js';
+import { localDateStr } from './date-utils.js';
 
 export async function getCurrentCycle() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const { data } = await supabase
     .from('cycles')
     .select('*')
@@ -23,7 +24,7 @@ export async function getCycleHistory(limit = 8) {
 }
 
 export async function startPeriod() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const { data, error } = await supabase
     .from('cycles')
     .insert({ period_start: today })
@@ -34,7 +35,7 @@ export async function startPeriod() {
 }
 
 export async function endPeriod(cycleId) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const { error } = await supabase
     .from('cycles')
     .update({ period_end: today })
@@ -49,33 +50,34 @@ export function predictNextPeriod(cycles) {
 
   const lengths = [];
   for (let i = 0; i < completed.length - 1; i++) {
-    const curr = new Date(completed[i].period_start);
-    const prev = new Date(completed[i + 1].period_start);
+    // Forcer interprétation locale (T12:00 évite l'ambiguïté DST)
+    const curr = new Date(completed[i].period_start     + 'T12:00:00');
+    const prev = new Date(completed[i + 1].period_start + 'T12:00:00');
     const days = Math.round((curr - prev) / 864e5);
     if (days >= 15 && days <= 60) lengths.push(days);
   }
   if (!lengths.length) return null;
 
-  const avg = Math.round(lengths.reduce((a, b) => a + b, 0) / lengths.length);
-  const lastStart = new Date(completed[0].period_start);
-  const nextPeriod = new Date(lastStart.getTime() + avg * 864e5);
-  const ovulation  = new Date(nextPeriod.getTime() - 14 * 864e5);
-  const fertileStart = new Date(ovulation.getTime() - 5 * 864e5);
+  const avg       = Math.round(lengths.reduce((a, b) => a + b, 0) / lengths.length);
+  const lastStart = new Date(completed[0].period_start + 'T12:00:00');
+  const nextPeriod  = new Date(lastStart.getTime() + avg         * 864e5);
+  const ovulation   = new Date(nextPeriod.getTime()  - 14        * 864e5);
+  const fertileStart = new Date(ovulation.getTime()  - 5         * 864e5);
 
   return {
-    nextPeriodDate:  nextPeriod.toISOString().split('T')[0],
-    ovulationDate:   ovulation.toISOString().split('T')[0],
-    fertileStart:    fertileStart.toISOString().split('T')[0],
+    nextPeriodDate:  localDateStr(nextPeriod),
+    ovulationDate:   localDateStr(ovulation),
+    fertileStart:    localDateStr(fertileStart),
     avgCycleLength:  avg,
     cyclesUsed:      completed.length,
   };
 }
 
-// Energie par jour de cycle depuis log_entries
+// Énergie par jour de cycle depuis log_entries
 export async function getEnergyByCycleDay(userId, periodStart, totalDays) {
-  const start = new Date(periodStart);
-  const end = new Date(start.getTime() + totalDays * 864e5);
-  const endStr = end.toISOString().split('T')[0];
+  const start  = new Date(periodStart + 'T12:00:00');
+  const end    = new Date(start.getTime() + totalDays * 864e5);
+  const endStr = localDateStr(end);
 
   const { data } = await supabase
     .from('log_entries')
@@ -88,8 +90,9 @@ export async function getEnergyByCycleDay(userId, periodStart, totalDays) {
 
   const arr = new Array(totalDays).fill(null);
   (data || []).forEach(row => {
-    const dayIdx = Math.floor((new Date(row.log_date) - start) / 864e5);
-    const raw = row.value?.v ?? row.value;
+    const rowDate = new Date(row.log_date + 'T12:00:00');
+    const dayIdx  = Math.round((rowDate - start) / 864e5);
+    const raw     = row.value?.v ?? row.value;
     if (dayIdx >= 0 && dayIdx < totalDays && raw != null) {
       arr[dayIdx] = (Number(raw) - 1) / 4; // scale 1-5 → 0-1
     }
@@ -97,11 +100,11 @@ export async function getEnergyByCycleDay(userId, periodStart, totalDays) {
   return arr;
 }
 
-// Même chose mais pour une liste de user_ids (partenaire via RLS shared=true)
+// Même chose pour le partenaire (via RLS shared=true)
 export async function getPartnerEnergyByCycleDay(userId, periodStart, totalDays) {
-  const start = new Date(periodStart);
-  const end = new Date(start.getTime() + totalDays * 864e5);
-  const endStr = end.toISOString().split('T')[0];
+  const start  = new Date(periodStart + 'T12:00:00');
+  const end    = new Date(start.getTime() + totalDays * 864e5);
+  const endStr = localDateStr(end);
 
   const { data } = await supabase
     .from('log_entries')
@@ -115,8 +118,9 @@ export async function getPartnerEnergyByCycleDay(userId, periodStart, totalDays)
 
   const arr = new Array(totalDays).fill(null);
   (data || []).forEach(row => {
-    const dayIdx = Math.floor((new Date(row.log_date) - start) / 864e5);
-    const raw = row.value?.v ?? row.value;
+    const rowDate = new Date(row.log_date + 'T12:00:00');
+    const dayIdx  = Math.round((rowDate - start) / 864e5);
+    const raw     = row.value?.v ?? row.value;
     if (dayIdx >= 0 && dayIdx < totalDays && raw != null) {
       arr[dayIdx] = (Number(raw) - 1) / 4;
     }

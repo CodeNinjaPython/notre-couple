@@ -4,6 +4,7 @@
  */
 import { navigate } from './router.js';
 import { getCurrentCycle, startPeriod } from './cycles.js';
+import { localDateStr, daysAgo } from './date-utils.js';
 
 const KEY = 'nc-onboarding-v1';
 const MODE_KEY = 'nc-cycle-mode';
@@ -89,11 +90,10 @@ export function initOnboarding() {
   // Step 4 : Date dernières règles
   const dateInput = document.getElementById('onboard-period-date');
   if (dateInput) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateStr();
     dateInput.max = today;
     // Défaut : il y a 3 jours
-    const def = new Date(Date.now() - 3 * 864e5).toISOString().split('T')[0];
-    dateInput.value = def;
+    dateInput.value = daysAgo(3);
   }
 
   document.getElementById('btn-onboard-4')?.addEventListener('click', () => {

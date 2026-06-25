@@ -87,7 +87,7 @@ let state = {
   savedValues: {},
   coupleId: null,
   prediction: null,
-  logDate: new Date().toISOString().split('T')[0],
+  logDate: localDateStr(),
   logDateOffset: 0,          // 0 = aujourd'hui, -1 = hier, etc.
 };
 
@@ -194,7 +194,7 @@ function initDateNav() {
   prevBtn?.addEventListener('click', async () => {
     if (state.logDateOffset > -30) {
       state.logDateOffset--;
-      state.logDate = new Date(Date.now() + state.logDateOffset * 864e5).toISOString().split('T')[0];
+      state.logDate = daysAgo(-state.logDateOffset);
       updateDisplay();
       await loadEntriesForDate(state.logDate);
       renderMetrics();
@@ -205,7 +205,7 @@ function initDateNav() {
   nextBtn?.addEventListener('click', async () => {
     if (state.logDateOffset < 0) {
       state.logDateOffset++;
-      state.logDate = new Date(Date.now() + state.logDateOffset * 864e5).toISOString().split('T')[0];
+      state.logDate = daysAgo(-state.logDateOffset);
       updateDisplay();
       await loadEntriesForDate(state.logDate);
       renderMetrics();
@@ -312,7 +312,7 @@ function renderCycleControls() {
         state.phaseName = 'Menstruelle';
       } else {
         await endPeriod(state.currentCycle.id);
-        state.currentCycle = { ...state.currentCycle, period_end: new Date().toISOString().split('T')[0] };
+        state.currentCycle = { ...state.currentCycle, period_end: localDateStr() };
       }
       renderHeader();
       renderCycleControls();
@@ -752,7 +752,7 @@ async function saveEvent() {
   const typeBtn = document.querySelector('.ev-type-btn.sel');
   const type = typeBtn?.dataset.type || 'other';
   const note = document.getElementById('event-note')?.value.trim() || null;
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   await supabase.from('couple_events').insert({
     couple_id: state.coupleId, event_date: today, event_type: type, note,
     created_by: state.me?.user_id,

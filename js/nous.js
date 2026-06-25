@@ -6,9 +6,9 @@ import { getCycleMode, setCycleMode } from './onboarding.js';
 import {
   computeSyncScore, computeWeeklyTrends, computeEventsByPhase,
   computeConflictsByPhase, detectCycleAnomalies, predictPeriodDuration,
-  loadAnalyticsData,
+  loadAnalyticsData, pearson, buildMap, align,
 } from './analytics.js';
-import { currentWeekDates } from './date-utils.js';
+import { currentWeekDates, daysAgo, localDateStr } from './date-utils.js';
 import { exportPDF } from './pdf.js';
 
 const MODE_DESCS = {
@@ -43,76 +43,7 @@ function strength(r) {
   return STRENGTH.find(s => abs >= s.min) || STRENGTH[STRENGTH.length - 1];
 }
 
-// ---------------------------------------------------------------------------
-// Statistiques (Pearson)
-// ---------------------------------------------------------------------------
-function pearson(xs, ys) {
-  const n = xs.length;
-  if (n < 5) return null;
-  const mx = xs.reduce((a,b) => a+b, 0) / n;
-  const my = ys.reduce((a,b) => a+b, 0) / n;
-  let num=0, dx=0, dy=0;
-  for (let i=0; i<n; i++) {
-    num += (xs[i]-mx)*(ys[i]-my);
-    dx  += (xs[i]-mx)**2;
-    dy  += (ys[i]-my)**2;
-  }
-  const den = Math.sqrt(dx*dy);
-  return den===0 ? null : num/den;
-}
-
-// Construit { date: valeur_numérique } pour un user + une catégorie
-function buildMap(entries, userId, catId) {
-  const m = {};
-  entries
-    .filter(e => e.user_id === userId && e.category_id === catId)
-    .forEach(e => {
-      const raw = e.value?.v ?? e.value;
-      if (raw != null) m[e.log_date] = Number(raw);
-    });
-  return m;
-}
-
-// Aligne deux maps date→valeur, retourne les paires (xs, ys, dates communes)
-function align(ma, mb) {
-  const dates = Object.keys(ma).filter(d => mb[d] != null).sort();
-  return {
-    xs: dates.map(d => ma[d]),
-    ys: dates.map(d => mb[d]),
-    n: dates.length,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Chargement des données
-// ---------------------------------------------------------------------------
-async function loadEntries(days = 90) {
-  const since = new Date(Date.now() - days * 864e5).toISOString().split('T')[0];
-  const { data, error } = await supabase
-    .from('log_entries')
-    .select('user_id, log_date, category_id, value')
-    .gte('log_date', since)
-    .order('log_date');
-  if (error) console.error('loadEntries:', error.message);
-  return data || [];
-}
-
-async function loadRecentEvents(coupleId, days = 30) {
-  const since = new Date(Date.now() - days * 864e5).toISOString().split('T')[0];
-  const { data } = await supabase
-    .from('couple_events')
-    .select('event_date, event_type')
-    .eq('couple_id', coupleId)
-    .gte('event_date', since);
-  return data || [];
-}
-
-// ---------------------------------------------------------------------------
-// Semaine courante (Lun–Dim) — utilise date-utils
-// ---------------------------------------------------------------------------
-function weekBounds() {
-  return currentWeekDates();
-}
+// pearson / buildMap / align importés depuis analytics.js (plus de doublons)
 
 // ---------------------------------------------------------------------------
 // Initialisation principale
@@ -152,7 +83,7 @@ function renderWeekStats(entries, events, elleId, luiId, me, partner) {
   const wrap = document.getElementById('nous-week');
   if (!wrap) return;
 
-  const week = new Set(weekBounds());
+  const week = new Set(currentWeekDates());
   const elleDays = new Set(entries.filter(e => e.user_id === elleId && week.has(e.log_date)).map(e => e.log_date)).size;
   const luiDays  = new Set(entries.filter(e => e.user_id === luiId  && week.has(e.log_date)).map(e => e.log_date)).size;
   const weekEvents = events.filter(e => week.has(e.event_date)).length;
@@ -184,7 +115,7 @@ function renderTrends(entries, elleId, luiId) {
   const wrap = document.getElementById('nous-trends');
   if (!wrap) return;
 
-  const since7 = new Date(Date.now() - 7 * 864e5).toISOString().split('T')[0];
+  const since7 = daysAgo(7);
   const recent = entries.filter(e => e.log_date >= since7);
 
   function avg(uid, cat) {
@@ -514,7 +445,7 @@ function renderSettings(me, partner) {
 // Export JSON + CSV (§10)
 // ---------------------------------------------------------------------------
 async function exportData(format = 'json') {
-  const today = new Date().toISOString().split('T')[0];
+  const today = localDateStr();
   const btn   = document.getElementById(`btn-export-${format}`);
   if (btn) { btn.disabled = true; btn.textContent = 'Export…'; }
 
