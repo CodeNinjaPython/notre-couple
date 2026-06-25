@@ -604,5 +604,81 @@ input::placeholder { color: var(--faint); }
 }
 .detail-row:first-child { border-top: none; }
 
+/* ----------------------------------------------------------------
+   Nous : stats semaine
+   ---------------------------------------------------------------- */
+.stat-grid  { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.stat-item  { background: var(--surface2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 10px; text-align: center; }
+.stat-val   { font-family: "DM Mono", monospace; font-size: 26px; font-weight: 500; line-height: 1; margin-bottom: 6px; color: var(--text); }
+.stat-label { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; letter-spacing: .06em; line-height: 1.4; }
+
+/* ----------------------------------------------------------------
+   Nous : tendances 7 jours
+   ---------------------------------------------------------------- */
+.trend-header { display: grid; grid-template-columns: 1fr 80px 80px; gap: 4px; font-size: 11px; color: var(--faint); padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.trend-row    { display: grid; grid-template-columns: 1fr 80px 80px; gap: 4px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.trend-name   { font-size: 13px; color: var(--text); font-weight: 500; }
+.trend-val    { display: flex; align-items: center; gap: 6px; }
+.trend-bar {
+  display: inline-block;
+  width: var(--v, 0%);
+  max-width: 40px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 2px;
+  opacity: .6;
+  vertical-align: middle;
+}
+
+/* ----------------------------------------------------------------
+   Nous : corrélations (§9)
+   ---------------------------------------------------------------- */
+.corr-item  { padding: 14px 0; border-top: 1px solid var(--line); }
+.corr-item:first-child { border-top: none; }
+.corr-label { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.corr-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+.corr-bar-wrap {
+  position: relative;
+  height: 5px;
+  background: var(--surface2);
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+.corr-center {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  width: 1px;
+  height: 9px;
+  background: var(--faint);
+}
+.corr-fill  { position: absolute; top: 0; height: 100%; border-radius: 3px; }
+.corr-meta  { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--faint); flex-wrap: wrap; }
+
+/* ----------------------------------------------------------------
+   Nous : réglages profil
+   ---------------------------------------------------------------- */
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.settings-row:first-child { border-top: none; }
+.settings-label { color: var(--muted); font-size: 13px; }
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color .2s;
+}
+.btn-icon:hover { color: var(--gold); }
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }

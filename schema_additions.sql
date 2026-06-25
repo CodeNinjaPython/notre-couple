@@ -55,3 +55,13 @@ create policy "codes: marquer utilisé"
   on pairing_codes for update
   using (auth.role() = 'authenticated')
   with check (auth.role() = 'authenticated');
+
+-- -------------------------------------------------------------
+-- couple_members : UPDATE (modifier son propre profil)
+-- Nécessaire pour modifier display_name et tracks_cycle
+-- depuis l'écran Nous.
+-- -------------------------------------------------------------
+create policy "members: modifier ses infos"
+  on couple_members for update
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
