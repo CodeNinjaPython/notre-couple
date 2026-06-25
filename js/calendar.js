@@ -3,10 +3,10 @@ import { getMyMembership } from './pairing.js';
 import { getCycleHistory, predictNextPeriod } from './cycles.js';
 
 const PHASES = [
-  [1,  5,  'Menstruelle',  '#C98A6A'],
-  [6,  13, 'Folliculaire', '#D9B36A'],
-  [14, 16, 'Ovulation',    '#D9B36A'],
-  [17, 35, 'Lutéale',      '#93A98F'],
+  [1,  5,  'Menstruelle',  '#E53935'],
+  [6,  13, 'Folliculaire', '#4278C4'],
+  [14, 16, 'Ovulation',    '#7C5CFC'],
+  [17, 35, 'Lutéale',      '#E84375'],
 ];
 const MONTH_FR = ['Janvier','Février','Mars','Avril','Mai','Juin',
                   'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];

@@ -4,8 +4,8 @@
   "description": "Suivi de cycle en couple — symétrique et privé",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0E0A07",
-  "theme_color": "#0E0A07",
+  "background_color": "#F6F5FF",
+  "theme_color": "#F6F5FF",
   "orientation": "portrait",
   "lang": "fr",
   "icons": [

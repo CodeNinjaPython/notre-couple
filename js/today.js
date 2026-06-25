@@ -16,10 +16,10 @@ const PHASES = [
   [17, 35,'Lutéale'],
 ];
 const PHASE_FILL = {
-  Menstruelle:  'rgba(201,138,106,.08)',
-  Folliculaire: 'rgba(217,179,106,.05)',
-  Ovulation:    'rgba(217,179,106,.11)',
-  Lutéale:      'rgba(147,169,143,.06)',
+  Menstruelle:  'rgba(229,57,53,.07)',
+  Folliculaire: 'rgba(66,120,196,.05)',
+  Ovulation:    'rgba(124,92,252,.09)',
+  Lutéale:      'rgba(232,67,117,.06)',
 };
 const PHASE_TIPS = {
   Menstruelle:  'Elle est en phase menstruelle. Le repos et la chaleur font souvent du bien — un moment calme peut être apprécié.',
@@ -266,15 +266,15 @@ function drawChart(elleData, luiData, totalDays, todayIdx) {
 
   if (todayIdx != null) {
     const tx = xP(todayIdx);
-    s += `<line x1="${tx}" y1="4" x2="${tx}" y2="${H-4}" stroke="#D9B36A" stroke-width="1" stroke-dasharray="2 3" opacity=".5"/>`;
+    s += `<line x1="${tx}" y1="4" x2="${tx}" y2="${H-4}" stroke="#E84375" stroke-width="1.5" stroke-dasharray="3 3" opacity=".4"/>`;
   }
 
-  s += `<path d="${smooth(luiData)}"  fill="none" stroke="#93A98F" stroke-width="2"   opacity=".9"/>`;
-  s += `<path d="${smooth(elleData)}" fill="none" stroke="#D9B36A" stroke-width="2.2"/>`;
+  s += `<path d="${smooth(luiData)}"  fill="none" stroke="#4278C4" stroke-width="2"   opacity=".85"/>`;
+  s += `<path d="${smooth(elleData)}" fill="none" stroke="#E84375" stroke-width="2.5"/>`;
 
   if (todayIdx != null) {
-    s += `<circle cx="${xP(todayIdx)}" cy="${yP(elleData[todayIdx])}" r="3.4" fill="#D9B36A"/>`;
-    s += `<circle cx="${xP(todayIdx)}" cy="${yP(luiData[todayIdx])}"  r="3.4" fill="#93A98F"/>`;
+    s += `<circle cx="${xP(todayIdx)}" cy="${yP(elleData[todayIdx])}" r="4" fill="#E84375"/>`;
+    s += `<circle cx="${xP(todayIdx)}" cy="${yP(luiData[todayIdx])}"  r="3.5" fill="#4278C4"/>`;
   }
   svg.innerHTML = s;
 }
