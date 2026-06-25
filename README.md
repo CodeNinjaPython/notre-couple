@@ -64,6 +64,39 @@ vercel.json     → rewrite SPA + headers
 CLAUDE.md       → doc technique pour Claude Code
 ```
 
+## Architecture du module Intimité
+
+Le module Intime est découpé en sous-modules pour garantir la maintenabilité :
+
+```text
+js/intimacy.js           → Orchestrateur (~200 l) — init, routing, appels parallèles
+js/intimacy-sessions.js  → Formulaires (complet + fast-track), try/catch systématique
+js/intimacy-stats.js     → Heatmap mensuelle, courbe satisfaction, orgasme/phase (SVG natif)
+js/intimacy-library.js   → 40 positions offline, SVG line-art, filtres, suggestions
+js/kinks.js              → Double-révélation, wish-list, limites, check-in
+js/pin-lock.js           → PIN SHA-256 (Web Crypto), masquage rapide (visibilitychange)
+js/intimacy-tests.js     → Tests unitaires fenêtre de désir + kink match rate
+```
+
+**Ordre d'exécution SQL :**
+
+```text
+1. schema_couple_tracker.sql       → tables + RLS de base
+2. schema_additions.sql            → correctifs RLS
+3. schema_intimite.sql             → module intimité (sessions, kinks, limites…)
+4. schema_intimite_additions.sql   → first_times, session_activities, colonnes additionnelles
+```
+
+### Confidentialité du module Intime
+
+- Aucune photo ni vidéo stockée dans le cloud (voir §D du module)
+- PIN haché SHA-256 côté client — jamais envoyé au serveur
+- Aftercare préférences en `localStorage` uniquement
+- Hard limits toujours visibles du partenaire (sécurité intentionnelle)
+- `shared = false` par défaut sur les feedbacks et kink_ratings
+
+**Tests :** `http://localhost:3456/?run-tests` pour lancer les tests en console.
+
 ## Stack
 
 HTML · CSS custom · JavaScript vanilla · Supabase (Auth + Postgres + RLS) · Vercel · PWA

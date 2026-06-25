@@ -661,10 +661,13 @@
       <div id="desire-window" style="margin-top:16px"></div>
 
       <!-- Quick add -->
-      <button type="button" id="btn-quick-add" class="btn-quick-add">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        On a partagé un moment ?
-      </button>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button type="button" id="btn-quick-add" class="btn-quick-add" style="flex:1">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          On a partagé un moment ?
+        </button>
+        <button type="button" id="btn-fast-track-open" class="btn-secondary" style="flex-shrink:0;min-height:44px" aria-label="Mode rapide 4 taps">⚡</button>
+      </div>
 
       <!-- Équilibre + délai neutre -->
       <div class="intime-meta">
@@ -711,6 +714,43 @@
           onclick="document.getElementById('kinks-section').scrollIntoView({behavior:'smooth'})">
           Explorer tous les désirs →
         </button>
+      </div>
+
+      <!-- Suggestions contextuelles (phase × humeur) -->
+      <div class="card">
+        <h2>Pour vous ce soir</h2>
+        <div id="suggestions-contextuelles"></div>
+      </div>
+
+      <!-- Bibliothèque de positions -->
+      <div class="card">
+        <h2>Bibliothèque de positions</h2>
+        <div class="library-filters">
+          <select id="filter-intensity" class="library-filter-select" aria-label="Filtrer par intensité">
+            <option value="">Toute intensité</option>
+            <option value="1">Douce (1)</option>
+            <option value="2">≤ Modérée (2)</option>
+            <option value="3">Toutes</option>
+          </select>
+          <select id="filter-comfort" class="library-filter-select" aria-label="Filtrer par confort">
+            <option value="">Tout niveau</option>
+            <option value="1">Facile</option>
+            <option value="2">≤ Intermédiaire</option>
+          </select>
+          <select id="filter-category" class="library-filter-select" aria-label="Filtrer par catégorie">
+            <option value="">Toutes catégories</option>
+            <option value="face-a-face">Face à face</option>
+            <option value="cote-a-cote">Côté à côté</option>
+            <option value="elle-dessus">Elle au-dessus</option>
+            <option value="par-derriere">Par derrière</option>
+            <option value="assis">Assis</option>
+            <option value="debout">Debout</option>
+            <option value="douceur">Douceur</option>
+            <option value="preliminaires">Préliminaires</option>
+            <option value="avancees">Avancées</option>
+          </select>
+        </div>
+        <div id="library-grid"></div>
       </div>
 
       <!-- Explorer les kinks (vue privée + slider) -->
@@ -786,6 +826,34 @@
         <div id="safewords-display"></div>
       </div>
 
+      <!-- Statistiques avancées -->
+      <div class="card">
+        <h2>Statistiques Intimité</h2>
+        <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:16px 0 10px">Heatmap mensuelle</h3>
+        <div id="intimacy-heatmap"></div>
+        <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:20px 0 10px">Évolution de la satisfaction</h3>
+        <div id="satisfaction-curve"></div>
+        <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:20px 0 10px">Plaisir par phase du cycle</h3>
+        <div id="orgasm-by-phase"></div>
+      </div>
+
+      <!-- PIN & sécurité -->
+      <div class="card">
+        <h2 style="color:var(--violet)">🔒 Sécurité</h2>
+        <div class="settings-row">
+          <span class="settings-label">Code PIN</span>
+          <span id="pin-status" style="font-size:13px;color:var(--muted)">Pas de PIN</span>
+        </div>
+        <div class="settings-actions" style="margin-top:10px">
+          <button type="button" id="btn-set-pin"    class="btn-secondary">Définir un PIN</button>
+          <button type="button" id="btn-delete-pin" class="btn-secondary btn-danger" style="display:none">Supprimer le PIN</button>
+          <button type="button" id="btn-quick-hide" class="btn-secondary">Masquer instantanément</button>
+        </div>
+        <p style="font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:12px;line-height:1.6">
+          Le PIN est stocké sous forme de hash SHA-256 localement. Aucun serveur ne le voit jamais.
+        </p>
+      </div>
+
       <p class="disclaimer">
         Ces données sont très sensibles. Elles sont chiffrées en transit (HTTPS) et protégées par RLS. Aucune galerie photo n'est stockée dans le cloud. En cas de séparation, utilisez "Supprimer mes données" dans Nous.
       </p>
@@ -846,8 +914,55 @@
           <input type="text" id="session-note-input" placeholder="Ce qu'on a adoré…">
         </div>
 
+        <!-- Sélecteur de positions -->
+        <div class="field">
+          <label>Positions (optionnel)</label>
+          <div id="position-picker-grid" class="pos-pick-grid" role="group" aria-label="Sélecteur de positions"></div>
+        </div>
+
         <button type="button" id="btn-session-save" class="btn-primary">Enregistrer → Feedback rapide</button>
-        <button type="button" id="btn-session-cancel" class="btn-secondary" style="margin-top:10px">Annuler</button>
+        <button type="button" id="btn-fast-track" class="btn-secondary" style="margin-top:8px">⚡ Mode rapide (4 taps)</button>
+        <button type="button" id="btn-session-cancel" class="btn-secondary" style="margin-top:8px">Annuler</button>
+      </div>
+    </div>
+
+    <!-- Sheet : fast-track (4-5 taps max) -->
+    <div id="fast-track-sheet" class="sheet-backdrop" aria-hidden="true">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">⚡ Note rapide</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px">4 taps · enregistrement immédiat.</p>
+
+        <div class="field">
+          <label>Ambiance</label>
+          <div class="mood-grid">
+            <button type="button" class="ft-mood-btn mood-btn" data-mood="tender" aria-label="Tendre">🥰<span>Tendre</span></button>
+            <button type="button" class="ft-mood-btn mood-btn" data-mood="playful" aria-label="Joueur">😄<span>Joueur</span></button>
+            <button type="button" class="ft-mood-btn mood-btn" data-mood="passionate" aria-label="Passionné">🔥<span>Passionné</span></button>
+            <button type="button" class="ft-mood-btn mood-btn" data-mood="spontaneous" aria-label="Spontané">⚡<span>Spontané</span></button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Ma satisfaction</label>
+          <div class="ft-sat-grid" role="group" aria-label="Satisfaction">
+            <button type="button" class="ft-sat-btn" data-sat="3" aria-label="Moyen">😔</button>
+            <button type="button" class="ft-sat-btn" data-sat="5" aria-label="Bien">🙂</button>
+            <button type="button" class="ft-sat-btn" data-sat="7" aria-label="Très bien">😊</button>
+            <button type="button" class="ft-sat-btn" data-sat="9" aria-label="Excellent">🤩</button>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div><div class="toggle-label" id="ft-orgasm-label">Orgasme ?</div></div>
+          <label class="toggle" aria-labelledby="ft-orgasm-label">
+            <input type="checkbox" id="ft-orgasm">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+
+        <button type="button" id="btn-ft-save" class="btn-primary" style="margin-top:16px">Valider</button>
+        <button type="button" id="btn-ft-cancel" class="btn-secondary" style="margin-top:8px">Annuler</button>
       </div>
     </div>
 

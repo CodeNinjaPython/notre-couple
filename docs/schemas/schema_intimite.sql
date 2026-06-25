@@ -44,32 +44,58 @@ create table kinks (
   category  text not null   -- 'atmosphere','pratiques','lieux','communication','jeux'
 );
 
--- Catalogue de départ (non exhaustif, à compléter)
+-- Catalogue de référence (44 kinks couvrant 6 catégories)
 insert into kinks (id, label, category) values
   -- Atmosphère
-  ('mood_candles',    'Bougies & lumière tamisée',     'atmosphere'),
-  ('mood_music',      'Musique choisie ensemble',       'atmosphere'),
-  ('mood_massage',    'Massage avant',                  'atmosphere'),
-  ('mood_bath',       'Bain ou douche ensemble',        'atmosphere'),
+  ('mood_candles',     'Bougies & lumière tamisée',       'atmosphere'),
+  ('mood_music',       'Musique choisie ensemble',         'atmosphere'),
+  ('mood_massage',     'Massage avant',                    'atmosphere'),
+  ('mood_bath',        'Bain ou douche ensemble',          'atmosphere'),
+  ('mood_scent',       'Parfum / huile de massage',        'atmosphere'),
+  ('mood_food',        'Apéro ou dessert au lit',          'atmosphere'),
+  ('mood_dress',       'Tenue choisie pour l''autre',      'atmosphere'),
   -- Communication
-  ('comm_fantasy',    'Partage de fantasmes',           'communication'),
-  ('comm_aftercare',  'Temps de tendresse après',       'communication'),
-  ('comm_photos',     'Photos intimes (privées)',        'communication'),
-  ('comm_surprise',   'Proposition surprise',            'communication'),
+  ('comm_fantasy',     'Partage de fantasmes',             'communication'),
+  ('comm_aftercare',   'Temps de tendresse après',         'communication'),
+  ('comm_surprise',    'Proposition surprise',              'communication'),
+  ('comm_vocal',       'Exprimer ce qu''on aime pendant',  'communication'),
+  ('comm_letter',      'Petit mot / message avant',        'communication'),
+  ('comm_debrief',     'Débrief doux après',               'communication'),
   -- Lieux
-  ('loc_outside',     'Extérieur / nature',             'lieux'),
-  ('loc_travel',      'En voyage',                      'lieux'),
-  ('loc_hotel',       'Hôtel / nuit ailleurs',          'lieux'),
-  -- Pratiques (volontairement non exhaustif)
-  ('act_slowdown',    'Ralentir, prendre le temps',     'pratiques'),
-  ('act_roleplay',    'Jeu de rôles léger',             'pratiques'),
-  ('act_bondage_soft','Contrainte douce (foulard…)',    'pratiques'),
-  ('act_toys',        'Accessoires',                    'pratiques'),
-  ('act_oral',        'Câlins buccaux',                 'pratiques'),
+  ('loc_outside',      'Extérieur / nature',               'lieux'),
+  ('loc_travel',       'En voyage',                        'lieux'),
+  ('loc_hotel',        'Hôtel / nuit ailleurs',            'lieux'),
+  ('loc_car',          'Voiture',                          'lieux'),
+  ('loc_other_room',   'Autre pièce de la maison',         'lieux'),
+  -- Pratiques
+  ('act_slowdown',     'Ralentir, prendre le temps',       'pratiques'),
+  ('act_roleplay',     'Jeu de rôles léger',               'pratiques'),
+  ('act_bondage_soft', 'Contrainte douce (foulard…)',       'pratiques'),
+  ('act_toys',         'Accessoires',                      'pratiques'),
+  ('act_oral',         'Câlins buccaux',                   'pratiques'),
+  ('act_sixty_nine',   'Partage simultané',                'pratiques'),
+  ('act_exhib_soft',   'Légère exhibition (entre vous)',    'pratiques'),
+  ('act_temperature',  'Chaud / froid (bougie, glaçon)',   'pratiques'),
+  ('act_mirror',       'Miroir',                           'pratiques'),
+  ('act_blindfold',    'Yeux bandés',                      'pratiques'),
+  ('act_photo_priv',   'Photos privées',                   'pratiques'),
+  ('act_extended',     'Session longue sans précipitation','pratiques'),
   -- Jeux
-  ('game_dare',       'Questions / défis',              'jeux'),
-  ('game_challenge',  'Défi du mois',                   'jeux'),
-  ('game_date',       'Date night thématique',          'jeux');
+  ('game_dare',        'Questions / défis',                'jeux'),
+  ('game_challenge',   'Défi du mois',                     'jeux'),
+  ('game_date',        'Date night thématique',            'jeux'),
+  ('game_quiz',        'Quiz de compatibilité',            'jeux'),
+  ('game_strip',       'Jeu de déshabillage',              'jeux'),
+  ('game_fantasy_box', 'Boîte à fantasmes',                'jeux'),
+  -- Sensations
+  ('sens_slow_touch',  'Effleurement très lent',           'sensations'),
+  ('sens_deep_eye',    'Contact visuel prolongé',          'sensations'),
+  ('sens_voice',       'Voix à l''oreille',                'sensations'),
+  ('sens_breathe',     'Synchroniser la respiration',      'sensations'),
+  ('sens_music_tempo', 'Rythme calé sur la musique',       'sensations'),
+  ('sens_no_goal',     'Sans objectif défini',             'sensations'),
+  ('sens_outdoor_sky', 'À la belle étoile',                'sensations'),
+  ('sens_tantric',     'Approche tantrique (lenteur)',      'sensations');
 
 -- Évaluations individuelles (désir 0-5)
 -- shared = true : le partenaire sait que tu t'y intéresses (pas le niveau exact)

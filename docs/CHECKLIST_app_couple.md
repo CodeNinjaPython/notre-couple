@@ -189,6 +189,83 @@
 6. Nom définitif de l'app
 7. Web Push VAPID (nécessite Supabase Edge Function ou cron Vercel)
 
+---
+
+## Module Intimité (extension v2 — `docs/MODULE_intimite_app_couple.md`)
+
+### Architecture
+
+- [x] `js/intimacy.js` — orchestrateur léger (~200 l)
+- [x] `js/intimacy-sessions.js` — formulaires, fast-track, try/catch
+- [x] `js/intimacy-stats.js` — stats, heatmap, courbe, débrief
+- [x] `js/intimacy-library.js` — 40 positions offline, SVG, filtres, suggestions
+- [x] `js/kinks.js` — double-révélation, wish-list, limites, check-in
+- [x] `js/pin-lock.js` — PIN SHA-256, masquage rapide, visibilitychange
+- [x] `js/intimacy-tests.js` — tests unitaires fenêtre désir + kink match rate
+
+### Journal & Formulaire
+
+- [x] Session complète (mood, lieu, durée, tags d'activité multi-sélect, note partagée)
+- [x] Sélecteur de positions dans le formulaire
+- [x] Fast-track (4 taps : ambiance + satisfaction + orgasme → save)
+- [x] Feedback post-séance automatique (4 questions ~30s, privé)
+- [ ] Positions libres / tags personnalisables par l'utilisateur
+- [ ] Durée préliminaires séparée + intensité slider
+
+### Bibliothèque de positions
+
+- [x] 40 positions offline embarquées en JS
+- [x] SVG silhouettes line-art minimalistes (rose = elle, bleu = lui)
+- [x] Filtres : intensité, confort, catégorie
+- [x] Suggestions contextuelles croisées phase × humeur partenaire
+- [x] Idées Date Night par phase
+- [ ] Tags personnalisables
+- [ ] Favoris / positions sauvegardées
+
+### Statistiques avancées
+
+- [x] Heatmap mensuelle (grille 7×N colorée par intensité, style GitHub)
+- [x] Courbe d'évolution satisfaction 3 mois (SVG natif, bezier lissé)
+- [x] Taux de plaisir partagé par phase du cycle (barres SVG)
+- [x] Souvenir du jour (session passée aléatoire)
+- [x] Débrief post-dispute (détection conflit récent → suggestions douces)
+- [x] Équité du plaisir (satisfaction + orgasmes, ton neutre/bienveillant)
+- [ ] Export statistiques (PDF mensuel étendu)
+
+### Désirs & Communication
+
+- [x] Kinks matrix — slider 0-5 privé + double-révélation (match = les deux intéressés)
+- [x] Compteur "Nos désirs en commun : X / Y"
+- [x] Wish-list avec workflow statut (proposé → validé → testé → à refaire)
+- [x] Check-in automatique quand un souhait passe en "validé"
+- [x] Alignement libido par phase du cycle
+- [ ] Notes privées sur chaque kink
+
+### Consentement & Sécurité
+
+- [x] Limites (ok / soft / hard) — hard limits toujours visibles du partenaire
+- [x] Safewords enregistrés et accessibles
+- [x] Aftercare préférences (localStorage uniquement, non partagé)
+- [x] Verrou PIN 4 chiffres (SHA-256, jamais stocké en clair)
+- [x] Masquage rapide (bouton ⚡ ou switch d'app → auto-lock)
+- [x] Aucune galerie photo cloud (§D respecté)
+- [ ] Biométrie WebAuthn (limité en PWA iOS)
+
+### Santé Sexuelle
+
+- [x] Journal santé (contraception, test IST, vaccination, symptôme)
+- [x] Privé par défaut, partageable manuellement
+- [ ] Rappels contraception (notification douce)
+- [ ] Alertes symptômes récurrents (non diagnostiques)
+
+### Rituels & Temps
+
+- [x] Premières fois (journal horodaté)
+- [x] Souvenir du jour (remontée aléatoire)
+- [x] Défis du mois avec case à cocher
+- [x] Suggestions Date Night par phase
+- [ ] Mode Surprise (l'un propose, l'autre découvre)
+
 ### Hors périmètre v1 (noté pour mémoire)
 
 - Multi-couples / comptes multiples
@@ -197,4 +274,3 @@
 - Mode périménopause
 - Bilingue FR/EN
 - Partage granulaire catégorie par catégorie
-- Module intimité (voir `docs/MODULE_intimite_app_couple.md`)

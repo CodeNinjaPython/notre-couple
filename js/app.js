@@ -9,6 +9,7 @@ import { requestPermission, getPermission, declineNotifications } from './notifi
 import { onboardingDone, initOnboarding, markOnboardingDone } from './onboarding.js';
 import { initIntimacy } from './intimacy.js';
 import { initKinks } from './kinks.js';
+import { initQuickHide } from './pin-lock.js';
 
 // Mode démo : indicateur sur le body
 if (IS_DEMO) document.body.classList.add('demo-mode');
@@ -23,6 +24,10 @@ registerView('today',      () => initToday());
 registerView('calendar',   () => initCalendar());
 registerView('nous',       () => initNous());
 registerView('intime',     () => { initIntimacy(); initKinks(); });
+// Tests accessibles depuis la console du navigateur en dev
+if (window.location.search.includes('run-tests')) {
+  import('./intimacy-tests.js').then(m => m.runAllTests());
+}
 registerView('auth',       () => initAuthView());
 registerView('pairing',    () => initPairingView());
 registerView('onboarding', () => initOnboarding());

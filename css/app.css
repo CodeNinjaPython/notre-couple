@@ -1180,6 +1180,180 @@ body.demo-mode .demo-badge {
 }
 .fb-sat-btn.sel { border-color: var(--elle); background: var(--elle-light); box-shadow: var(--sh-elle); }
 
+/* ─── Heatmap mensuelle ────────────────────────────────────────────────── */
+.heatmap-month-title {
+  font-family: "DM Mono", monospace; font-size: 13px; font-weight: 600;
+  color: var(--muted); text-align: center; margin-bottom: 12px; letter-spacing: .06em;
+}
+.heatmap-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+.heatmap-day-header {
+  font-family: "DM Mono", monospace; font-size: 9px; color: var(--faint);
+  text-align: center; padding-bottom: 4px; font-weight: 600; letter-spacing: .06em;
+}
+.heatmap-cell {
+  aspect-ratio: 1; border-radius: 5px; border: 1.5px solid transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: default; min-height: 32px; transition: transform .15s;
+}
+.heatmap-cell.future { opacity: .4; }
+.heatmap-cell.empty  { background: transparent !important; }
+.heatmap-day-num { font-size: 10px; color: var(--text); font-family: "DM Mono", monospace; }
+.heatmap-legend  {
+  display: flex; gap: 14px; margin-top: 10px; font-size: 11px;
+  color: var(--faint); font-family: "DM Mono", monospace; align-items: center;
+}
+.heatmap-legend span:not([style]) { margin-right: 4px; }
+.heatmap-legend span[style] { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+
+/* ─── Courbe satisfaction ─────────────────────────────────────────────── */
+.curve-legend {
+  display: flex; justify-content: space-between; margin-top: 8px;
+  font-size: 11px; color: var(--muted); align-items: center; flex-wrap: wrap; gap: 6px;
+}
+.curve-legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+/* ─── Orgasme par phase ───────────────────────────────────────────────── */
+.orgasm-phase-row { padding: 12px 0; border-top: 1.5px solid var(--line); }
+.orgasm-phase-row:first-child { border-top: none; }
+.orgasm-phase-label { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+.orgasm-phase-bars  { display: flex; flex-direction: column; gap: 6px; }
+.orgasm-bar-wrap    { display: flex; align-items: center; gap: 8px; }
+.orgasm-who         { font-size: 11px; font-weight: 600; color: var(--muted); width: 60px; flex-shrink: 0; }
+.orgasm-bar-track   { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.orgasm-bar-fill    { height: 100%; border-radius: 4px; transition: width .6s ease; }
+.orgasm-pct         { font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted); width: 34px; text-align: right; flex-shrink: 0; }
+.orgasm-n           { font-size: 10px; color: var(--faint); font-family: "DM Mono", monospace; margin-top: 4px; }
+
+/* ─── Bibliothèque de positions ───────────────────────────────────────── */
+.library-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.library-filter-select {
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 10px; color: var(--text); font-family: "DM Sans"; font-size: 12px;
+  padding: 7px 10px; outline: none; cursor: pointer; -webkit-appearance: none;
+  transition: border-color .2s; flex: 1; min-width: 100px;
+}
+.library-filter-select:focus { border-color: var(--elle); }
+
+.pos-card {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 12px 0; border-top: 1.5px solid var(--line);
+  cursor: pointer; transition: background .15s; border-radius: 8px;
+  min-height: 44px; /* A11Y tap target */
+}
+.pos-card:first-child { border-top: none; }
+.pos-card:hover, .pos-card:focus { background: var(--surface2); outline: none; }
+.pos-card:focus-visible { outline: 2.5px solid var(--elle); outline-offset: 2px; }
+.pos-svg  { width: 60px; height: 60px; flex-shrink: 0; }
+.pos-info { flex: 1; min-width: 0; }
+.pos-label { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.pos-desc  { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 6px; }
+.pos-meta  { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.pos-tag   {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 100px; padding: 2px 8px; color: var(--muted);
+}
+.pos-phase { font-size: 10px; color: var(--faint); font-family: "DM Mono", monospace; }
+
+/* Position picker dans le sheet */
+.pos-pick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; max-height: 180px; overflow-y: auto; }
+.pos-pick-btn {
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 8px 4px; cursor: pointer; text-align: center;
+  transition: all .18s; min-height: 44px; /* A11Y */
+}
+.pos-pick-btn.sel { border-color: var(--elle); background: var(--elle-light); }
+.pos-pick-svg  { width: 44px; height: 44px; margin: 0 auto 4px; }
+.pos-pick-label { font-size: 10px; color: var(--muted); font-weight: 600; display: block; }
+
+/* ─── Suggestions contextuelles ──────────────────────────────────────── */
+.suggestion-phase { font-size: 11px; font-weight: 700; color: var(--elle); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; }
+.suggestion-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+.suggestion-positions { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.suggestion-pos {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 14px; padding: 10px; min-width: 70px; flex-shrink: 0;
+}
+.suggestion-pos-svg { width: 48px; height: 48px; }
+.suggestion-pos span { font-size: 10px; color: var(--muted); font-weight: 600; text-align: center; }
+.suggestion-idea {
+  font-size: 13px; color: var(--text); padding: 8px 0;
+  border-bottom: 1px solid var(--line); line-height: 1.5;
+}
+.suggestion-idea:last-child { border-bottom: none; }
+
+/* ─── Fast-Track sheet ────────────────────────────────────────────────── */
+.ft-sat-grid { display: flex; gap: 8px; }
+.ft-sat-btn {
+  flex: 1; background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 12px; font-size: 22px; padding: 12px 6px;
+  cursor: pointer; transition: all .18s; min-height: 44px; /* A11Y */
+}
+.ft-sat-btn.sel { border-color: var(--elle); background: var(--elle-light); box-shadow: var(--sh-elle); }
+
+/* ─── PIN Lock ────────────────────────────────────────────────────────── */
+#pin-lock-overlay {
+  position: fixed; inset: 0; background: var(--bg); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.pin-lock-box { text-align: center; padding: 32px 24px; width: 100%; max-width: 320px; }
+.pin-lock-icon  { font-size: 48px; margin-bottom: 16px; }
+.pin-lock-title { font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.pin-lock-sub   { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+.pin-display {
+  display: flex; justify-content: center; gap: 16px; margin-bottom: 12px;
+  transition: all .3s;
+}
+.pin-display.pin-shake { animation: pin-shake .4s ease; }
+@keyframes pin-shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-8px); }
+  75%      { transform: translateX(8px); }
+}
+.pin-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2.5px solid var(--line); background: transparent; transition: all .2s;
+}
+.pin-dot.filled { background: var(--elle); border-color: var(--elle); }
+.pin-error { font-size: 13px; color: var(--red); min-height: 20px; margin-bottom: 12px; }
+.pin-keypad {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 20px;
+}
+.pin-key {
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: 14px; font-size: 20px; font-weight: 600; color: var(--text);
+  padding: 16px; cursor: pointer; transition: all .15s;
+  min-height: 56px; /* A11Y 44px + */
+}
+.pin-key:hover:not(:disabled) { background: var(--surface2); border-color: var(--elle-mid); }
+.pin-key:active { transform: scale(.96); }
+.pin-key-empty { opacity: 0; pointer-events: none; }
+
+/* ─── Quick hide ──────────────────────────────────────────────────────── */
+#quick-hide-screen {
+  position: fixed; inset: 0; background: var(--bg); z-index: 199;
+  display: flex; align-items: center; justify-content: center;
+}
+.quick-hide-content { text-align: center; }
+.quick-hide-icon { font-size: 56px; margin-bottom: 24px; }
+.btn-quick-hide-header {
+  position: absolute; top: 58px; right: 20px;
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 100px; font-size: 12px; font-weight: 700; color: var(--muted);
+  padding: 6px 13px; cursor: pointer; transition: all .2s;
+  min-height: 44px; /* A11Y */
+}
+
+/* ─── A11Y : tap targets minimum 44×44px ─────────────────────────────── */
+.chip, .mood-btn, .loc-btn, .act-tag-btn, .fb-sat-btn, .ft-sat-btn,
+nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+/* Sliders kinks — zone de tap étendue */
+.kink-slider { min-height: 44px; cursor: pointer; }
+
 /* ─── Accessibility + motion ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 :focus-visible { outline: 2.5px solid var(--elle); outline-offset: 2px; }

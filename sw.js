@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v8';
+const CACHE = 'notre-rythme-v9';
 const SHELL = [
   '/',
   '/index.html',
@@ -21,7 +21,12 @@ const SHELL = [
   '/js/date-utils.js',
   '/js/pdf.js',
   '/js/intimacy.js',
+  '/js/intimacy-sessions.js',
+  '/js/intimacy-stats.js',
+  '/js/intimacy-library.js',
+  '/js/intimacy-tests.js',
   '/js/kinks.js',
+  '/js/pin-lock.js',
   '/manifest.json',
 ];
 
