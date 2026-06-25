@@ -8,11 +8,11 @@ PWA privée pour **un seul couple** : les deux partenaires suivent leurs propres
 
 ## Où est quoi
 
-- **`PASSATION_app_couple.md`** — le cahier complet : scope, décisions tranchées, tokens visuels d'origine (§6), écrans, moteur de corrélation, ordre de construction (§11). **Référence produit principale.**
-- **`CHECKLIST_app_couple.md`** — inventaire exhaustif en cases à cocher. Tracker d'avancement.
-- **`MODULE_intimite_app_couple.md`** — extension « intimité » (à traiter après le noyau v1). Lire §D avant de coder.
-- **`schema_couple_tracker.sql`** — schéma Postgres + RLS + seed catégories, à exécuter en premier dans Supabase > SQL Editor.
-- **`schema_additions.sql`** — politiques RLS complémentaires + colonnes `reactions`/`created_by` sur `couple_events`. À exécuter **après** `schema_couple_tracker.sql`.
+- **`docs/PASSATION_app_couple.md`** — le cahier complet : scope, décisions tranchées, tokens visuels d'origine (§6), écrans, moteur de corrélation, ordre de construction (§11). **Référence produit principale.**
+- **`docs/CHECKLIST_app_couple.md`** — inventaire exhaustif en cases à cocher. Tracker d'avancement.
+- **`docs/MODULE_intimite_app_couple.md`** — extension « intimité » (à traiter après le noyau v1). Lire §D avant de coder.
+- **`docs/schemas/schema_couple_tracker.sql`** — schéma Postgres + RLS + seed catégories, à exécuter en premier dans Supabase > SQL Editor.
+- **`docs/schemas/schema_additions.sql`** — politiques RLS complémentaires + colonnes `reactions`/`created_by` sur `couple_events`. À exécuter **après** le schéma principal. Voir `docs/schemas/README.md` pour l'ordre complet.
 
 ## Stack
 
