@@ -605,6 +605,43 @@ input::placeholder { color: var(--faint); }
 .detail-row:first-child { border-top: none; }
 
 /* ----------------------------------------------------------------
+   Badge MODE DÉMO
+   ---------------------------------------------------------------- */
+.demo-badge {
+  display: none;
+}
+body.demo-mode .demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(217,179,106,.1);
+  border: 1px solid var(--gold-dim);
+  border-radius: 100px;
+  padding: 3px 9px;
+  margin-top: 10px;
+}
+
+/* Hint demo dans l'écran auth */
+.auth-demo-hint {
+  display: none;
+  font-size: 12px;
+  color: var(--gold);
+  font-family: "DM Mono", monospace;
+  letter-spacing: .04em;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: rgba(217,179,106,.07);
+  border: 1px solid var(--gold-dim);
+  border-radius: 10px;
+  line-height: 1.6;
+}
+
+/* ----------------------------------------------------------------
    Toast in-app
    ---------------------------------------------------------------- */
 .toast {

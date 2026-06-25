@@ -59,6 +59,10 @@
       <div class="card" style="margin-top:32px">
         <h2>Connexion</h2>
         <div id="auth-form">
+          <div id="auth-demo-hint" class="auth-demo-hint">
+            Mode démo actif — aucun e-mail ne sera envoyé.<br>
+            Entrez n'importe quoi et appuyez sur Entrée.
+          </div>
           <p style="color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6">
             Entrez votre adresse e-mail pour recevoir un lien de connexion magique.
           </p>
@@ -185,6 +189,7 @@
         <div class="eyebrow" id="eyebrow">—</div>
         <div class="phase" id="phase-name">Notre rythme</div>
         <div class="date" id="today-date"></div>
+        <span class="demo-badge">Mode démo · données locales</span>
       </header>
 
       <!-- Contrôle cycle (visible uniquement pour elle) -->
@@ -410,6 +415,7 @@
           <button type="button" id="btn-install"      class="btn-secondary" style="display:none">Installer l'app sur l'écran d'accueil</button>
           <button type="button" id="btn-export-json"  class="btn-secondary">Exporter en JSON</button>
           <button type="button" id="btn-export-csv"   class="btn-secondary">Exporter en CSV</button>
+          <button type="button" id="btn-reset-demo"   class="btn-secondary demo-badge" style="display:none">Réinitialiser les données de démo</button>
           <button type="button" id="btn-unlink"       class="btn-secondary btn-danger">Se délier du couple</button>
           <button type="button" id="btn-nous-signout" class="btn-secondary">Se déconnecter</button>
         </div>

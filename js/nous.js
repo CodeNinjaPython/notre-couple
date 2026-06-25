@@ -1,4 +1,4 @@
-import { supabase } from './supabase.js';
+import { supabase, IS_DEMO } from './supabase.js';
 import { signOut } from './auth.js';
 import { navigate } from './router.js';
 import { getMyMembership, getPartnerMembership } from './pairing.js';
@@ -331,7 +331,7 @@ function renderSettings(me) {
   document.getElementById('btn-export-csv')?.addEventListener('click',  () => exportData('csv'));
   document.getElementById('btn-unlink')?.addEventListener('click', () => unlinkAccount(me));
 
-  // Bouton install PWA (visible seulement si l'événement beforeinstallprompt a été capturé)
+  // Bouton install PWA
   const installBtn = document.getElementById('btn-install');
   if (installBtn && window.__installPrompt) {
     installBtn.style.display = 'block';
@@ -339,6 +339,18 @@ function renderSettings(me) {
       window.__installPrompt.prompt();
       const { outcome } = await window.__installPrompt.userChoice;
       if (outcome === 'accepted') installBtn.style.display = 'none';
+    }, { once: true });
+  }
+
+  // Bouton reset (mode démo uniquement)
+  const resetBtn = document.getElementById('btn-reset-demo');
+  if (resetBtn && IS_DEMO) {
+    resetBtn.style.display = 'block';
+    resetBtn.addEventListener('click', async () => {
+      if (!confirm('Réinitialiser toutes les données de démo ?')) return;
+      const { resetDemoData } = await import('./local-db.js');
+      resetDemoData();
+      window.location.reload();
     }, { once: true });
   }
 }
