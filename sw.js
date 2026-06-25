@@ -9,6 +9,7 @@ const SHELL = [
   '/js/auth.js',
   '/js/pairing.js',
   '/js/router.js',
+  '/js/cycles.js',
   '/js/today.js',
   '/js/calendar.js',
   '/js/nous.js',

@@ -11,7 +11,7 @@ function randomCode() {
 export async function getMyMembership() {
   const { data, error } = await supabase
     .from('couple_members')
-    .select('couple_id, display_name, tracks_cycle')
+    .select('user_id, couple_id, display_name, tracks_cycle')
     .maybeSingle();
   if (error) throw error;
   return data;

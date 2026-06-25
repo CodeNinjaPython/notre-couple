@@ -178,8 +178,13 @@
         <div class="date" id="today-date"></div>
       </header>
 
+      <!-- Contrôle cycle (visible uniquement pour elle) -->
+      <div id="cycle-controls" style="margin-top:16px;display:none">
+        <button id="btn-cycle-toggle" class="btn-primary">Mes règles commencent</button>
+      </div>
+
       <!-- Qui saisit ? -->
-      <div class="who" id="who-toggle" role="tablist">
+      <div class="who" id="who-toggle" role="tablist" style="margin-top:16px">
         <button data-p="elle">Elle</button>
         <button data-p="lui">Lui</button>
       </div>
@@ -205,13 +210,34 @@
       <div class="card insight">
         <h2>Cette semaine</h2>
         <div class="body" id="insight-body"></div>
-        <div class="meta">Corrélation observée · données en cours d'accumulation</div>
+        <div class="meta" id="insight-meta">Données en cours d'accumulation</div>
       </div>
 
       <!-- Conseil (lui) -->
       <div class="card tip" id="tip-card" style="display:none">
         <h2>Pour toi</h2>
         <p id="tip-text"></p>
+      </div>
+
+      <!-- Prédiction (≥ 2 cycles) -->
+      <div class="card" id="prediction-card" style="display:none">
+        <h2>Prochainement</h2>
+        <div class="pred-row">
+          <div class="pred-item">
+            <div class="pred-label">Règles</div>
+            <div class="pred-val" style="color:var(--rose)" id="pred-next">—</div>
+            <div class="pred-sub" id="pred-next-date"></div>
+          </div>
+          <div class="pred-item">
+            <div class="pred-label">Ovulation</div>
+            <div class="pred-val" style="color:var(--gold)" id="pred-ovulation">—</div>
+          </div>
+          <div class="pred-item">
+            <div class="pred-label">Cycle moy.</div>
+            <div class="pred-val" id="pred-avg">—</div>
+          </div>
+        </div>
+        <div class="pred-disclaimer">Indicatif · pas un outil contraceptif</div>
       </div>
 
       <!-- Moments partagés -->
@@ -227,10 +253,30 @@
         Les prédictions sont indicatives uniquement.
       </p>
     </div>
+
+    <!-- Sheet : noter un moment -->
+    <div id="event-sheet" class="sheet-backdrop">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Noter un moment</h3>
+        <div class="ev-types">
+          <button class="ev-type-btn" data-type="intimacy">❤️<span>Intimité</span></button>
+          <button class="ev-type-btn" data-type="date_night">🌙<span>Soirée</span></button>
+          <button class="ev-type-btn" data-type="conflict">💬<span>Tension</span></button>
+          <button class="ev-type-btn" data-type="other">✨<span>Autre</span></button>
+        </div>
+        <div class="field" style="margin-top:18px">
+          <label for="event-note">Note (optionnel)</label>
+          <input type="text" id="event-note" placeholder="ex. Belle soirée ensemble…">
+        </div>
+        <button id="btn-sheet-save" class="btn-primary">Enregistrer</button>
+        <button id="btn-sheet-cancel" class="btn-secondary" style="margin-top:10px">Annuler</button>
+      </div>
+    </div>
   </template>
 
   <!-- ================================================================
-       TEMPLATE : CALENDAR (stub)
+       TEMPLATE : CALENDAR
        ================================================================ -->
   <template id="tpl-calendar">
     <div class="app">
@@ -239,10 +285,51 @@
         <div class="phase">Calendrier</div>
         <div class="date" id="today-date"></div>
       </header>
-      <div class="stub">
-        <div class="stub-icon">📅</div>
-        <h3>Calendrier</h3>
-        <p>Vue du cycle, historique des saisies et prédiction des prochaines règles.<br>Bientôt disponible.</p>
+
+      <!-- Navigation mois -->
+      <div class="cal-nav">
+        <button id="cal-prev" class="cal-nav-btn" aria-label="Mois précédent">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span id="cal-month-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
+        <button id="cal-next" class="cal-nav-btn" aria-label="Mois suivant">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- Grille jours -->
+      <div id="cal-grid" class="cal-grid"></div>
+
+      <!-- Légende -->
+      <div class="cal-legend">
+        <span><i class="cal-legend-dot" style="background:var(--rose)"></i>Règles</span>
+        <span><i class="cal-legend-dot" style="background:var(--gold)"></i>Ovulation</span>
+        <span><i class="cal-legend-dot" style="background:var(--sage)"></i>Lutéale</span>
+        <span><i class="cal-legend-dot" style="border:1px dashed var(--faint);background:transparent"></i>Prévu</span>
+      </div>
+
+      <!-- Prédiction -->
+      <div class="card" style="margin-top:16px">
+        <h2>Prédiction</h2>
+        <div id="cal-prediction"></div>
+      </div>
+
+      <!-- Historique cycles -->
+      <div class="card">
+        <h2>Historique</h2>
+        <div id="cal-history"></div>
+      </div>
+
+      <p class="disclaimer">Indicatif · pas un outil contraceptif</p>
+    </div>
+
+    <!-- Sheet : détail d'un jour -->
+    <div id="day-detail" class="sheet-backdrop">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title" id="day-detail-date"></h3>
+        <div id="day-detail-body"></div>
+        <button id="btn-detail-close" class="btn-secondary" style="margin-top:20px">Fermer</button>
       </div>
     </div>
   </template>
