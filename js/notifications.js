@@ -62,3 +62,15 @@ export async function checkPartnerLoggedToday(partnerUserId) {
     .limit(1);
   return !!(data?.length);
 }
+
+// Alerte règles imminentes (< 3 jours)
+export function checkRulesImminentes(prediction) {
+  if (!prediction || Notification.permission !== 'granted') return;
+  const daysUntil = Math.round((new Date(prediction.nextPeriodDate) - new Date()) / 864e5);
+  if (daysUntil >= 0 && daysUntil <= 2) {
+    const msg = daysUntil === 0
+      ? 'Les règles sont prévues aujourd\'hui.'
+      : `Les règles sont prévues dans ${daysUntil} jour${daysUntil > 1 ? 's' : ''}.`;
+    showNotification('Notre rythme · Rappel cycle', msg, 'regles-imminentes');
+  }
+}

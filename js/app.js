@@ -6,6 +6,7 @@ import { initToday } from './today.js';
 import { initCalendar } from './calendar.js';
 import { initNous } from './nous.js';
 import { requestPermission, getPermission, declineNotifications } from './notifications.js';
+import { onboardingDone, initOnboarding, markOnboardingDone } from './onboarding.js';
 
 // Mode démo : indicateur sur le body
 if (IS_DEMO) document.body.classList.add('demo-mode');
@@ -16,11 +17,12 @@ if ('serviceWorker' in navigator && !IS_DEMO) {
 }
 
 // ── Register view inits ────────────────────────────────────────────────────
-registerView('today',    () => initToday());
-registerView('calendar', () => initCalendar());
-registerView('nous',     () => initNous());
-registerView('auth',     () => initAuthView());
-registerView('pairing',  () => initPairingView());
+registerView('today',      () => initToday());
+registerView('calendar',   () => initCalendar());
+registerView('nous',       () => initNous());
+registerView('auth',       () => initAuthView());
+registerView('pairing',    () => initPairingView());
+registerView('onboarding', () => initOnboarding());
 
 // ── Auth view ──────────────────────────────────────────────────────────────
 function initAuthView() {
@@ -115,6 +117,29 @@ function initPairingView() {
 
   document.getElementById('btn-done')?.addEventListener('click', () => navigate('today'));
 
+  // Copier le code (1 tap)
+  document.getElementById('btn-copy-code')?.addEventListener('click', async () => {
+    const code = document.getElementById('generated-code')?.textContent?.trim();
+    if (!code || code === '------') return;
+    await navigator.clipboard.writeText(code).catch(() => {});
+    const btn = document.getElementById('btn-copy-code');
+    if (btn) { btn.textContent = '✓ Copié'; setTimeout(() => { btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier'; }, 2000); }
+  });
+
+  // Partager via Web Share API
+  document.getElementById('btn-share-code')?.addEventListener('click', async () => {
+    const code = document.getElementById('generated-code')?.textContent?.trim();
+    if (!code || code === '------') return;
+    const text = `Rejoins moi sur Notre rythme. Ton code d'invitation : ${code}`;
+    if (navigator.share) {
+      await navigator.share({ title: 'Notre rythme', text }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(text).catch(() => {});
+      const btn = document.getElementById('btn-share-code');
+      if (btn) { btn.textContent = '✓ Copié'; setTimeout(() => { btn.textContent = 'Partager'; }, 2000); }
+    }
+  });
+
   document.getElementById('btn-join-submit')?.addEventListener('click', async () => {
     const code       = document.getElementById('join-code')?.value?.trim();
     const name       = document.getElementById('join-name')?.value?.trim();
@@ -132,6 +157,11 @@ function initPairingView() {
 
 // ── Routing ────────────────────────────────────────────────────────────────
 async function routeAfterAuth() {
+  // Onboarding si pas encore vu (sauf en mode démo — seed déjà configuré)
+  if (!IS_DEMO && !onboardingDone()) {
+    navigate('onboarding');
+    return;
+  }
   const membership = await getMyMembership();
   if (!membership) {
     navigate('pairing');

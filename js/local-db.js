@@ -300,6 +300,9 @@ function seed() {
   ]);
 
   ls.set('pairing_codes', []);
+  // Démo : onboarding considéré comme complété, mode par défaut
+  localStorage.setItem('nc-onboarding-v1', 'done');
+  localStorage.setItem('nc-cycle-mode', 'rules');
   ls.set('seeded', '2');
 }
 

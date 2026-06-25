@@ -7,25 +7,45 @@ import {
   predictNextPeriod, getEnergyByCycleDay, getPartnerEnergyByCycleDay, interpolate,
 } from './cycles.js';
 import { subscribeToEvents, subscribeToPartnerLogs } from './realtime.js';
-import { maybeRemindToLog, checkPartnerLoggedToday, showNotification } from './notifications.js';
+import { maybeRemindToLog, checkPartnerLoggedToday, showNotification, checkRulesImminentes } from './notifications.js';
 
-const PHASES = [
-  [1, 5,  'Menstruelle'],
-  [6, 13, 'Folliculaire'],
-  [14, 16,'Ovulation'],
-  [17, 35,'Lutéale'],
-];
-const PHASE_FILL = {
-  Menstruelle:  'rgba(229,57,53,.07)',
-  Folliculaire: 'rgba(66,120,196,.05)',
-  Ovulation:    'rgba(124,92,252,.09)',
-  Lutéale:      'rgba(232,67,117,.06)',
-};
-const PHASE_TIPS = {
-  Menstruelle:  'Elle est en phase menstruelle. Le repos et la chaleur font souvent du bien — un moment calme peut être apprécié.',
-  Folliculaire: 'L\'énergie remonte progressivement. Une bonne période pour des sorties et des projets communs.',
-  Ovulation:    'Pic d\'énergie et de vitalité ces jours-ci. Profitez-en pour partager des activités qui vous tiennent à cœur.',
-  Lutéale:      'Énergie souvent en baisse, sensibilité en hausse ces jours-ci — une soirée tranquille tombe souvent juste.',
+const PHASES_DATA = {
+  Menstruelle: {
+    range: [1, 5],
+    fill: 'rgba(229,57,53,.07)',
+    tip: 'Elle est en phase menstruelle. Le repos et la chaleur font souvent du bien — un moment calme peut être apprécié.',
+    insight: {
+      elle: 'Phase menstruelle — énergie souvent <em>basse</em>, le corps se régénère.',
+      lui: 'Ton énergie tend à être <em class="s">stable</em> pendant sa phase menstruelle.'
+    }
+  },
+  Folliculaire: {
+    range: [6, 13],
+    fill: 'rgba(66,120,196,.05)',
+    tip: 'L\'énergie remonte progressivement. Une bonne période pour des sorties et des projets communs.',
+    insight: {
+      elle: 'Énergie en <em>montée</em> — bonne période pour de nouveaux projets.',
+      lui: 'Vos énergies remontent ensemble — <em class="s">synchronie</em> de début de cycle.'
+    }
+  },
+  Ovulation: {
+    range: [14, 16],
+    fill: 'rgba(124,92,252,.09)',
+    tip: 'Pic d\'énergie et de vitalité ces jours-ci. Profitez-en pour partager des activités qui vous tiennent à cœur.',
+    insight: {
+      elle: 'Pic d\'énergie et de <em>vitalité</em> — moment fort du cycle.',
+      lui: 'Période de haute <em class="s">énergie</em> pour tous les deux souvent.'
+    }
+  },
+  Lutéale: {
+    range: [17, 35],
+    fill: 'rgba(232,67,117,.06)',
+    tip: 'Énergie souvent en baisse, sensibilité en hausse ces jours-ci — une soirée tranquille tombe souvent juste.',
+    insight: {
+      elle: 'Énergie qui redescend, <em>sensibilité</em> plus présente ces jours-ci.',
+      lui: 'Ton <em class="s">énergie</em> tend à baisser avec la sienne — phase lutéale.'
+    }
+  },
 };
 const METRICS = {
   elle: [
@@ -45,8 +65,12 @@ const METRICS = {
     { id: 'exercise', label: 'Sport',   type: 'boolean', opts: ['—', '✓'] },
   ],
 };
-const EVENT_ICONS  = { intimacy: '❤️', conflict: '💬', date_night: '🌙', other: '✨' };
-const EVENT_LABELS = { intimacy: 'Intimité', conflict: 'Tension', date_night: 'Soirée', other: 'Moment' };
+const EVENT_TYPES = {
+  intimacy:   { icon: '❤️', label: 'Intimité' },
+  conflict:   { icon: '💬', label: 'Tension' },
+  date_night: { icon: '🌙', label: 'Soirée' },
+  other:      { icon: '✨', label: 'Moment' },
+};
 const CYCLE_LEN = 28;
 
 let state = {
@@ -57,6 +81,8 @@ let state = {
   savedValues: {},
   coupleId: null,
   prediction: null,
+  logDate: new Date().toISOString().split('T')[0],
+  logDateOffset: 0,          // 0 = aujourd'hui, -1 = hier, etc.
 };
 
 export async function initToday() {
@@ -87,11 +113,14 @@ export async function initToday() {
 
   state.prediction = predictNextPeriod(history);
 
-  await loadTodayEntries();
+  state.logDate = new Date().toISOString().split('T')[0];
+  state.logDateOffset = 0;
+  await loadEntriesForDate(state.logDate);
 
   renderHeader();
   renderCycleControls();
   renderWhoToggle();
+  initDateNav();
   await renderChart();
   renderMetrics();
   renderInsight();
@@ -108,8 +137,9 @@ export async function initToday() {
     });
   }
 
-  // Rappel quotidien (>= 19h, si pas encore saisi)
+  // Rappel quotidien + alerte règles imminentes
   maybeRemindToLog();
+  if (state.prediction) checkRulesImminentes(state.prediction);
 
   // Toast si partenaire a déjà saisi aujourd'hui
   if (state.partner) {
@@ -120,15 +150,61 @@ export async function initToday() {
 }
 
 function getPhase(day) {
-  return (PHASES.find(([a, b]) => day >= a && day <= b) || PHASES[PHASES.length - 1])[2];
+  const phaseEntry = Object.entries(PHASES_DATA).find(([, data]) => day >= data.range[0] && day <= data.range[1]);
+  return phaseEntry ? phaseEntry[0] : 'Lutéale';
 }
 
-async function loadTodayEntries() {
-  const today = new Date().toISOString().split('T')[0];
+async function loadEntriesForDate(dateStr) {
   const { data } = await supabase
-    .from('log_entries').select('category_id, value').eq('log_date', today);
+    .from('log_entries').select('category_id, value').eq('log_date', dateStr);
   state.savedValues = {};
   (data || []).forEach(r => { state.savedValues[r.category_id] = r.value; });
+}
+
+// --- Navigation date (saisie antérieure) -----------------------------------
+function initDateNav() {
+  const prevBtn = document.getElementById('btn-log-prev');
+  const nextBtn = document.getElementById('btn-log-next');
+  const label   = document.getElementById('log-date-label');
+
+  function updateDisplay() {
+    const isToday = state.logDateOffset === 0;
+    nextBtn && (nextBtn.disabled = isToday);
+    if (label) {
+      if (isToday) {
+        label.textContent = "Aujourd'hui";
+      } else {
+        const d = new Date(state.logDate + 'T12:00:00');
+        label.textContent = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+      }
+    }
+    // Masquer le contrôle cycle sur les jours passés
+    const cycleCtrl = document.getElementById('cycle-controls');
+    if (cycleCtrl) cycleCtrl.style.display = (!isToday || !state.me?.tracks_cycle) ? 'none' : 'block';
+  }
+
+  prevBtn?.addEventListener('click', async () => {
+    if (state.logDateOffset > -30) {
+      state.logDateOffset--;
+      state.logDate = new Date(Date.now() + state.logDateOffset * 864e5).toISOString().split('T')[0];
+      updateDisplay();
+      await loadEntriesForDate(state.logDate);
+      renderMetrics();
+    }
+    if (state.logDateOffset === -30) prevBtn.disabled = true;
+  });
+
+  nextBtn?.addEventListener('click', async () => {
+    if (state.logDateOffset < 0) {
+      state.logDateOffset++;
+      state.logDate = new Date(Date.now() + state.logDateOffset * 864e5).toISOString().split('T')[0];
+      updateDisplay();
+      await loadEntriesForDate(state.logDate);
+      renderMetrics();
+    }
+  });
+
+  updateDisplay();
 }
 
 // --- Header ----------------------------------------------------------------
@@ -258,10 +334,11 @@ function drawChart(elleData, luiData, totalDays, todayIdx) {
   }
 
   let s = '';
-  PHASES.forEach(([a, b, l]) => {
+  Object.entries(PHASES_DATA).forEach(([, data]) => {
+    const [a, b] = data.range;
     const xa = xP(Math.min(a - 1, totalDays - 1));
     const xb = xP(Math.min(b - 1, totalDays - 1));
-    s += `<rect x="${xa}" y="0" width="${Math.max(0, xb - xa)}" height="${H}" fill="${PHASE_FILL[l]}"/>`;
+    s += `<rect x="${xa}" y="0" width="${Math.max(0, xb - xa)}" height="${H}" fill="${data.fill}"/>`;
   });
 
   if (todayIdx != null) {
@@ -280,88 +357,117 @@ function drawChart(elleData, luiData, totalDays, todayIdx) {
 }
 
 // --- Metrics ---------------------------------------------------------------
+
+/**
+ * Gère le clic sur une "chip" de métrique via délégation d'événement.
+ * @param {MouseEvent} event
+ */
+async function handleMetricClick(event) {
+  const chip = event.target.closest('.chip');
+  if (!chip) return;
+
+  const { id: metricId, v: value } = chip.dataset;
+  const metric = METRICS[state.cur].find(m => m.id === metricId);
+  if (!metric) return;
+
+  // 1. Mettre à jour l'UI de manière optimiste
+  chip.closest('.chips').querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
+  chip.classList.add('sel');
+
+  const displayValue = (metric.type === 'enum' || metric.type === 'boolean')
+    ? (metric.opts[value] ?? value)
+    : value;
+  chip.closest('.metric').querySelector('.val').textContent = displayValue;
+
+  // 2. Sauvegarder la donnée et mettre à jour l'état local
+  await saveEntry(metricId, value);
+  state.savedValues[metricId] = { v: value };
+
+  // 3. Effet de bord : rafraîchir le graphique si l'énergie est modifiée
+  if (metricId === 'energy') {
+    await renderChart();
+  }
+}
+
+/**
+ * Retourne la chaîne de caractères à afficher pour une valeur de métrique.
+ * @param {object} metric
+ * @param {string|number|null} value
+ * @returns {string}
+ */
+function getMetricDisplayValue(metric, value) {
+  if (value == null) return '—';
+  if (metric.type === 'enum' || metric.type === 'boolean') {
+    return metric.opts[value] ?? value;
+  }
+  return value;
+}
+
+/**
+ * Génère le HTML pour les "chips" d'une métrique.
+ * @param {object} metric
+ * @param {string|number|null} savedValue
+ * @returns {string}
+ */
+function getMetricChipsHTML(metric, savedValue) {
+  const isSelected = (v) => String(savedValue) === String(v) ? ' sel' : '';
+
+  const options = (metric.type === 'enum' || metric.type === 'boolean')
+    ? metric.opts
+    : Array.from({ length: 5 }, (_, i) => i + 1);
+
+  return options.map((opt, i) => {
+    const value = (metric.type === 'enum' || metric.type === 'boolean') ? i : opt;
+    const chipClass = metric.type === 'scale' ? 'chip scalechip' : 'chip';
+    return `<div class="${chipClass}${isSelected(value)}" data-id="${metric.id}" data-v="${value}">${opt}</div>`;
+  }).join('');
+}
+
+/**
+ * Affiche les métriques pour l'utilisateur courant et attache les gestionnaires d'événements.
+ */
 function renderMetrics() {
   const wrap = document.getElementById('metrics');
   if (!wrap) return;
-  wrap.innerHTML = '';
 
-  METRICS[state.cur].forEach((m, mi) => {
-    const savedRaw = state.savedValues[m.id];
-    const savedV   = savedRaw != null
-      ? (typeof savedRaw === 'object' ? savedRaw.v : savedRaw)
-      : null;
-    const display  = savedV != null
-      ? (m.type === 'enum' || m.type === 'boolean' ? (m.opts[savedV] ?? savedV) : savedV)
-      : '—';
+  wrap.innerHTML = METRICS[state.cur].map(metric => {
+    const savedRaw = state.savedValues[metric.id];
+    const savedValue = savedRaw != null ? (savedRaw.v ?? savedRaw) : null;
 
-    let chips = '';
-    if (m.type === 'enum' || m.type === 'boolean') {
-      m.opts.forEach((o, i) =>
-        chips += `<div class="chip${String(savedV) === String(i) ? ' sel' : ''}" data-m="${mi}" data-id="${m.id}" data-v="${i}">${o}</div>`
-      );
-    } else {
-      for (let i = 1; i <= 5; i++)
-        chips += `<div class="chip scalechip${String(savedV) === String(i) ? ' sel' : ''}" data-m="${mi}" data-id="${m.id}" data-v="${i}">${i}</div>`;
-    }
+    return `
+      <div class="metric">
+        <div class="ml">
+          <span class="name">${metric.label}</span>
+          <span class="val" id="val-${metric.id}">${getMetricDisplayValue(metric, savedValue)}</span>
+        </div>
+        <div class="chips">${getMetricChipsHTML(metric, savedValue)}</div>
+      </div>`;
+  }).join('');
 
-    const el = document.createElement('div');
-    el.className = 'metric';
-    el.innerHTML = `
-      <div class="ml"><span class="name">${m.label}</span><span class="val" id="val-${m.id}">${display}</span></div>
-      <div class="chips">${chips}</div>`;
-    wrap.appendChild(el);
-  });
-
-  wrap.querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', async () => {
-      chip.closest('.chips').querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
-      chip.classList.add('sel');
-      const catId = chip.dataset.id;
-      const val   = chip.dataset.v;
-      const m     = METRICS[state.cur].find(x => x.id === catId);
-      const label = (m?.type === 'enum' || m?.type === 'boolean')
-        ? (m.opts[val] ?? val)
-        : val;
-      document.getElementById(`val-${catId}`).textContent = label;
-
-      // Si c'est l'énergie, rafraîchir le chart après sauvegarde
-      const isEnergy = catId === 'energy';
-      await saveEntry(catId, val);
-      state.savedValues[catId] = { v: val };
-      if (isEnergy) await renderChart();
-    });
-  });
+  wrap.removeEventListener('click', handleMetricClick);
+  wrap.addEventListener('click', handleMetricClick);
 }
 
 async function saveEntry(categoryId, value) {
-  const today = new Date().toISOString().split('T')[0];
   const { error } = await supabase.from('log_entries').upsert(
-    { log_date: today, category_id: categoryId, value: { v: value }, shared: true },
+    { log_date: state.logDate, category_id: categoryId, value: { v: value }, shared: true },
     { onConflict: 'user_id,log_date,category_id' }
   );
   if (error) console.error('saveEntry:', error.message);
+  else showToast('Sauvegardé ✓');
 }
 
 // --- Insight ---------------------------------------------------------------
-const INSIGHTS_ELLE = {
-  Menstruelle:  'Phase menstruelle — énergie souvent <em>basse</em>, le corps se régénère.',
-  Folliculaire: 'Énergie en <em>montée</em> — bonne période pour de nouveaux projets.',
-  Ovulation:    'Pic d\'énergie et de <em>vitalité</em> — moment fort du cycle.',
-  Lutéale:      'Énergie qui redescend, <em>sensibilité</em> plus présente ces jours-ci.',
-};
-const INSIGHTS_LUI = {
-  Menstruelle:  'Ton énergie tend à être <em class="s">stable</em> pendant sa phase menstruelle.',
-  Folliculaire: 'Vos énergies remontent ensemble — <em class="s">synchronie</em> de début de cycle.',
-  Ovulation:    'Période de haute <em class="s">énergie</em> pour tous les deux souvent.',
-  Lutéale:      'Ton <em class="s">énergie</em> tend à baisser avec la sienne — phase lutéale.',
-};
-
 function renderInsight() {
   const body = document.getElementById('insight-body');
   const meta = document.getElementById('insight-meta');
   if (!body) return;
   const phase = state.phaseName || 'Lutéale';
-  body.innerHTML = state.cur === 'elle' ? (INSIGHTS_ELLE[phase] || '') : (INSIGHTS_LUI[phase] || '');
+  const insightData = PHASES_DATA[phase]?.insight;
+
+  if (insightData) {
+    body.innerHTML = insightData[state.cur] || '';
+  }
   if (meta && state.prediction) {
     meta.textContent = `Basé sur ${state.prediction.cyclesUsed} cycles · cycle moyen ${state.prediction.avgCycleLength} j`;
   }
@@ -372,7 +478,7 @@ function renderTip() {
   const txt  = document.getElementById('tip-text');
   if (!card) return;
   card.style.display = state.cur === 'lui' ? 'block' : 'none';
-  if (txt) txt.textContent = PHASE_TIPS[state.phaseName || 'Lutéale'];
+  if (txt) txt.textContent = PHASES_DATA[state.phaseName || 'Lutéale']?.tip || '';
 }
 
 // --- Prédiction ------------------------------------------------------------
@@ -434,38 +540,53 @@ async function renderEvents() {
     .limit(7);
 
   wrap.innerHTML = '';
-  (data || []).forEach(ev => {
-    const diff = Math.round((Date.now() - new Date(ev.event_date)) / 864e5);
-    const when = diff === 0 ? "Aujourd'hui" : diff === 1 ? 'Hier' : `Il y a ${diff} jours`;
 
-    // Réactions : { userId: emoji }
-    const reactions = ev.reactions || {};
-    const myReaction = reactions[state.me?.user_id];
-    const allReactions = Object.values(reactions);
-    const reactionSummary = [...new Set(allReactions)].map(e => {
-      const count = allReactions.filter(x => x === e).length;
-      return `<span class="ev-reaction${e === myReaction ? ' mine' : ''}">${e}${count > 1 ? ` ${count}` : ''}</span>`;
-    }).join('');
+  if (!data?.length) {
+    wrap.innerHTML = `<div class="empty-state-inline">
+      <div class="es-icon">🌸</div>
+      <p>Aucun moment noté ensemble.<br>Commencez par en ajouter un !</p>
+    </div>`;
+  } else {
+    data.forEach(ev => {
+      const diff = Math.round((Date.now() - new Date(ev.event_date)) / 864e5);
+      const when = diff === 0 ? "Aujourd'hui" : diff === 1 ? 'Hier' : `Il y a ${diff} jours`;
+      const reactions = ev.reactions || {};
+      const myReaction = reactions[state.me?.user_id];
+      const allReactions = Object.values(reactions);
+      const reactionSummary = [...new Set(allReactions)].map(e => {
+        const count = allReactions.filter(x => x === e).length;
+        return `<span class="ev-reaction${e === myReaction ? ' mine' : ''}">${e}${count > 1 ? ` ${count}` : ''}</span>`;
+      }).join('');
 
-    const div = document.createElement('div');
-    div.className = 'ev';
-    div.dataset.id = ev.id;
-    div.innerHTML = `
-      <div class="ico">${EVENT_ICONS[ev.event_type] || '✨'}</div>
-      <div class="ev-body">
-        <div class="et">${ev.note || EVENT_LABELS[ev.event_type] || ev.event_type}</div>
-        <div class="ed">${when}</div>
-        ${reactionSummary ? `<div class="ev-reactions">${reactionSummary}</div>` : ''}
-      </div>
-      <button class="ev-react-btn" data-id="${ev.id}" aria-label="Réagir">
-        ${myReaction || '🫶'}
-      </button>`;
-    wrap.appendChild(div);
-  });
+      const eventInfo = EVENT_TYPES[ev.event_type] || EVENT_TYPES.other;
+      const div = document.createElement('div');
+      div.className = 'ev';
+      div.dataset.id = ev.id;
+      div.innerHTML = `
+        <div class="ico">${eventInfo.icon}</div>
+        <div class="ev-body">
+          <div class="et">${ev.note || eventInfo.label}</div>
+          <div class="ed">${when}</div>
+          ${reactionSummary ? `<div class="ev-reactions">${reactionSummary}</div>` : ''}
+        </div>
+        <div class="ev-actions">
+          <button type="button" class="ev-react-btn" data-id="${ev.id}" aria-label="Réagir">${myReaction || '🫶'}</button>
+          <button type="button" class="ev-delete-btn" data-id="${ev.id}" aria-label="Supprimer">×</button>
+        </div>`;
+      wrap.appendChild(div);
+    });
+  }
 
-  // Listeners réactions
+  // Listeners réactions + suppression
   wrap.querySelectorAll('.ev-react-btn').forEach(btn => {
     btn.addEventListener('click', () => openReactionPicker(btn.dataset.id, btn));
+  });
+  wrap.querySelectorAll('.ev-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Supprimer ce moment ?')) return;
+      await supabase.from('couple_events').delete().eq('id', btn.dataset.id);
+      await renderEvents();
+    });
   });
 
   document.getElementById('btn-addev')?.addEventListener('click', openEventSheet);

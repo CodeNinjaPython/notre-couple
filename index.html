@@ -43,6 +43,96 @@
   </nav>
 
   <!-- ================================================================
+       TEMPLATE : ONBOARDING (4 étapes)
+       ================================================================ -->
+  <template id="tpl-onboarding">
+    <div class="app onboard-app">
+
+      <!-- Indicateur de progression -->
+      <div class="onboard-dots">
+        <span class="onboard-dot active"></span>
+        <span class="onboard-dot"></span>
+        <span class="onboard-dot"></span>
+        <span class="onboard-dot"></span>
+      </div>
+
+      <!-- Étape 1 : Bienvenue -->
+      <div class="onboard-step active" data-step="1">
+        <div class="onboard-hero">🌸</div>
+        <h1 class="onboard-title">Notre rythme</h1>
+        <p class="onboard-desc">
+          Suivez votre cycle ensemble, en couple.<br>
+          Symétrique, privé, sans algorithmes.
+        </p>
+        <ul class="onboard-features">
+          <li><span class="feat-icon" style="background:var(--elle-light);color:var(--elle)">📈</span>Double rythme synchronisé</li>
+          <li><span class="feat-icon" style="background:var(--lui-light);color:var(--lui)">🔗</span>Données uniquement partagées entre vous</li>
+          <li><span class="feat-icon" style="background:var(--violet-light);color:var(--violet)">🔒</span>Zéro partage avec des tiers</li>
+        </ul>
+        <button type="button" id="btn-onboard-1" class="btn-primary" style="margin-top:32px">Commencer →</button>
+      </div>
+
+      <!-- Étape 2 : Disclaimer -->
+      <div class="onboard-step" data-step="2">
+        <div class="onboard-hero" style="background:var(--red-light)">⚕️</div>
+        <h1 class="onboard-title">Important</h1>
+        <div class="disclaimer-box">
+          <p>Cette application est un <strong>outil d'observation</strong>, pas un moyen de contraception.</p>
+          <p style="margin-top:12px">Les prédictions sont indicatives et dépendent de la régularité de votre cycle. Consultez un professionnel de santé pour tout sujet médical.</p>
+        </div>
+        <button type="button" id="btn-onboard-2" class="btn-primary" style="margin-top:28px">J'ai compris et j'accepte</button>
+      </div>
+
+      <!-- Étape 3 : Mode du cycle -->
+      <div class="onboard-step" data-step="3">
+        <div class="onboard-hero">🎯</div>
+        <h1 class="onboard-title">Votre objectif</h1>
+        <p class="onboard-desc">Adaptez l'app à votre situation.</p>
+        <div class="mode-choices">
+          <button type="button" class="mode-choice active" data-mode="rules">
+            <span class="mode-icon">🌀</span>
+            <div>
+              <div class="mode-title">Comprendre nos rythmes</div>
+              <div class="mode-sub">Suivi du cycle, insights, synchronie</div>
+            </div>
+          </button>
+          <button type="button" class="mode-choice" data-mode="conception">
+            <span class="mode-icon">🌱</span>
+            <div>
+              <div class="mode-title">Préparer une grossesse</div>
+              <div class="mode-sub">Fenêtre fertile mise en avant</div>
+            </div>
+          </button>
+          <button type="button" class="mode-choice" data-mode="pregnancy">
+            <span class="mode-icon">🤰</span>
+            <div>
+              <div class="mode-title">Suivi de grossesse</div>
+              <div class="mode-sub">Semaine par semaine, sans prédiction de règles</div>
+            </div>
+          </button>
+        </div>
+        <button type="button" id="btn-onboard-3" class="btn-primary" style="margin-top:24px">Continuer →</button>
+      </div>
+
+      <!-- Étape 4 : Date des dernières règles -->
+      <div class="onboard-step" data-step="4">
+        <div class="onboard-hero">📅</div>
+        <h1 class="onboard-title">Dernières règles</h1>
+        <p class="onboard-desc">
+          Pour lancer le calcul de cycle. Vous pourrez modifier cette date plus tard.
+        </p>
+        <div class="field" style="margin-top:24px">
+          <label for="onboard-period-date">Date de début</label>
+          <input type="date" id="onboard-period-date">
+        </div>
+        <button type="button" id="btn-onboard-4" class="btn-primary" style="margin-top:8px">Terminer →</button>
+        <button type="button" id="btn-onboard-4-skip" class="btn-secondary" style="margin-top:10px">Je n'ai pas mes règles / passer</button>
+      </div>
+
+    </div>
+  </template>
+
+  <!-- ================================================================
        TEMPLATE : AUTH
        ================================================================ -->
   <template id="tpl-auth">
@@ -135,12 +225,21 @@
         <div class="card">
           <h2>Code d'invitation</h2>
           <div class="code-display" id="generated-code">------</div>
-          <p style="font-size:14px;color:var(--muted);line-height:1.6;text-align:center;margin-bottom:16px">
-            Partagez ce code avec votre partenaire.<br>
-            Il expire dans 24 heures.
+          <div class="code-actions">
+            <button type="button" id="btn-copy-code" class="btn-code-action">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copier
+            </button>
+            <button type="button" id="btn-share-code" class="btn-code-action">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+              Partager
+            </button>
+          </div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.6;text-align:center;margin-bottom:16px">
+            Expire dans 24 heures · Votre partenaire le saisit sur son téléphone.
           </p>
-          <button id="btn-renew-code" class="btn-secondary">Générer un nouveau code</button>
-          <button id="btn-done" class="btn-primary" style="margin-top:10px">Continuer sans attendre →</button>
+          <button type="button" id="btn-renew-code" class="btn-secondary">Nouveau code</button>
+          <button type="button" id="btn-done" class="btn-primary" style="margin-top:10px">Continuer sans attendre →</button>
         </div>
         <p class="disclaimer">
           Une fois votre partenaire rejoint, l'espace se synchronise automatiquement.
@@ -213,8 +312,24 @@
 
       <!-- Saisie du jour -->
       <div class="card">
-        <h2 id="log-title">Aujourd'hui — Elle</h2>
-        <div id="metrics"></div>
+        <!-- Navigation date (saisie antérieure) -->
+        <div class="log-date-nav">
+          <button type="button" id="btn-log-prev" class="log-nav-btn" aria-label="Jour précédent">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span id="log-date-label" class="log-date-label">Aujourd'hui</span>
+          <button type="button" id="btn-log-next" class="log-nav-btn" aria-label="Jour suivant" disabled>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+        <h2 id="log-title">Elle</h2>
+        <div id="metrics">
+          <!-- État vide initial (remplacé par renderMetrics) -->
+          <div class="empty-state-inline">
+            <div class="es-icon">✏️</div>
+            <p>Chargement des données…</p>
+          </div>
+        </div>
       </div>
 
       <!-- Insight -->
@@ -377,21 +492,21 @@
         <div id="nous-correlations"></div>
       </div>
 
-      <!-- Réglages -->
+      <!-- Réglages profil -->
       <div class="card">
         <h2>Mon profil</h2>
 
         <div class="settings-row">
           <span class="settings-label">Prénom</span>
           <div style="display:flex;align-items:center;gap:8px">
-            <span id="settings-name-val" style="font-size:14px"></span>
+            <span id="settings-name-val" style="font-size:14px;font-weight:600"></span>
             <input type="text" id="settings-name-input"
-              style="display:none;width:120px;font-size:14px;padding:6px 10px"
+              style="display:none;width:130px;font-size:14px;padding:6px 10px"
               autocomplete="given-name">
-            <button id="btn-settings-edit" class="btn-icon" aria-label="Modifier">
+            <button type="button" id="btn-settings-edit" class="btn-icon" aria-label="Modifier">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button id="btn-settings-save" class="btn-icon" style="display:none;color:var(--gold)" aria-label="Enregistrer">
+            <button type="button" id="btn-settings-save" class="btn-icon" style="display:none;color:var(--elle)" aria-label="Enregistrer">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
             </button>
           </div>
@@ -407,14 +522,50 @@
             <span class="toggle-track"></span>
           </label>
         </div>
+      </div>
 
+      <!-- Mode du cycle -->
+      <div class="card">
+        <h2>Objectif du suivi</h2>
+        <div class="mode-tabs" id="mode-tabs">
+          <button type="button" class="mode-tab active" data-mode="rules">🌀 Rythmes</button>
+          <button type="button" class="mode-tab" data-mode="conception">🌱 Conception</button>
+          <button type="button" class="mode-tab" data-mode="pregnancy">🤰 Grossesse</button>
+        </div>
+        <p id="mode-desc" style="font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6"></p>
+      </div>
+
+      <!-- Export & données -->
+      <div class="card">
+        <h2>Mes données</h2>
         <div class="settings-actions">
-          <button type="button" id="btn-install"      class="btn-secondary" style="display:none">Installer l'app sur l'écran d'accueil</button>
+          <button type="button" id="btn-install"      class="btn-secondary" style="display:none">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px"><path d="M12 3v13M5 10l7 7 7-7"/><path d="M3 21h18"/></svg>
+            Installer l'app (écran d'accueil)
+          </button>
           <button type="button" id="btn-export-json"  class="btn-secondary">Exporter en JSON</button>
           <button type="button" id="btn-export-csv"   class="btn-secondary">Exporter en CSV</button>
-          <button type="button" id="btn-reset-demo"   class="btn-secondary demo-badge" style="display:none">Réinitialiser les données de démo</button>
+          <button type="button" id="btn-delete-data"  class="btn-secondary btn-danger">Supprimer toutes mes données</button>
+          <button type="button" id="btn-reset-demo"   class="btn-secondary" style="display:none">Réinitialiser les données de démo</button>
+        </div>
+      </div>
+
+      <!-- Compte -->
+      <div class="card">
+        <h2>Compte</h2>
+        <div class="settings-actions">
           <button type="button" id="btn-unlink"       class="btn-secondary btn-danger">Se délier du couple</button>
           <button type="button" id="btn-nous-signout" class="btn-secondary">Se déconnecter</button>
+        </div>
+      </div>
+
+      <!-- RGPD -->
+      <div class="card">
+        <h2>Confidentialité</h2>
+        <div class="rgpd-block">
+          <p>Vos données sont stockées uniquement dans votre espace Supabase personnel. Aucun partage avec des tiers, aucun analytics intrusif.</p>
+          <p>Conformément au RGPD, vous pouvez exporter ou supprimer toutes vos données à tout moment via les boutons ci-dessus.</p>
+          <p>Cette application <strong>n'est pas un dispositif médical</strong> et ne remplace pas l'avis d'un professionnel de santé.</p>
         </div>
       </div>
 

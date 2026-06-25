@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v4';
+const CACHE = 'notre-rythme-v5';
 const SHELL = [
   '/',
   '/index.html',
@@ -16,6 +16,7 @@ const SHELL = [
   '/js/realtime.js',
   '/js/notifications.js',
   '/js/local-db.js',
+  '/js/onboarding.js',
   '/manifest.json',
 ];
 

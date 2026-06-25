@@ -2,6 +2,13 @@ import { supabase, IS_DEMO } from './supabase.js';
 import { signOut } from './auth.js';
 import { navigate } from './router.js';
 import { getMyMembership, getPartnerMembership } from './pairing.js';
+import { getCycleMode, setCycleMode } from './onboarding.js';
+
+const MODE_DESCS = {
+  rules:      'Comprendre vos rythmes communs — corrélations, synchronie et insights par phase.',
+  conception: 'Fenêtre fertile mise en avant dans la prédiction. Le calendrier affiche les jours de fertilité maximale.',
+  pregnancy:  'Suivi semaine par semaine. La prédiction des règles est désactivée.',
+};
 
 // ---------------------------------------------------------------------------
 // Paires de métriques à corréler (§9)
@@ -329,7 +336,18 @@ function renderSettings(me) {
 
   document.getElementById('btn-export-json')?.addEventListener('click', () => exportData('json'));
   document.getElementById('btn-export-csv')?.addEventListener('click',  () => exportData('csv'));
+  document.getElementById('btn-delete-data')?.addEventListener('click', () => deleteAllData(me));
   document.getElementById('btn-unlink')?.addEventListener('click', () => unlinkAccount(me));
+
+  // Mode cycle tabs
+  renderModeTabs();
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const mode = tab.dataset.mode;
+      setCycleMode(mode);
+      renderModeTabs();
+    });
+  });
 
   // Bouton install PWA
   const installBtn = document.getElementById('btn-install');
@@ -392,6 +410,49 @@ async function exportData(format = 'json') {
       btn.disabled = false;
       btn.textContent = format === 'csv' ? 'Exporter en CSV' : 'Exporter en JSON';
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Mode cycle tabs
+// ---------------------------------------------------------------------------
+function renderModeTabs() {
+  const current = getCycleMode();
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.mode === current);
+  });
+  const desc = document.getElementById('mode-desc');
+  if (desc) desc.textContent = MODE_DESCS[current] || '';
+}
+
+// ---------------------------------------------------------------------------
+// Supprimer toutes les données personnelles (RGPD §10)
+// ---------------------------------------------------------------------------
+async function deleteAllData(me) {
+  const confirmed = confirm(
+    'Supprimer TOUTES vos données personnelles ?\n\n' +
+    'Ceci effacera définitivement toutes vos saisies, cycles et historique. ' +
+    'Cette action est irréversible et ne peut pas être annulée.'
+  );
+  if (!confirmed) return;
+
+  const btn = document.getElementById('btn-delete-data');
+  if (btn) { btn.disabled = true; btn.textContent = 'Suppression…'; }
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Non authentifié');
+
+    // Supprimer les données dans l'ordre (cascade FK)
+    await supabase.from('log_entries').delete().eq('user_id', user.id);
+    await supabase.from('cycles').delete().eq('user_id', user.id);
+    await supabase.from('couple_members').delete().eq('user_id', user.id);
+
+    await signOut();
+    window.location.reload();
+  } catch (e) {
+    alert('Erreur : ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Supprimer toutes mes données'; }
   }
 }
 
