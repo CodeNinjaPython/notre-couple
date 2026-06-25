@@ -1111,6 +1111,75 @@ body.demo-mode .demo-badge {
   padding: 0; text-decoration: underline; text-underline-offset: 3px;
 }
 
+/* ─── Souvenir du jour ────────────────────────────────────────────────── */
+.souvenir-card {
+  background: linear-gradient(135deg, var(--violet-light), var(--elle-light));
+  border: 1.5px solid rgba(124,92,252,.2); border-radius: 16px; padding: 16px;
+}
+.souvenir-label { font-size: 11px; font-weight: 700; color: var(--violet); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.souvenir-mood  { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.souvenir-note  { font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 6px; line-height: 1.5; }
+.souvenir-date  { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; }
+
+/* ─── Débrief post-dispute ────────────────────────────────────────────── */
+.debrief-card { background: var(--lui-light); border: 1.5px solid var(--lui-mid); border-radius: 16px; padding: 16px; }
+.debrief-title { font-size: 13px; font-weight: 700; color: var(--lui); margin-bottom: 8px; }
+.debrief-idea  { font-size: 14px; color: var(--text); font-weight: 500; }
+.debrief-sub   { font-size: 12px; color: var(--muted); margin-top: 6px; font-style: italic; }
+
+/* ─── Équité du plaisir ───────────────────────────────────────────────── */
+.equity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.equity-item { background: var(--surface2); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px; text-align: center; }
+.equity-name { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+.equity-sat  { font-family: "DM Mono", monospace; font-size: 24px; font-weight: 700; color: var(--elle); line-height: 1; }
+.equity-sat span { font-size: 13px; color: var(--faint); }
+.equity-org  { font-family: "DM Mono", monospace; font-size: 18px; font-weight: 700; color: var(--violet); margin-top: 10px; }
+.equity-label { font-size: 10px; font-weight: 600; color: var(--faint); letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; }
+
+/* ─── Satisfaction / libido par phase ─────────────────────────────────── */
+.phase-sat-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+.phase-sat-row:first-child { border-top: none; }
+.phase-sat-label   { font-size: 12px; font-weight: 600; color: var(--text); width: 90px; flex-shrink: 0; }
+.phase-sat-bar-wrap { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.phase-sat-bar     { height: 100%; border-radius: 4px; transition: width .6s ease; }
+.phase-sat-val     { font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted); width: 40px; text-align: right; flex-shrink: 0; }
+
+/* ─── Check-in pratiques validées ─────────────────────────────────────── */
+.checkin-card { background: var(--surface2); border: 1.5px dashed var(--elle-mid); border-radius: 14px; padding: 14px; }
+.checkin-title { font-size: 13px; font-weight: 700; color: var(--elle); margin-bottom: 10px; }
+.checkin-item  { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); }
+.checkin-item:first-of-type { border-top: none; }
+.checkin-label  { font-size: 13px; color: var(--text); font-weight: 500; }
+.checkin-prompt { font-size: 11px; color: var(--violet); font-family: "DM Mono", monospace; font-weight: 600; }
+.checkin-note   { font-size: 11px; color: var(--faint); margin-top: 10px; font-style: italic; }
+
+/* ─── Premières fois ──────────────────────────────────────────────────── */
+.first-item { padding: 10px 0; border-top: 1.5px solid var(--line); }
+.first-item:first-child { border-top: none; }
+.first-date { font-family: "DM Mono", monospace; font-size: 11px; color: var(--faint); margin-bottom: 4px; }
+.first-desc { font-size: 14px; font-weight: 600; color: var(--text); }
+.first-note { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
+
+/* ─── Tags d'activité (multi-sélection) ───────────────────────────────── */
+.act-tags-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+.act-tag-btn {
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 100px; padding: 7px 13px; cursor: pointer;
+  font-family: "DM Sans"; font-size: 12px; font-weight: 600; color: var(--muted);
+  transition: all .18s;
+}
+.act-tag-btn.sel { border-color: var(--elle); background: var(--elle-light); color: var(--elle); }
+.act-tag-btn:hover { border-color: var(--elle-mid); }
+
+/* ─── Feedback post-séance ────────────────────────────────────────────── */
+.fb-sat-grid { display: flex; gap: 8px; justify-content: space-between; }
+.fb-sat-btn {
+  flex: 1; background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 12px; font-size: 24px; padding: 12px 6px; cursor: pointer;
+  transition: all .18s;
+}
+.fb-sat-btn.sel { border-color: var(--elle); background: var(--elle-light); box-shadow: var(--sh-elle); }
+
 /* ─── Accessibility + motion ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 :focus-visible { outline: 2.5px solid var(--elle); outline-offset: 2px; }

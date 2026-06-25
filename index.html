@@ -672,10 +672,34 @@
         <span id="initiation-balance" class="meta-chip" style="display:none"></span>
       </div>
 
+      <!-- Souvenir du jour -->
+      <div id="souvenir-du-jour" style="display:none;margin-top:14px"></div>
+
+      <!-- Débrief post-dispute -->
+      <div id="debrief-postdispute" style="display:none;margin-top:14px"></div>
+
       <!-- Sessions récentes -->
       <div class="card">
         <h2>Nos moments récents</h2>
         <div id="recent-sessions"></div>
+      </div>
+
+      <!-- Équité du plaisir -->
+      <div class="card">
+        <h2>Satisfaction & plaisir partagé</h2>
+        <div id="equite-plaisir"></div>
+      </div>
+
+      <!-- Croisement cycle × intimité -->
+      <div class="card">
+        <h2>Intimité selon la phase du cycle</h2>
+        <div id="cycle-x-intimite"></div>
+      </div>
+
+      <!-- Alignement libido par phase (dans kinks.js) -->
+      <div class="card">
+        <h2>Libido Elle · par phase</h2>
+        <div id="libido-par-phase"></div>
       </div>
 
       <!-- Désirs en commun (matchs) -->
@@ -698,6 +722,9 @@
         <div id="kink-list"></div>
       </div>
 
+      <!-- Check-in pratiques validées -->
+      <div id="checkin-validated" style="display:none;margin-top:14px"></div>
+
       <!-- Wish-list -->
       <div class="card">
         <h2>Notre wish-list</h2>
@@ -705,10 +732,29 @@
         <button type="button" id="btn-add-wish" class="btn-secondary" style="margin-top:12px">+ Ajouter une idée</button>
       </div>
 
+      <!-- Premières fois -->
+      <div class="card">
+        <h2>Nos premières fois</h2>
+        <div id="first-times-list"></div>
+        <button type="button" id="btn-add-first" class="btn-secondary" style="margin-top:12px">+ Ajouter une première</button>
+      </div>
+
       <!-- Défis du mois -->
       <div class="card">
         <h2>Défis du mois</h2>
         <div id="challenges-list"></div>
+      </div>
+
+      <!-- Aftercare préférences (local, très privé) -->
+      <div class="card">
+        <h2>Mes préférences d'aftercare — privé</h2>
+        <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:12px;line-height:1.6">
+          Stocké uniquement sur cet appareil. Non partagé.
+        </p>
+        <div id="aftercare-prefs">
+          <textarea id="aftercare-input" class="note-input" rows="3"
+            placeholder="Ex. : câlins, silence, verre d'eau, musique douce…"></textarea>
+        </div>
       </div>
 
       <!-- Santé (privé par défaut) -->
@@ -776,14 +822,22 @@
           </div>
         </div>
 
+        <div class="field">
+          <label>Type d'activité (multi-sélection)</label>
+          <div class="act-tags-grid">
+            <button type="button" class="act-tag-btn" data-tag="massage">💆 Massage</button>
+            <button type="button" class="act-tag-btn" data-tag="oral">💋 Câlins buccaux</button>
+            <button type="button" class="act-tag-btn" data-tag="toys">🎯 Accessoires</button>
+            <button type="button" class="act-tag-btn" data-tag="roleplay">🎭 Jeu de rôles</button>
+            <button type="button" class="act-tag-btn" data-tag="bondage_soft">🎀 Contrainte douce</button>
+            <button type="button" class="act-tag-btn" data-tag="slow">🕯️ Ralenti</button>
+          </div>
+        </div>
+
         <div style="display:flex;gap:12px">
           <div class="field" style="flex:1">
             <label for="session-duration">Durée (min)</label>
             <input type="number" id="session-duration" min="1" max="300" placeholder="30" style="padding:10px 12px">
-          </div>
-          <div class="field" style="flex:1">
-            <label for="session-sat-input">Ma satisfaction (1-10)</label>
-            <input type="number" id="session-sat-input" min="1" max="10" placeholder="8" style="padding:10px 12px">
           </div>
         </div>
 
@@ -792,8 +846,49 @@
           <input type="text" id="session-note-input" placeholder="Ce qu'on a adoré…">
         </div>
 
-        <button type="button" id="btn-session-save" class="btn-primary">Enregistrer</button>
+        <button type="button" id="btn-session-save" class="btn-primary">Enregistrer → Feedback rapide</button>
         <button type="button" id="btn-session-cancel" class="btn-secondary" style="margin-top:10px">Annuler</button>
+      </div>
+    </div>
+
+    <!-- Sheet : feedback post-séance (4 questions ~30s) -->
+    <div id="feedback-sheet" class="sheet-backdrop">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Note ta séance 🔥</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:18px">Privé par défaut. ~30 secondes.</p>
+
+        <div class="field">
+          <label>Ma satisfaction</label>
+          <div class="fb-sat-grid">
+            <button type="button" class="fb-sat-btn" data-sat="2">😔</button>
+            <button type="button" class="fb-sat-btn" data-sat="4">😐</button>
+            <button type="button" class="fb-sat-btn" data-sat="6">🙂</button>
+            <button type="button" class="fb-sat-btn" data-sat="8">😊</button>
+            <button type="button" class="fb-sat-btn" data-sat="10">🤩</button>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div><div class="toggle-label">Orgasme ?</div></div>
+          <label class="toggle">
+            <input type="checkbox" id="fb-orgasm">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+
+        <div class="field" style="margin-top:14px">
+          <label for="fb-loved">Ce que j'ai aimé</label>
+          <input type="text" id="fb-loved" placeholder="La tendresse, le rythme…">
+        </div>
+
+        <div class="field">
+          <label for="fb-improve">Ce qu'on pourrait améliorer</label>
+          <input type="text" id="fb-improve" placeholder="Plus de temps, plus de...">
+        </div>
+
+        <button type="button" id="btn-feedback-save" class="btn-primary">Enregistrer</button>
+        <button type="button" id="btn-feedback-skip" class="btn-secondary" style="margin-top:10px">Passer</button>
       </div>
     </div>
   </template>

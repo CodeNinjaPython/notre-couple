@@ -32,18 +32,26 @@ export async function initIntimacy() {
     new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   await Promise.all([
+    renderDesireWindow(),
     renderRecentSessions(),
     renderMatchCount(),
+    renderSouvenirDuJour(),
+    renderDebriefPostDispute(),
+    renderEquitePlaisir(),
+    renderCycleXIntimite(),
+    renderFirstTimes(),
     renderLastHealthEntry(),
     renderHardLimits(),
     renderSafewords(),
-    renderDesireWindow(),
+    renderAftercare(),
     renderChallenges(),
   ]);
 
   initQuickAdd();
   initSessionSheet();
+  initFeedbackSheet();
   initHealthAdd();
+  initFirstTimeAdd();
 }
 
 // ---------------------------------------------------------------------------
@@ -358,8 +366,10 @@ async function saveSession() {
   const mood     = document.querySelector('.mood-btn.sel')?.dataset.mood || null;
   const location = document.querySelector('.loc-btn.sel')?.dataset.loc  || null;
   const dur      = parseInt(document.getElementById('session-duration')?.value) || null;
-  const sat      = parseInt(document.getElementById('session-sat-input')?.value) || null;
   const note     = document.getElementById('session-note-input')?.value?.trim() || null;
+
+  // Tags d'activité multi-sélection
+  const actTags = [...document.querySelectorAll('.act-tag-btn.sel')].map(b => b.dataset.tag);
 
   const { data: session, error } = await supabase.from('intimate_sessions').insert({
     couple_id:    st.coupleId,
@@ -368,22 +378,18 @@ async function saveSession() {
     mood, location,
     duration_min: dur,
     note,
+    activity_tags: actTags,
   }).select().single();
 
   if (error) { console.error(error); return; }
 
-  // Feedback personnel
-  if (sat != null && session?.id) {
-    await supabase.from('session_feedback').insert({
-      session_id:   session.id,
-      user_id:      st.me?.user_id,
-      satisfaction: sat,
-      shared:       false,
-    });
-  }
-
   closeSessionSheet();
   await renderRecentSessions();
+
+  // Ouvrir le feedback post-séance (4 questions rapides)
+  if (session?.id) {
+    setTimeout(() => openFeedbackSheet(session.id), 300);
+  }
 }
 
 function initSessionSheet() {
@@ -401,6 +407,310 @@ function initSessionSheet() {
       b.classList.add('sel');
     })
   );
+  // Activity tags (multi-sélection)
+  document.querySelectorAll('.act-tag-btn').forEach(b =>
+    b.addEventListener('click', () => b.classList.toggle('sel'))
+  );
+  // Feedback sat buttons
+  document.querySelectorAll('.fb-sat-btn').forEach(b =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.fb-sat-btn').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+    })
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Souvenir du jour — session passée aléatoire (> 14 jours)
+// ---------------------------------------------------------------------------
+async function renderSouvenirDuJour() {
+  const el = document.getElementById('souvenir-du-jour');
+  if (!el) return;
+
+  const cutoff = new Date(Date.now() - 14 * 864e5).toISOString().split('T')[0];
+  const { data } = await supabase.from('intimate_sessions')
+    .select('*').eq('couple_id', st.coupleId).lt('session_date', cutoff)
+    .order('session_date', { ascending: false }).limit(20);
+
+  if (!data?.length) { el.style.display = 'none'; return; }
+
+  // Sélection déterministe selon le jour (même souvenir toute la journée)
+  const seed = new Date().getDate() + new Date().getMonth();
+  const s    = data[seed % data.length];
+  const diff = diffDays(localDateStr(), s.session_date);
+
+  el.style.display = 'block';
+  el.innerHTML = `<div class="souvenir-card">
+    <div class="souvenir-label">✨ Souvenir · il y a ${diff} jours</div>
+    <div class="souvenir-mood">${MOODS[s.mood] || '💑'} ${MOOD_LABELS[s.mood] || ''}</div>
+    ${s.note ? `<div class="souvenir-note">${s.note}</div>` : ''}
+    <div class="souvenir-date">${fmtDate(s.session_date, { weekday:'long', day:'numeric', month:'long' })}</div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Débrief post-dispute — suggestion douce après un conflit récent
+// ---------------------------------------------------------------------------
+const RECONNECT_IDEAS = [
+  'Un câlin sans attente',
+  'Un repas préparé ensemble',
+  'Une promenade en silence',
+  'Écouter de la musique que vous aimez tous les deux',
+  'Une soirée film sous une couverture',
+];
+
+async function renderDebriefPostDispute() {
+  const el = document.getElementById('debrief-postdispute');
+  if (!el) return;
+
+  const since = new Date(Date.now() - 5 * 864e5).toISOString().split('T')[0];
+  const { data } = await supabase.from('couple_events')
+    .select('event_date, note')
+    .eq('couple_id', st.coupleId)
+    .eq('event_type', 'conflict')
+    .gte('event_date', since)
+    .order('event_date', { ascending: false })
+    .limit(1);
+
+  if (!data?.length) { el.style.display = 'none'; return; }
+
+  const conflict = data[0];
+  const daysSince = diffDays(localDateStr(), conflict.event_date);
+  const idea = RECONNECT_IDEAS[new Date().getDate() % RECONNECT_IDEAS.length];
+
+  el.style.display = 'block';
+  el.innerHTML = `<div class="debrief-card">
+    <div class="debrief-title">💬 Tension il y a ${daysSince} jour${daysSince > 1 ? 's' : ''}</div>
+    <div class="debrief-idea">Idée de reconnexion : <em>${idea}</em></div>
+    <div class="debrief-sub">Quand vous vous sentez prêts, sans pression.</div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Équité du plaisir — orgasmes par partenaire (neutre, pas un score)
+// ---------------------------------------------------------------------------
+async function renderEquitePlaisir() {
+  const el = document.getElementById('equite-plaisir');
+  if (!el || !st.partner) { el && (el.style.display = 'none'); return; }
+
+  const { data } = await supabase.from('session_feedback')
+    .select('user_id, orgasms, satisfaction').eq('shared', true);
+
+  if (!data?.length || data.length < 3) {
+    el.innerHTML = '<p class="intime-empty">Partagez vos feedbacks pour voir les tendances.</p>';
+    return;
+  }
+
+  const myName      = st.me?.display_name || 'Moi';
+  const partnerName = st.partner?.display_name || 'Partenaire';
+
+  const myData    = data.filter(f => f.user_id === st.me?.user_id);
+  const theirData = data.filter(f => f.user_id === st.partner?.user_id);
+
+  const avgSat = (arr) => arr.length
+    ? (arr.reduce((a, f) => a + (f.satisfaction || 0), 0) / arr.length).toFixed(1)
+    : '—';
+  const orgRate = (arr) => arr.length
+    ? `${Math.round(arr.filter(f => f.orgasms > 0).length / arr.length * 100)} %`
+    : '—';
+
+  el.innerHTML = `
+    <div class="equity-grid">
+      <div class="equity-item">
+        <div class="equity-name">${myName}</div>
+        <div class="equity-sat">${avgSat(myData)}<span>/10</span></div>
+        <div class="equity-label">Satisfaction moy.</div>
+        <div class="equity-org">${orgRate(myData)}</div>
+        <div class="equity-label">Plaisir partagé</div>
+      </div>
+      <div class="equity-item">
+        <div class="equity-name">${partnerName}</div>
+        <div class="equity-sat">${avgSat(theirData)}<span>/10</span></div>
+        <div class="equity-label">Satisfaction moy.</div>
+        <div class="equity-org">${orgRate(theirData)}</div>
+        <div class="equity-label">Plaisir partagé</div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:10px;line-height:1.6">
+      Basé sur ${data.length} feedbacks partagés · Informatif, pas un score de performance.
+    </p>`;
+}
+
+// ---------------------------------------------------------------------------
+// Croisement cycle × intimité — satisfaction par phase du cycle
+// ---------------------------------------------------------------------------
+const PHASES_INTIME = ['Menstruelle','Folliculaire','Ovulation','Lutéale'];
+const PHASE_RANGES_I = [[1,5],[6,13],[14,16],[17,35]];
+const PHASE_COLORS_I = { Menstruelle:'#E53935', Folliculaire:'#4278C4', Ovulation:'#7C5CFC', Lutéale:'#E84375' };
+
+async function renderCycleXIntimite() {
+  const el = document.getElementById('cycle-x-intimite');
+  if (!el) return;
+
+  const [sessionsRes, cyclesRes, feedbackRes] = await Promise.all([
+    supabase.from('intimate_sessions').select('id, session_date').eq('couple_id', st.coupleId),
+    supabase.from('cycles').select('period_start').order('period_start', { ascending: false }).limit(6),
+    supabase.from('session_feedback').select('session_id, satisfaction').eq('user_id', st.me?.user_id),
+  ]);
+
+  const sessions  = sessionsRes.data  || [];
+  const cycles    = cyclesRes.data    || [];
+  const feedbacks = feedbackRes.data  || [];
+  const fbMap     = Object.fromEntries(feedbacks.map(f => [f.session_id, f.satisfaction]));
+
+  if (!sessions.length || !cycles.length || !feedbacks.length) {
+    el.innerHTML = '<p class="intime-empty">Quelques cycles et feedbacks de plus pour voir ce croisement.</p>';
+    return;
+  }
+
+  // Pour chaque session, trouver le jour de cycle et la phase
+  const byPhase = { Menstruelle:[], Folliculaire:[], Ovulation:[], Lutéale:[] };
+  sessions.forEach(s => {
+    const sat = fbMap[s.id];
+    if (sat == null) return;
+    // Trouver le cycle le plus proche avant cette date
+    const cycle = cycles.find(c => c.period_start <= s.session_date);
+    if (!cycle) return;
+    const day  = diffDays(s.session_date, cycle.period_start) + 1;
+    const range = PHASE_RANGES_I.findIndex(([a, b]) => day >= a && day <= b);
+    const phase = PHASES_INTIME[range >= 0 ? range : 3];
+    byPhase[phase].push(sat);
+  });
+
+  const hasData = Object.values(byPhase).some(arr => arr.length > 0);
+  if (!hasData) {
+    el.innerHTML = '<p class="intime-empty">Plus de sessions avec feedback pour voir les tendances par phase.</p>';
+    return;
+  }
+
+  const maxAvg = Math.max(...PHASES_INTIME.map(p =>
+    byPhase[p].length ? byPhase[p].reduce((a, b) => a + b, 0) / byPhase[p].length : 0
+  ));
+
+  el.innerHTML = PHASES_INTIME.map(phase => {
+    const arr = byPhase[phase];
+    if (!arr.length) return `<div class="phase-sat-row"><span class="phase-sat-label">${phase}</span><span style="color:var(--faint);font-size:12px">pas de données</span></div>`;
+    const avg = arr.reduce((a, b) => a + b, 0) / arr.length;
+    const pct = maxAvg > 0 ? (avg / maxAvg * 100).toFixed(0) : 0;
+    return `<div class="phase-sat-row">
+      <span class="phase-sat-label">${phase}</span>
+      <div class="phase-sat-bar-wrap">
+        <div class="phase-sat-bar" style="width:${pct}%;background:${PHASE_COLORS_I[phase]}"></div>
+      </div>
+      <span class="phase-sat-val">${avg.toFixed(1)}/10</span>
+    </div>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Premières fois
+// ---------------------------------------------------------------------------
+async function renderFirstTimes() {
+  const el = document.getElementById('first-times-list');
+  if (!el) return;
+
+  const { data } = await supabase.from('first_times')
+    .select('*').eq('couple_id', st.coupleId)
+    .order('date', { ascending: false }).limit(10);
+
+  if (!data?.length) {
+    el.innerHTML = '<p class="intime-empty">Notez vos premières fois ensemble.</p>';
+    return;
+  }
+
+  el.innerHTML = data.map(f => `<div class="first-item">
+    <div class="first-date">${fmtDate(f.date, { day:'numeric', month:'short', year:'numeric' })}</div>
+    <div class="first-desc">${f.description}</div>
+    ${f.note ? `<div class="first-note">${f.note}</div>` : ''}
+  </div>`).join('');
+}
+
+function initFirstTimeAdd() {
+  document.getElementById('btn-add-first')?.addEventListener('click', async () => {
+    const description = prompt('Votre première fois :\n(ex. "Voyage en amoureux à Paris", "Massage échangé")');
+    if (!description) return;
+    const date = prompt('Date (YYYY-MM-DD) :') || localDateStr();
+    const note = prompt('Note (optionnel) :') || null;
+    await supabase.from('first_times').insert({
+      couple_id: st.coupleId, created_by: st.me?.user_id,
+      description, date, note,
+    });
+    await renderFirstTimes();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Aftercare — préférences stockées localement (très privé)
+// ---------------------------------------------------------------------------
+const AC_KEY = 'nc-aftercare';
+
+function renderAftercare() {
+  const el  = document.getElementById('aftercare-prefs');
+  const inp = document.getElementById('aftercare-input');
+  if (!el || !inp) return;
+  const saved = localStorage.getItem(AC_KEY) || '';
+  inp.value = saved;
+  inp.addEventListener('input', () => {
+    localStorage.setItem(AC_KEY, inp.value);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Feedback post-séance rapide (4 questions, déclenché après save session)
+// ---------------------------------------------------------------------------
+let pendingFeedbackSessionId = null;
+
+function initFeedbackSheet() {
+  document.getElementById('btn-feedback-save')?.addEventListener('click', saveFeedback);
+  document.getElementById('btn-feedback-skip')?.addEventListener('click', closeFeedbackSheet);
+}
+
+export function openFeedbackSheet(sessionId) {
+  pendingFeedbackSessionId = sessionId;
+  const sheet = document.getElementById('feedback-sheet');
+  if (!sheet) return;
+  // reset
+  document.querySelectorAll('.fb-sat-btn').forEach(b => b.classList.remove('sel'));
+  const orgEl = document.getElementById('fb-orgasm');
+  const lovedEl = document.getElementById('fb-loved');
+  const improveEl = document.getElementById('fb-improve');
+  if (orgEl) orgEl.checked = false;
+  if (lovedEl) lovedEl.value = '';
+  if (improveEl) improveEl.value = '';
+  sheet.classList.add('open');
+  document.querySelectorAll('.fb-sat-btn').forEach(b =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.fb-sat-btn').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+    })
+  );
+}
+
+function closeFeedbackSheet() {
+  document.getElementById('feedback-sheet')?.classList.remove('open');
+  pendingFeedbackSessionId = null;
+}
+
+async function saveFeedback() {
+  if (!pendingFeedbackSessionId) { closeFeedbackSheet(); return; }
+  const sat     = parseInt(document.querySelector('.fb-sat-btn.sel')?.dataset.sat) || null;
+  const orgasms = document.getElementById('fb-orgasm')?.checked ? 1 : 0;
+  const loved   = document.getElementById('fb-loved')?.value.trim()   || null;
+  const improve = document.getElementById('fb-improve')?.value.trim() || null;
+
+  await supabase.from('session_feedback').upsert({
+    session_id:   pendingFeedbackSessionId,
+    user_id:      st.me?.user_id,
+    satisfaction: sat,
+    orgasms,
+    loved_txt:    loved,
+    improve_txt:  improve,
+    shared:       false,
+  }, { onConflict: 'session_id,user_id' });
+
+  closeFeedbackSheet();
+  await renderEquitePlaisir();
+  await renderCycleXIntimite();
 }
 
 // ---------------------------------------------------------------------------

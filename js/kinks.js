@@ -28,6 +28,8 @@ export async function initKinks() {
     renderMatches(st),
     renderWishlist(st),
     renderMyLimits(st),
+    renderCheckIn(st),
+    renderLibidoParPhase(st),
   ]);
   initAddLimit(st);
   initAddWish(st);
@@ -199,6 +201,87 @@ function initAddWish(st) {
     });
     await renderWishlist(st);
   });
+}
+
+// ---------------------------------------------------------------------------
+// Check-in — rappel avant d'essayer une pratique nouvellement validée
+// ---------------------------------------------------------------------------
+async function renderCheckIn(st) {
+  const el = document.getElementById('checkin-validated');
+  if (!el) return;
+
+  const { data } = await supabase.from('fantasies')
+    .select('*').eq('couple_id', st.coupleId).eq('status', 'validated');
+
+  if (!data?.length) { el.style.display = 'none'; return; }
+
+  el.style.display = 'block';
+  el.innerHTML = `<div class="checkin-card">
+    <div class="checkin-title">✅ ${data.length} idée${data.length > 1 ? 's' : ''} validée${data.length > 1 ? 's' : ''}</div>
+    ${data.map(f => `<div class="checkin-item">
+      <span class="checkin-label">${f.content}</span>
+      <span class="checkin-prompt">On est ok tous les deux ?</span>
+    </div>`).join('')}
+    <p class="checkin-note">Confirmez ensemble avant de passer à « testé ».</p>
+  </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Alignement désir ↔ phase du cycle (libido de elle par phase)
+// ---------------------------------------------------------------------------
+const PHASE_RANGES_K = [[1,5],[6,13],[14,16],[17,35]];
+const PHASE_NAMES_K  = ['Menstruelle','Folliculaire','Ovulation','Lutéale'];
+const PHASE_COLORS_K = { Menstruelle:'#E53935', Folliculaire:'#4278C4', Ovulation:'#7C5CFC', Lutéale:'#E84375' };
+
+async function renderLibidoParPhase(st) {
+  const el = document.getElementById('libido-par-phase');
+  if (!el) return;
+
+  // Libido de elle (qui tracks_cycle)
+  const elleId = st.me?.tracks_cycle ? st.me.user_id : st.partner?.user_id;
+  if (!elleId) { el.innerHTML = '<p class="intime-empty">—</p>'; return; }
+
+  const [libidoRes, cyclesRes] = await Promise.all([
+    supabase.from('log_entries').select('log_date, value')
+      .eq('user_id', elleId).eq('category_id', 'libido')
+      .order('log_date', { ascending: false }).limit(90),
+    supabase.from('cycles').select('period_start')
+      .order('period_start', { ascending: false }).limit(4),
+  ]);
+
+  const libidos = libidoRes.data || [];
+  const cycles  = cyclesRes.data || [];
+  if (!libidos.length || !cycles.length) {
+    el.innerHTML = '<p class="intime-empty">Plus de données de libido pour voir les tendances par phase.</p>';
+    return;
+  }
+
+  const { diffDays: diff } = await import('./date-utils.js');
+  const byPhase = { Menstruelle:[], Folliculaire:[], Ovulation:[], Lutéale:[] };
+
+  libidos.forEach(l => {
+    const cycle = cycles.find(c => c.period_start <= l.log_date);
+    if (!cycle) return;
+    const day   = diff(l.log_date, cycle.period_start) + 1;
+    const idx   = PHASE_RANGES_K.findIndex(([a, b]) => day >= a && day <= b);
+    const phase = PHASE_NAMES_K[idx >= 0 ? idx : 3];
+    const v     = Number(l.value?.v ?? l.value);
+    if (!isNaN(v)) byPhase[phase].push(v);
+  });
+
+  const max = Math.max(...PHASE_NAMES_K.map(p => byPhase[p].length ? byPhase[p].reduce((a,b)=>a+b,0)/byPhase[p].length : 0), 1);
+
+  el.innerHTML = PHASE_NAMES_K.map(phase => {
+    const arr = byPhase[phase];
+    if (!arr.length) return '';
+    const avg = arr.reduce((a,b)=>a+b,0)/arr.length;
+    const pct = (avg / max * 100).toFixed(0);
+    return `<div class="phase-sat-row">
+      <span class="phase-sat-label">${phase}</span>
+      <div class="phase-sat-bar-wrap"><div class="phase-sat-bar" style="width:${pct}%;background:${PHASE_COLORS_K[phase]}"></div></div>
+      <span class="phase-sat-val">${avg.toFixed(1)}/5</span>
+    </div>`;
+  }).filter(Boolean).join('') || '<p class="intime-empty">—</p>';
 }
 
 // ---------------------------------------------------------------------------

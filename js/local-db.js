@@ -41,7 +41,11 @@ function applyRLS(table, rows) {
     case 'intimate_sessions':
     case 'safewords':
     case 'challenges':
+    case 'first_times':
       return rows.filter(r => r.couple_id === cid);
+    case 'session_activities':
+      // accessible via session_id → on filtre par couple_id des sessions
+      return rows; // simplifié pour le mode démo
     case 'session_feedback':
       return rows.filter(r => r.user_id === uid || (r.shared === true && inSameCouple(r.user_id)));
     case 'kink_ratings':
@@ -230,7 +234,7 @@ const chanNoop = () => ({ on() { return this; }, subscribe() { return this; }, u
 
 // ─── Seed (30 jours de données réalistes) ─────────────────────────────────
 function seed() {
-  if (ls.get('seeded') === '3') return; // version 3 du seed (module intime)
+  if (ls.get('seeded') === '4') return; // version 4 du seed (module intime complet)
 
   const T  = new Date();
   // Utilise la date locale pour éviter le décalage UTC (important UTC+4)
@@ -376,11 +380,16 @@ function seed() {
   ls.set('challenges', [
     { id:'ch1', couple_id:CID, title:'Date night sans téléphone', description:null, due_date:dt(7), completed:false, created_by:ELLE, created_at:new Date().toISOString() },
   ]);
+  ls.set('first_times', [
+    { id:'ft1', couple_id:CID, created_by:ELLE, description:'Premier voyage ensemble', date:dt(-90), note:'Lisbonne', created_at:new Date(T-90*864e5).toISOString() },
+    { id:'ft2', couple_id:CID, created_by:LUI,  description:'Premier massage partagé', date:dt(-25), note:null, created_at:new Date(T-25*864e5).toISOString() },
+  ]);
+  ls.set('session_activities', []);
 
   // Démo : onboarding considéré comme complété, mode par défaut
   localStorage.setItem('nc-onboarding-v1', 'done');
   localStorage.setItem('nc-cycle-mode', 'rules');
-  ls.set('seeded', '3');
+  ls.set('seeded', '4');
 }
 
 // ─── Export ────────────────────────────────────────────────────────────────
