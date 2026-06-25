@@ -53,7 +53,11 @@ alter table session_feedback
 
 -- -------------------------------------------------------------
 -- 4. COLONNES SUPPLÉMENTAIRES SUR intimate_sessions
---    (tags d'activité inline pour mode démo sans join)
 -- -------------------------------------------------------------
 alter table intimate_sessions
-  add column if not exists activity_tags text[] default '{}';
+  add column if not exists activity_tags     text[]  default '{}',
+  add column if not exists prelim_intensity  int     check (prelim_intensity between 1 and 3),
+  add column if not exists partner_orgasm    int     default 0;
+  -- partner_orgasm : 0=non déclaré, 1=oui, 2=plusieurs
+  -- La valeur est déclarée par le créateur de la session (consensuel).
+  -- Chaque partenaire peut ensuite mettre à jour son propre session_feedback.

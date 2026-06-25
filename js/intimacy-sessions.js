@@ -117,12 +117,33 @@ export function openFullSessionSheet(st) {
   const dateEl = document.getElementById('session-date-input');
   if (dateEl) { dateEl.value = localDateStr(); dateEl.max = localDateStr(); }
 
-  document.querySelectorAll('.mood-btn, .loc-btn, .act-tag-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('.mood-btn, .loc-btn, .act-tag-btn, .prelim-chip').forEach(b => b.classList.remove('sel'));
 
-  ['session-duration', 'session-note-input'].forEach(id => {
+  ['session-duration', 'session-prelim-duration', 'session-note-input'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+
+  // Réinitialiser préliminaires
+  const prelimToggle = document.getElementById('session-prelim-toggle');
+  if (prelimToggle) { prelimToggle.checked = false; }
+  const prelimDetails = document.getElementById('prelim-details');
+  if (prelimDetails) { prelimDetails.classList.remove('open'); }
+
+  // Réinitialiser orgasmes (tout à 0 = "—" sélectionné par défaut)
+  document.querySelectorAll('.orgasm-chip').forEach(c => {
+    c.classList.toggle('sel', c.dataset.val === '0');
+  });
+
+  // Mettre à jour les noms partenaires
+  if (st?.me) {
+    const myName = st.me.display_name || 'Moi';
+    const partnerName = st.partner?.display_name || 'Partenaire';
+    const orgLabelMe      = document.getElementById('orgasm-label-me');
+    const orgLabelPartner = document.getElementById('orgasm-label-partner');
+    if (orgLabelMe)      orgLabelMe.textContent      = myName;
+    if (orgLabelPartner) orgLabelPartner.textContent = partnerName;
+  }
 
   // Remplir le sélecteur de positions
   renderPositionPicker();
@@ -161,23 +182,38 @@ async function saveFullSession(st) {
   const date         = document.getElementById('session-date-input')?.value || localDateStr();
   const mood         = document.querySelector('.mood-btn.sel')?.dataset.mood || null;
   const location     = document.querySelector('.loc-btn.sel')?.dataset.loc  || null;
-  const dur          = parseInt(document.getElementById('session-duration')?.value) || null;
-  const note         = document.getElementById('session-note-input')?.value?.trim() || null;
+  const dur          = parseInt(document.getElementById('session-duration')?.value)      || null;
+  const note         = document.getElementById('session-note-input')?.value?.trim()      || null;
   const actTags      = [...document.querySelectorAll('.act-tag-btn.sel')].map(b => b.dataset.tag);
   const positionIds  = [...document.querySelectorAll('.pos-pick-btn.sel')].map(b => b.dataset.id);
+
+  // Préliminaires
+  const prelimOn    = document.getElementById('session-prelim-toggle')?.checked ?? false;
+  const prelimDur   = parseInt(document.getElementById('session-prelim-duration')?.value) || null;
+  const prelimIntEl = document.querySelector('.prelim-chip.sel');
+  const prelimInt   = prelimIntEl ? parseInt(prelimIntEl.dataset.intensity) : null;
+
+  // Orgasmes par partenaire (déclaratifs, consentis ensemble)
+  const myOrgasmVal = document.querySelector('.orgasm-chip.sel[data-partner="me"]')?.dataset.val;
+  const ptOrgasmVal = document.querySelector('.orgasm-chip.sel[data-partner="partner"]')?.dataset.val;
+  const myOrgasms   = myOrgasmVal ? parseInt(myOrgasmVal)      : 0;
+  const ptOrgasms   = ptOrgasmVal ? parseInt(ptOrgasmVal)      : 0;
 
   const btn = document.getElementById('btn-session-save');
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
 
   try {
     const { data: session, error } = await supabase.from('intimate_sessions').insert({
-      couple_id:    st.coupleId,
-      created_by:   st.me?.user_id,
-      session_date: date,
+      couple_id:     st.coupleId,
+      created_by:    st.me?.user_id,
+      session_date:  date,
       mood, location,
       duration_min:  dur,
       note,
       activity_tags: actTags,
+      prelim_min:    prelimOn ? (prelimDur || null) : null,
+      prelim_intensity: prelimOn ? (prelimInt || null) : null,
+      partner_orgasm:   ptOrgasms || null,
     }).select().single();
 
     if (error) throw error;
@@ -193,9 +229,9 @@ async function saveFullSession(st) {
     closeSessionSheet();
     await renderRecentSessions(st);
 
-    // Ouvrir le feedback post-séance
+    // Ouvrir le feedback post-séance, pré-rempli avec l'orgasme déclaré
     if (session?.id) {
-      setTimeout(() => openFeedbackSheet(session.id, st), 350);
+      setTimeout(() => openFeedbackSheet(session.id, st, myOrgasms), 350);
     }
 
   } catch (e) {
@@ -280,7 +316,7 @@ async function saveFastTrack(st) {
 
 let _pendingFeedbackId = null;
 
-export function openFeedbackSheet(sessionId, st) {
+export function openFeedbackSheet(sessionId, st, prefilledOrgasms = 0) {
   _pendingFeedbackId = sessionId;
   const sheet = document.getElementById('feedback-sheet');
   if (!sheet) return;
@@ -289,7 +325,7 @@ export function openFeedbackSheet(sessionId, st) {
   const orgEl    = document.getElementById('fb-orgasm');
   const lovedEl  = document.getElementById('fb-loved');
   const improveEl = document.getElementById('fb-improve');
-  if (orgEl)     orgEl.checked  = false;
+  if (orgEl)     orgEl.checked  = prefilledOrgasms > 0;  // pré-coché si déclaré dans le formulaire
   if (lovedEl)   lovedEl.value  = '';
   if (improveEl) improveEl.value = '';
 
@@ -344,7 +380,7 @@ async function saveFeedback(st) {
 // ─── Init du sheet ────────────────────────────────────────────────────────
 
 export function initSessionSheetListeners() {
-  // Multi-select : mood, loc, act-tags, ft-mood, fb-sat
+  // Sélection unique : mood, loc, ft-mood
   ['mood-btn', 'loc-btn', 'ft-mood-btn'].forEach(cls => {
     document.querySelectorAll(`.${cls}`).forEach(b =>
       b.addEventListener('click', () => {
@@ -354,14 +390,49 @@ export function initSessionSheetListeners() {
     );
   });
 
+  // Multi-select : activity tags
   document.querySelectorAll('.act-tag-btn').forEach(b =>
     b.addEventListener('click', () => b.classList.toggle('sel'))
   );
 
+  // Satisfaction : fb + ft
   document.querySelectorAll('.fb-sat-btn, .ft-sat-btn').forEach(b =>
     b.addEventListener('click', () => {
       const cls = b.classList.contains('fb-sat-btn') ? '.fb-sat-btn' : '.ft-sat-btn';
       document.querySelectorAll(cls).forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+    })
+  );
+
+  // Préliminaires : toggle → afficher/masquer le détail
+  document.getElementById('session-prelim-toggle')?.addEventListener('change', (e) => {
+    const details = document.getElementById('prelim-details');
+    if (!details) return;
+    if (e.target.checked) {
+      details.classList.add('open');
+      details.setAttribute('aria-hidden', 'false');
+    } else {
+      details.classList.remove('open');
+      details.setAttribute('aria-hidden', 'true');
+      // Réinitialiser si on décoche
+      document.getElementById('session-prelim-duration').value = '';
+      document.querySelectorAll('.prelim-chip').forEach(c => c.classList.remove('sel'));
+    }
+  });
+
+  // Préliminaires : intensité (sélection unique)
+  document.querySelectorAll('.prelim-chip').forEach(b =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.prelim-chip').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+    })
+  );
+
+  // Orgasmes : sélection unique par partenaire
+  document.querySelectorAll('.orgasm-chip').forEach(b =>
+    b.addEventListener('click', () => {
+      const partner = b.dataset.partner;
+      document.querySelectorAll(`.orgasm-chip[data-partner="${partner}"]`).forEach(x => x.classList.remove('sel'));
       b.classList.add('sel');
     })
   );

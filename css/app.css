@@ -1180,6 +1180,54 @@ body.demo-mode .demo-badge {
 }
 .fb-sat-btn.sel { border-color: var(--elle); background: var(--elle-light); box-shadow: var(--sh-elle); }
 
+/* ─── Préliminaires ───────────────────────────────────────────────────── */
+.prelim-expand {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .28s ease, opacity .2s;
+  opacity: 0;
+  pointer-events: none;
+  padding: 0 2px;
+}
+.prelim-expand.open {
+  max-height: 160px;
+  opacity: 1;
+  pointer-events: all;
+  margin-bottom: 14px;
+}
+.prelim-intensity-chips { display: flex; gap: 8px; margin-top: 6px; }
+.prelim-chip {
+  flex: 1; background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 10px 6px; font-family: "DM Sans"; font-size: 13px;
+  font-weight: 600; color: var(--muted); cursor: pointer; transition: all .18s;
+  min-height: 44px; /* A11Y */
+}
+.prelim-chip:hover { border-color: var(--elle-mid); }
+.prelim-chip.sel   { border-color: var(--elle); background: var(--elle-light); color: var(--elle); box-shadow: var(--sh-elle); }
+
+/* ─── Orgasmes par partenaire ─────────────────────────────────────────── */
+.orgasm-per-partner { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.orgasm-partner-row { display: flex; align-items: center; gap: 12px; }
+.orgasm-partner-name {
+  font-size: 13px; font-weight: 700; color: var(--muted);
+  width: 72px; flex-shrink: 0;
+}
+.orgasm-chips { display: flex; gap: 6px; }
+.orgasm-chip {
+  min-width: 44px; min-height: 44px; /* A11Y */
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 11px; font-family: "DM Mono", monospace;
+  font-size: 14px; font-weight: 700; color: var(--muted);
+  cursor: pointer; padding: 6px 12px; transition: all .18s;
+}
+.orgasm-chip:hover { border-color: var(--elle-mid); }
+.orgasm-chip.sel[data-val="0"] { border-color: var(--line); background: var(--surface2); color: var(--faint); }
+.orgasm-chip.sel[data-val="1"],
+.orgasm-chip.sel[data-val="2"] {
+  border-color: var(--violet); background: var(--violet-light);
+  color: var(--violet); box-shadow: 0 2px 8px var(--violet-dim);
+}
+
 /* ─── Heatmap mensuelle ────────────────────────────────────────────────── */
 .heatmap-month-title {
   font-family: "DM Mono", monospace; font-size: 13px; font-weight: 600;
