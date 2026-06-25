@@ -6,6 +6,8 @@ import {
   getCurrentCycle, getCycleHistory, startPeriod, endPeriod,
   predictNextPeriod, getEnergyByCycleDay, getPartnerEnergyByCycleDay, interpolate,
 } from './cycles.js';
+import { subscribeToEvents, subscribeToPartnerLogs } from './realtime.js';
+import { maybeRemindToLog, checkPartnerLoggedToday, showNotification } from './notifications.js';
 
 const PHASES = [
   [1, 5,  'Menstruelle'],
@@ -96,6 +98,25 @@ export async function initToday() {
   renderTip();
   renderPrediction();
   await renderEvents();
+
+  // Realtime : rafraîchir les moments en temps réel
+  if (state.coupleId) {
+    subscribeToEvents(state.coupleId, () => renderEvents());
+    subscribeToPartnerLogs(state.coupleId, () => {
+      showToast('Ton partenaire vient de saisir sa journée.');
+      showNotification('Notre rythme', 'Ton partenaire a saisi sa journée.');
+    });
+  }
+
+  // Rappel quotidien (>= 19h, si pas encore saisi)
+  maybeRemindToLog();
+
+  // Toast si partenaire a déjà saisi aujourd'hui
+  if (state.partner) {
+    checkPartnerLoggedToday(state.partner.user_id).then(has => {
+      if (has) showToast(`${state.partner.display_name} a déjà saisi aujourd'hui.`);
+    });
+  }
 }
 
 function getPhase(day) {
@@ -383,7 +404,24 @@ function renderPrediction() {
   document.getElementById('pred-avg').textContent = `${p.avgCycleLength} j`;
 }
 
+// --- Toast in-app ----------------------------------------------------------
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._hide);
+  t._hide = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
 // --- Events ----------------------------------------------------------------
+const REACTION_EMOJIS = ['❤️', '✨', '😊', '💪'];
+
 async function renderEvents() {
   const wrap = document.getElementById('events-list');
   if (!wrap || !state.coupleId) return;
@@ -393,22 +431,89 @@ async function renderEvents() {
     .select('*')
     .eq('couple_id', state.coupleId)
     .order('event_date', { ascending: false })
-    .limit(5);
+    .limit(7);
 
   wrap.innerHTML = '';
   (data || []).forEach(ev => {
     const diff = Math.round((Date.now() - new Date(ev.event_date)) / 864e5);
     const when = diff === 0 ? "Aujourd'hui" : diff === 1 ? 'Hier' : `Il y a ${diff} jours`;
+
+    // Réactions : { userId: emoji }
+    const reactions = ev.reactions || {};
+    const myReaction = reactions[state.me?.user_id];
+    const allReactions = Object.values(reactions);
+    const reactionSummary = [...new Set(allReactions)].map(e => {
+      const count = allReactions.filter(x => x === e).length;
+      return `<span class="ev-reaction${e === myReaction ? ' mine' : ''}">${e}${count > 1 ? ` ${count}` : ''}</span>`;
+    }).join('');
+
     const div = document.createElement('div');
     div.className = 'ev';
+    div.dataset.id = ev.id;
     div.innerHTML = `
       <div class="ico">${EVENT_ICONS[ev.event_type] || '✨'}</div>
-      <div><div class="et">${ev.note || EVENT_LABELS[ev.event_type] || ev.event_type}</div>
-           <div class="ed">${when}</div></div>`;
+      <div class="ev-body">
+        <div class="et">${ev.note || EVENT_LABELS[ev.event_type] || ev.event_type}</div>
+        <div class="ed">${when}</div>
+        ${reactionSummary ? `<div class="ev-reactions">${reactionSummary}</div>` : ''}
+      </div>
+      <button class="ev-react-btn" data-id="${ev.id}" aria-label="Réagir">
+        ${myReaction || '🫶'}
+      </button>`;
     wrap.appendChild(div);
   });
 
+  // Listeners réactions
+  wrap.querySelectorAll('.ev-react-btn').forEach(btn => {
+    btn.addEventListener('click', () => openReactionPicker(btn.dataset.id, btn));
+  });
+
   document.getElementById('btn-addev')?.addEventListener('click', openEventSheet);
+}
+
+function openReactionPicker(eventId, anchorBtn) {
+  // Fermer tout picker existant
+  document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
+
+  const picker = document.createElement('div');
+  picker.className = 'reaction-picker';
+  picker.innerHTML = REACTION_EMOJIS.map(e =>
+    `<button class="reaction-opt" data-emoji="${e}">${e}</button>`
+  ).join('');
+  anchorBtn.insertAdjacentElement('afterend', picker);
+
+  picker.querySelectorAll('.reaction-opt').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      picker.remove();
+      await likeEvent(eventId, btn.dataset.emoji);
+    });
+  });
+
+  // Fermer au clic extérieur
+  const close = e => { if (!picker.contains(e.target) && e.target !== anchorBtn) { picker.remove(); document.removeEventListener('click', close, true); } };
+  setTimeout(() => document.addEventListener('click', close, true), 10);
+}
+
+async function likeEvent(eventId, emoji) {
+  const userId = state.me?.user_id;
+  if (!userId) return;
+
+  // Lire la réaction actuelle
+  const { data: ev } = await supabase
+    .from('couple_events').select('reactions').eq('id', eventId).single();
+  const current = ev?.reactions || {};
+
+  // Toggle : même emoji → retirer, sinon → mettre le nouveau
+  const newReactions = { ...current };
+  if (current[userId] === emoji) {
+    delete newReactions[userId];
+  } else {
+    newReactions[userId] = emoji;
+  }
+
+  await supabase.from('couple_events')
+    .update({ reactions: newReactions }).eq('id', eventId);
+  // Le realtime channel va déclencher renderEvents()
 }
 
 function openEventSheet() {
@@ -439,6 +544,8 @@ async function saveEvent() {
   const today = new Date().toISOString().split('T')[0];
   await supabase.from('couple_events').insert({
     couple_id: state.coupleId, event_date: today, event_type: type, note,
+    created_by: state.me?.user_id,
+    reactions: {},
   });
   closeEventSheet();
   await renderEvents();

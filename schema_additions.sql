@@ -65,3 +65,34 @@ create policy "members: modifier ses infos"
   on couple_members for update
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
+
+-- -------------------------------------------------------------
+-- couple_members : DELETE (se délier du couple — §10)
+-- -------------------------------------------------------------
+create policy "members: se délier"
+  on couple_members for delete
+  using ((select auth.uid()) = user_id);
+
+-- -------------------------------------------------------------
+-- couple_events : colonnes réactions + créateur (§7)
+-- À exécuter après le schéma principal si les colonnes n'existent pas.
+-- -------------------------------------------------------------
+alter table couple_events
+  add column if not exists reactions   jsonb    default '{}',
+  add column if not exists created_by  uuid     references auth.users;
+
+-- Politique UPDATE pour les réactions (tout membre du couple peut réagir)
+create policy "events: réagir"
+  on couple_events for update
+  using (
+    couple_id in (
+      select couple_id from couple_members
+      where (select auth.uid()) = user_id
+    )
+  )
+  with check (
+    couple_id in (
+      select couple_id from couple_members
+      where (select auth.uid()) = user_id
+    )
+  );

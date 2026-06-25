@@ -605,6 +605,119 @@ input::placeholder { color: var(--faint); }
 .detail-row:first-child { border-top: none; }
 
 /* ----------------------------------------------------------------
+   Toast in-app
+   ---------------------------------------------------------------- */
+.toast {
+  position: fixed;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  font-family: "DM Sans", sans-serif;
+  padding: 10px 18px;
+  border-radius: 100px;
+  white-space: nowrap;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s, transform .3s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ----------------------------------------------------------------
+   Bannière notifications opt-in
+   ---------------------------------------------------------------- */
+.notif-banner {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 18px;
+  z-index: 80;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.notif-banner div { display: flex; gap: 8px; flex-shrink: 0; }
+.notif-banner button {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: .2s;
+}
+.notif-banner button:first-child { color: var(--gold); border-color: var(--gold-dim); }
+.notif-banner button:hover { border-color: var(--faint); }
+
+/* ----------------------------------------------------------------
+   Réactions sur les événements
+   ---------------------------------------------------------------- */
+.ev-body { flex: 1; min-width: 0; }
+.ev-reactions { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.ev-reaction {
+  font-size: 13px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 2px 7px;
+  cursor: default;
+}
+.ev-reaction.mine { border-color: var(--gold-dim); background: rgba(217,179,106,.1); }
+
+.ev-react-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 16px;
+  padding: 5px 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: flex-start;
+  transition: border-color .2s;
+  line-height: 1;
+}
+.ev-react-btn:hover { border-color: var(--faint); }
+
+/* Picker flottant */
+.reaction-picker {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  z-index: 20;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.ev { position: relative; }
+.reaction-opt {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background .15s;
+}
+.reaction-opt:hover { background: var(--surface2); }
+
+/* ----------------------------------------------------------------
    Nous : stats semaine
    ---------------------------------------------------------------- */
 .stat-grid  { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
@@ -654,6 +767,13 @@ input::placeholder { color: var(--faint); }
 }
 .corr-fill  { position: absolute; top: 0; height: 100%; border-radius: 3px; }
 .corr-meta  { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--faint); flex-wrap: wrap; }
+
+/* ----------------------------------------------------------------
+   Nous : boutons d'action (export, délier)
+   ---------------------------------------------------------------- */
+.settings-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.btn-danger { color: var(--rose); border-color: rgba(201,138,106,.3); }
+.btn-danger:hover { border-color: var(--rose); }
 
 /* ----------------------------------------------------------------
    Nous : réglages profil

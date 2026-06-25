@@ -327,25 +327,90 @@ function renderSettings(me) {
     navigate('auth');
   });
 
-  document.getElementById('btn-export')?.addEventListener('click', exportData);
+  document.getElementById('btn-export-json')?.addEventListener('click', () => exportData('json'));
+  document.getElementById('btn-export-csv')?.addEventListener('click',  () => exportData('csv'));
+  document.getElementById('btn-unlink')?.addEventListener('click', () => unlinkAccount(me));
+
+  // Bouton install PWA (visible seulement si l'événement beforeinstallprompt a été capturé)
+  const installBtn = document.getElementById('btn-install');
+  if (installBtn && window.__installPrompt) {
+    installBtn.style.display = 'block';
+    installBtn.addEventListener('click', async () => {
+      window.__installPrompt.prompt();
+      const { outcome } = await window.__installPrompt.userChoice;
+      if (outcome === 'accepted') installBtn.style.display = 'none';
+    }, { once: true });
+  }
 }
 
 // ---------------------------------------------------------------------------
-// Export JSON
+// Export JSON + CSV (§10)
 // ---------------------------------------------------------------------------
-async function exportData() {
-  const btn = document.getElementById('btn-export');
-  if (btn) btn.textContent = 'Export…';
+async function exportData(format = 'json') {
+  const today = new Date().toISOString().split('T')[0];
+  const btn   = document.getElementById(`btn-export-${format}`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Export…'; }
+
   try {
-    const { data } = await supabase.from('log_entries').select('*').order('log_date');
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `notre-cycle-${new Date().toISOString().split('T')[0]}.json`;
+    const { data } = await supabase
+      .from('log_entries').select('*').order('log_date');
+
+    let blob, filename;
+    if (format === 'csv') {
+      const headers = ['log_date', 'category_id', 'value', 'shared', 'created_at'];
+      const rows = (data || []).map(r => [
+        r.log_date, r.category_id,
+        r.value?.v ?? r.value ?? '',
+        r.shared, r.created_at,
+      ].map(v => JSON.stringify(v ?? '')).join(','));
+      blob = new Blob([headers.join(',') + '\n' + rows.join('\n')], { type: 'text/csv' });
+      filename = `notre-cycle-${today}.csv`;
+    } else {
+      blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      filename = `notre-cycle-${today}.json`;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href = url; a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   } finally {
-    if (btn) btn.textContent = 'Exporter mes données (JSON)';
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = format === 'csv' ? 'Exporter en CSV' : 'Exporter en JSON';
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Délier le compte (§10)
+// ---------------------------------------------------------------------------
+async function unlinkAccount(me) {
+  const confirmed = confirm(
+    'Voulez-vous vraiment vous délier du couple ?\n\n' +
+    'Vos données personnelles seront conservées mais votre partenaire ne pourra plus les voir. ' +
+    'Cette action est irréversible.'
+  );
+  if (!confirmed) return;
+
+  const btn = document.getElementById('btn-unlink');
+  if (btn) { btn.disabled = true; btn.textContent = 'Déliaison…'; }
+
+  try {
+    const { error } = await supabase
+      .from('couple_members')
+      .delete()
+      .eq('user_id', me.user_id);
+
+    if (error) throw error;
+
+    // Déconnecter et retourner à l'auth
+    const { signOut: so } = await import('./auth.js');
+    await so();
+    window.location.reload();
+  } catch (e) {
+    alert('Erreur : ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Se délier du couple'; }
   }
 }

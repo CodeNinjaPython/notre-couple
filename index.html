@@ -20,17 +20,26 @@
   <!-- Mount point -->
   <div id="view"></div>
 
+  <!-- Bannière opt-in notifications (affichée une seule fois après connexion) -->
+  <div id="notif-banner" class="notif-banner">
+    <span>Recevoir des rappels quotidiens ?</span>
+    <div>
+      <button type="button" id="btn-notif-yes">Oui</button>
+      <button type="button" id="btn-notif-no">Non merci</button>
+    </div>
+  </div>
+
   <!-- Bottom navigation (masquée sur auth/pairing) -->
   <nav id="main-nav">
-    <button data-nav="today" class="on">
+    <button type="button" data-nav="today" class="on">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
       Aujourd'hui
     </button>
-    <button data-nav="calendar">
+    <button type="button" data-nav="calendar">
       <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
       Calendrier
     </button>
-    <button data-nav="nous">
+    <button type="button" data-nav="nous">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><circle cx="16" cy="11" r="2.5"/><path d="M4 19c0-3 2.5-5 5-5s5 2 5 5M14 19c0-2 1-3.5 2.5-3.5S19 17 19 19"/></svg>
       Nous
     </button>
@@ -397,9 +406,12 @@
           </label>
         </div>
 
-        <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
-          <button id="btn-export" class="btn-secondary">Exporter mes données (JSON)</button>
-          <button id="btn-nous-signout" class="btn-secondary" style="color:var(--rose);border-color:rgba(201,138,106,.3)">Se déconnecter</button>
+        <div class="settings-actions">
+          <button type="button" id="btn-install"      class="btn-secondary" style="display:none">Installer l'app sur l'écran d'accueil</button>
+          <button type="button" id="btn-export-json"  class="btn-secondary">Exporter en JSON</button>
+          <button type="button" id="btn-export-csv"   class="btn-secondary">Exporter en CSV</button>
+          <button type="button" id="btn-unlink"       class="btn-secondary btn-danger">Se délier du couple</button>
+          <button type="button" id="btn-nous-signout" class="btn-secondary">Se déconnecter</button>
         </div>
       </div>
 

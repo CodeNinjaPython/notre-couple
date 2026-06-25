@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Générer les icônes PWA</title>
+<style>
+  body { background:#0E0A07; color:#EDE3D3; font-family:monospace; padding:32px; }
+  canvas { display:block; margin:20px 0; border:1px solid #2C2015; }
+  button { background:#D9B36A; color:#0E0A07; border:none; padding:12px 24px;
+           font-size:14px; font-weight:700; cursor:pointer; border-radius:8px; margin:6px; }
+  a { color:#D9B36A; }
+</style>
+</head>
+<body>
+<h2>Générateur d'icônes PWA · Notre rythme</h2>
+<p>Ouvrir dans le navigateur, cliquer Télécharger, puis déposer les fichiers dans <code>/icons/</code>.</p>
+
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+
+<div>
+  <button onclick="download(192)">Télécharger icon-192.png</button>
+  <button onclick="download(512)">Télécharger icon-512.png</button>
+</div>
+
+<script>
+function drawIcon(size) {
+  const canvas = document.getElementById(`c${size}`);
+  const ctx = canvas.getContext('2d');
+  const S = size;
+
+  // Fond
+  ctx.fillStyle = '#0E0A07';
+  ctx.fillRect(0, 0, S, S);
+
+  // Halo central subtil
+  const grd = ctx.createRadialGradient(S/2, S/2, 0, S/2, S/2, S * 0.5);
+  grd.addColorStop(0, 'rgba(217,179,106,0.10)');
+  grd.addColorStop(1, 'transparent');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, S, S);
+
+  const W = S * 0.82;
+  const H = S * 0.40;
+  const OX = (S - W) / 2;
+  const OY = S / 2;
+
+  // Courbe "Elle" (or) — sinus montant
+  function sinePath(phase, amp, color, lw) {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (let i = 0; i <= 100; i++) {
+      const t = i / 100;
+      const x = OX + t * W;
+      const y = OY - Math.sin(t * Math.PI * 2 + phase) * amp;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Ombre légère
+  ctx.shadowColor = 'rgba(217,179,106,0.25)';
+  ctx.shadowBlur = S * 0.06;
+  sinePath(0, H * 0.55, '#D9B36A', S * 0.030);
+  ctx.shadowBlur = 0;
+  sinePath(Math.PI * 0.65, H * 0.40, '#93A98F', S * 0.022);
+
+  // Points de rencontre (dots)
+  ctx.fillStyle = '#D9B36A';
+  ctx.beginPath();
+  ctx.arc(OX + W * 0.25, OY - Math.sin(0.25 * Math.PI * 2) * H * 0.55, S * 0.028, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#93A98F';
+  ctx.beginPath();
+  ctx.arc(OX + W * 0.75, OY - Math.sin(0.75 * Math.PI * 2 + Math.PI * 0.65) * H * 0.40, S * 0.022, 0, Math.PI * 2);
+  ctx.fill();
+
+  return canvas;
+}
+
+drawIcon(192);
+drawIcon(512);
+
+function download(size) {
+  const canvas = document.getElementById(`c${size}`);
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `icon-${size}.png`;
+  a.click();
+}
+</script>
+</body>
+</html>

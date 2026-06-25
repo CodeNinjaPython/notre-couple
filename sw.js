@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v2';
+const CACHE = 'notre-rythme-v3';
 const SHELL = [
   '/',
   '/index.html',
@@ -13,6 +13,8 @@ const SHELL = [
   '/js/today.js',
   '/js/calendar.js',
   '/js/nous.js',
+  '/js/realtime.js',
+  '/js/notifications.js',
   '/manifest.json',
 ];
 
@@ -30,6 +32,30 @@ self.addEventListener('activate', e => {
     )
   );
   self.clients.claim();
+});
+
+// Push notification (envoyée depuis un serveur avec VAPID ou Supabase Edge Function)
+self.addEventListener('push', e => {
+  const data = e.data?.json() ?? {};
+  e.waitUntil(
+    self.registration.showNotification(data.title || 'Notre rythme', {
+      body:  data.body  || '',
+      icon:  '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag:   data.tag   || 'notre-rythme',
+      data:  { url: '/' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+      const existing = cs.find(c => c.url.startsWith(self.location.origin));
+      return existing ? existing.focus() : clients.openWindow('/');
+    })
+  );
 });
 
 self.addEventListener('fetch', e => {

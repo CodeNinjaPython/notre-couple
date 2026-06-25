@@ -1,5 +1,6 @@
 const NAV_VIEWS = ['today', 'calendar', 'nous'];
 const viewInits = {};
+let currentView = null;
 
 export function registerView(name, initFn) {
   viewInits[name] = initFn;
@@ -11,6 +12,12 @@ export function navigate(name, params = {}) {
   const nav = document.getElementById('main-nav');
 
   if (!tpl || !container) return;
+
+  // Nettoyer les subscriptions realtime quand on quitte Today
+  if (currentView === 'today' && name !== 'today') {
+    import('./realtime.js').then(m => m.unsubscribeAll());
+  }
+  currentView = name;
 
   container.innerHTML = '';
   container.appendChild(tpl.content.cloneNode(true));

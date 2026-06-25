@@ -5,6 +5,7 @@ import { navigate, registerView, initNavButtons } from './router.js';
 import { initToday } from './today.js';
 import { initCalendar } from './calendar.js';
 import { initNous } from './nous.js';
+import { requestPermission, getPermission, declineNotifications } from './notifications.js';
 
 // --- Register service worker -----------------------------------------------
 if ('serviceWorker' in navigator) {
@@ -146,7 +147,41 @@ async function routeAfterAuth() {
     navigate('pairing');
   } else {
     navigate('today');
+    // Proposer les notifications après la première navigation
+    setTimeout(() => maybeShowNotifBanner(), 2000);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Bannière opt-in notifications (affichée une seule fois)
+// ---------------------------------------------------------------------------
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // On expose l'événement pour que le bouton "Installer" dans Nous puisse l'utiliser
+  window.__installPrompt = e;
+});
+
+function maybeShowNotifBanner() {
+  const perm = getPermission();
+  if (perm === 'granted' || perm === 'denied' || perm === 'unsupported') return;
+  if (localStorage.getItem('notif-asked') === 'no') return;
+
+  const banner = document.getElementById('notif-banner');
+  if (!banner) return;
+  banner.style.display = 'flex';
+
+  document.getElementById('btn-notif-yes')?.addEventListener('click', async () => {
+    banner.style.display = 'none';
+    await requestPermission();
+  }, { once: true });
+
+  document.getElementById('btn-notif-no')?.addEventListener('click', () => {
+    banner.style.display = 'none';
+    declineNotifications();
+  }, { once: true });
 }
 
 // ---------------------------------------------------------------------------
