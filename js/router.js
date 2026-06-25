@@ -1,4 +1,4 @@
-const NAV_VIEWS = ['today', 'calendar', 'nous'];
+const NAV_VIEWS = ['today', 'calendar', 'nous', 'intime'];
 const viewInits = {};
 let currentView = null;
 

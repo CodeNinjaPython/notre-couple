@@ -38,7 +38,23 @@ function applyRLS(table, rows) {
     case 'log_entries':
       return rows.filter(r => r.user_id === uid || (r.shared === true && inSameCouple(r.user_id)));
     case 'couple_events':
+    case 'intimate_sessions':
+    case 'safewords':
+    case 'challenges':
       return rows.filter(r => r.couple_id === cid);
+    case 'session_feedback':
+      return rows.filter(r => r.user_id === uid || (r.shared === true && inSameCouple(r.user_id)));
+    case 'kink_ratings':
+      return rows.filter(r => r.user_id === uid || (r.shared === true && inSameCouple(r.user_id)));
+    case 'fantasies':
+      return rows.filter(r => r.created_by === uid || (r.shared === true && inSameCouple(r.created_by)));
+    case 'consent_limits':
+      // Mes limites + hard limits du partenaire (toujours visibles)
+      return rows.filter(r => r.user_id === uid || (r.level === 'hard' && inSameCouple(r.user_id)));
+    case 'sexual_health':
+      return rows.filter(r => r.user_id === uid || (r.shared === true && inSameCouple(r.user_id)));
+    case 'kinks':
+      return rows; // table de référence
     default:
       return rows;
   }
@@ -214,7 +230,7 @@ const chanNoop = () => ({ on() { return this; }, subscribe() { return this; }, u
 
 // ─── Seed (30 jours de données réalistes) ─────────────────────────────────
 function seed() {
-  if (ls.get('seeded') === '2') return; // version 2 du seed
+  if (ls.get('seeded') === '3') return; // version 3 du seed (module intime)
 
   const T  = new Date();
   // Utilise la date locale pour éviter le décalage UTC (important UTC+4)
@@ -307,10 +323,64 @@ function seed() {
   ]);
 
   ls.set('pairing_codes', []);
+
+  // ── Module Intime — données démo ─────────────────────────────────────
+  ls.set('intimate_sessions', [
+    { id:'ses1', couple_id:CID, created_by:ELLE, session_date:dt(-3),  mood:'tender',     location:'maison', duration_min:45,  note:'Belle soirée',         created_at:new Date(T-3*864e5).toISOString() },
+    { id:'ses2', couple_id:CID, created_by:LUI,  session_date:dt(-10), mood:'playful',    location:'hotel',  duration_min:60,  note:'Week-end ressourçant', created_at:new Date(T-10*864e5).toISOString() },
+    { id:'ses3', couple_id:CID, created_by:ELLE, session_date:dt(-18), mood:'passionate', location:'maison', duration_min:30,  note:null,                   created_at:new Date(T-18*864e5).toISOString() },
+  ]);
+  ls.set('session_feedback', [
+    { id:'fb1', session_id:'ses1', user_id:ELLE, satisfaction:8, orgasms:1, loved_txt:'La tendresse', improve_txt:null, shared:false, created_at:new Date(T-3*864e5).toISOString() },
+    { id:'fb2', session_id:'ses1', user_id:LUI,  satisfaction:9, orgasms:1, loved_txt:'Le moment',    improve_txt:null, shared:true,  created_at:new Date(T-3*864e5).toISOString() },
+    { id:'fb3', session_id:'ses2', user_id:ELLE, satisfaction:7, orgasms:0, loved_txt:null, improve_txt:'Plus de temps', shared:false, created_at:new Date(T-10*864e5).toISOString() },
+  ]);
+  ls.set('kinks', [
+    { id:'mood_candles',  label:'Bougies & lumière tamisée', category:'atmosphere' },
+    { id:'mood_music',    label:'Musique choisie ensemble',  category:'atmosphere' },
+    { id:'mood_massage',  label:'Massage avant',             category:'atmosphere' },
+    { id:'mood_bath',     label:'Bain ou douche ensemble',   category:'atmosphere' },
+    { id:'comm_fantasy',  label:'Partage de fantasmes',      category:'communication' },
+    { id:'comm_aftercare',label:'Temps de tendresse après',  category:'communication' },
+    { id:'comm_surprise', label:'Proposition surprise',      category:'communication' },
+    { id:'loc_travel',    label:'En voyage',                 category:'lieux' },
+    { id:'loc_hotel',     label:'Hôtel / nuit ailleurs',    category:'lieux' },
+    { id:'act_slowdown',  label:'Ralentir, prendre le temps','category':'pratiques' },
+    { id:'act_roleplay',  label:'Jeu de rôles léger',       category:'pratiques' },
+    { id:'act_toys',      label:'Accessoires',              category:'pratiques' },
+    { id:'game_dare',     label:'Questions / défis',        category:'jeux' },
+    { id:'game_date',     label:'Date night thématique',    category:'jeux' },
+  ]);
+  ls.set('kink_ratings', [
+    { id:'kr1', user_id:ELLE, kink_id:'mood_candles',  desire:5, shared:true,  updated_at:new Date().toISOString() },
+    { id:'kr2', user_id:ELLE, kink_id:'mood_massage',  desire:4, shared:true,  updated_at:new Date().toISOString() },
+    { id:'kr3', user_id:ELLE, kink_id:'loc_hotel',     desire:4, shared:true,  updated_at:new Date().toISOString() },
+    { id:'kr4', user_id:ELLE, kink_id:'game_date',     desire:3, shared:true,  updated_at:new Date().toISOString() },
+    { id:'kr5', user_id:LUI,  kink_id:'mood_candles',  desire:4, shared:true,  updated_at:new Date().toISOString() },
+    { id:'kr6', user_id:LUI,  kink_id:'loc_hotel',     desire:5, shared:true,  updated_at:new Date().toISOString() },
+    { id:'kr7', user_id:LUI,  kink_id:'act_slowdown',  desire:4, shared:true,  updated_at:new Date().toISOString() },
+    { id:'kr8', user_id:LUI,  kink_id:'game_date',     desire:4, shared:true,  updated_at:new Date().toISOString() },
+  ]);
+  ls.set('fantasies', [
+    { id:'wish1', couple_id:CID, created_by:ELLE, content:'Week-end sans téléphone dans un chalet', status:'validated', shared:true, created_at:new Date(T-5*864e5).toISOString() },
+    { id:'wish2', couple_id:CID, created_by:LUI,  content:'Soirée thématique années 80',            status:'proposed',  shared:true, created_at:new Date(T-12*864e5).toISOString() },
+  ]);
+  ls.set('consent_limits', [
+    { id:'cl1', user_id:ELLE, practice:'Photos / vidéos', level:'soft', note:'OK mais on décide ensemble',  updated_at:new Date().toISOString() },
+    { id:'cl2', user_id:LUI,  practice:'Partage avec tiers', level:'hard', note:'Absolument pas',           updated_at:new Date().toISOString() },
+  ]);
+  ls.set('safewords', [
+    { id:'sw1', couple_id:CID, word:'Ananas', meaning:'Stop immédiat', created_at:new Date().toISOString() },
+  ]);
+  ls.set('sexual_health', []);
+  ls.set('challenges', [
+    { id:'ch1', couple_id:CID, title:'Date night sans téléphone', description:null, due_date:dt(7), completed:false, created_by:ELLE, created_at:new Date().toISOString() },
+  ]);
+
   // Démo : onboarding considéré comme complété, mode par défaut
   localStorage.setItem('nc-onboarding-v1', 'done');
   localStorage.setItem('nc-cycle-mode', 'rules');
-  ls.set('seeded', '2');
+  ls.set('seeded', '3');
 }
 
 // ─── Export ────────────────────────────────────────────────────────────────

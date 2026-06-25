@@ -40,6 +40,10 @@
       <svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><circle cx="16" cy="11" r="2.5"/><path d="M4 19c0-3 2.5-5 5-5s5 2 5 5M14 19c0-2 1-3.5 2.5-3.5S19 17 19 19"/></svg>
       Nous
     </button>
+    <button type="button" data-nav="intime">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Intime
+    </button>
   </nav>
 
   <!-- ================================================================
@@ -638,6 +642,159 @@
         Ce n'est pas un outil contraceptif.<br>
         Les corrélations sont statistiques, pas causales.
       </p>
+    </div>
+  </template>
+
+  <!-- ================================================================
+       TEMPLATE : INTIME
+       Sections : Moments · Désirs & Kinks · Santé · Limites & Consentement
+       ================================================================ -->
+  <template id="tpl-intime">
+    <div class="app">
+      <header>
+        <div class="eyebrow" style="color:var(--elle)">Espace intime</div>
+        <div class="phase">Intime</div>
+        <div class="date" id="today-date-intime"></div>
+      </header>
+
+      <!-- Fenêtre de désir -->
+      <div id="desire-window" style="margin-top:16px"></div>
+
+      <!-- Quick add -->
+      <button type="button" id="btn-quick-add" class="btn-quick-add">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        On a partagé un moment ?
+      </button>
+
+      <!-- Équilibre + délai neutre -->
+      <div class="intime-meta">
+        <span id="days-since" class="meta-chip" style="display:none"></span>
+        <span id="initiation-balance" class="meta-chip" style="display:none"></span>
+      </div>
+
+      <!-- Sessions récentes -->
+      <div class="card">
+        <h2>Nos moments récents</h2>
+        <div id="recent-sessions"></div>
+      </div>
+
+      <!-- Désirs en commun (matchs) -->
+      <div class="card">
+        <h2>Désirs en commun</h2>
+        <div id="match-counter" class="match-counter-label"></div>
+        <div id="kink-matches" style="margin-top:12px"></div>
+        <button type="button" class="btn-secondary" style="margin-top:14px"
+          onclick="document.getElementById('kinks-section').scrollIntoView({behavior:'smooth'})">
+          Explorer tous les désirs →
+        </button>
+      </div>
+
+      <!-- Explorer les kinks (vue privée + slider) -->
+      <div class="card" id="kinks-section">
+        <h2>Mes désirs — privé</h2>
+        <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;line-height:1.6;margin-bottom:14px">
+          Tes réponses restent privées. Ton partenaire sait seulement que tu t'y intéresses (pas le niveau). Un match apparaît quand vous êtes deux à avoir répondu.
+        </p>
+        <div id="kink-list"></div>
+      </div>
+
+      <!-- Wish-list -->
+      <div class="card">
+        <h2>Notre wish-list</h2>
+        <div id="wishlist"></div>
+        <button type="button" id="btn-add-wish" class="btn-secondary" style="margin-top:12px">+ Ajouter une idée</button>
+      </div>
+
+      <!-- Défis du mois -->
+      <div class="card">
+        <h2>Défis du mois</h2>
+        <div id="challenges-list"></div>
+      </div>
+
+      <!-- Santé (privé par défaut) -->
+      <div class="card">
+        <h2>Santé — privé par défaut</h2>
+        <div id="health-summary"></div>
+        <button type="button" id="btn-add-health" class="btn-secondary" style="margin-top:12px">+ Ajouter une entrée</button>
+      </div>
+
+      <!-- Limites & Consentement -->
+      <div class="card" style="border-color:rgba(124,92,252,.25)">
+        <h2 style="color:var(--violet)">Mes limites</h2>
+        <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.6">
+          Les hard limits sont toujours visibles de votre partenaire — c'est leur but.
+        </p>
+        <div id="my-limits"></div>
+        <button type="button" id="btn-add-limit" class="btn-secondary" style="margin-top:12px">+ Poser une limite</button>
+      </div>
+
+      <!-- Hard limits du couple (toujours visibles) -->
+      <div class="card">
+        <h2>Hard limits du couple</h2>
+        <div id="hard-limits-display"></div>
+      </div>
+
+      <!-- Safewords -->
+      <div class="card">
+        <h2>Safewords</h2>
+        <div id="safewords-display"></div>
+      </div>
+
+      <p class="disclaimer">
+        Ces données sont très sensibles. Elles sont chiffrées en transit (HTTPS) et protégées par RLS. Aucune galerie photo n'est stockée dans le cloud. En cas de séparation, utilisez "Supprimer mes données" dans Nous.
+      </p>
+    </div>
+
+    <!-- Sheet : logger une session -->
+    <div id="session-sheet" class="sheet-backdrop">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title">Notre moment</h3>
+
+        <div class="field">
+          <label for="session-date-input">Date</label>
+          <input type="date" id="session-date-input">
+        </div>
+
+        <div class="field">
+          <label>Ambiance</label>
+          <div class="mood-grid">
+            <button type="button" class="mood-btn" data-mood="tender">🥰<span>Tendre</span></button>
+            <button type="button" class="mood-btn" data-mood="playful">😄<span>Joueur</span></button>
+            <button type="button" class="mood-btn" data-mood="passionate">🔥<span>Passionné</span></button>
+            <button type="button" class="mood-btn" data-mood="spontaneous">⚡<span>Spontané</span></button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Lieu</label>
+          <div class="loc-grid">
+            <button type="button" class="loc-btn" data-loc="maison">🏠 Maison</button>
+            <button type="button" class="loc-btn" data-loc="voyage">✈️ Voyage</button>
+            <button type="button" class="loc-btn" data-loc="hotel">🏨 Hôtel</button>
+            <button type="button" class="loc-btn" data-loc="autre">📍 Autre</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px">
+          <div class="field" style="flex:1">
+            <label for="session-duration">Durée (min)</label>
+            <input type="number" id="session-duration" min="1" max="300" placeholder="30" style="padding:10px 12px">
+          </div>
+          <div class="field" style="flex:1">
+            <label for="session-sat-input">Ma satisfaction (1-10)</label>
+            <input type="number" id="session-sat-input" min="1" max="10" placeholder="8" style="padding:10px 12px">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="session-note-input">Note partagée (optionnel)</label>
+          <input type="text" id="session-note-input" placeholder="Ce qu'on a adoré…">
+        </div>
+
+        <button type="button" id="btn-session-save" class="btn-primary">Enregistrer</button>
+        <button type="button" id="btn-session-cancel" class="btn-secondary" style="margin-top:10px">Annuler</button>
+      </div>
     </div>
   </template>
 

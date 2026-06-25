@@ -7,6 +7,8 @@ import { initCalendar } from './calendar.js';
 import { initNous } from './nous.js';
 import { requestPermission, getPermission, declineNotifications } from './notifications.js';
 import { onboardingDone, initOnboarding, markOnboardingDone } from './onboarding.js';
+import { initIntimacy } from './intimacy.js';
+import { initKinks } from './kinks.js';
 
 // Mode démo : indicateur sur le body
 if (IS_DEMO) document.body.classList.add('demo-mode');
@@ -20,6 +22,7 @@ if ('serviceWorker' in navigator && !IS_DEMO) {
 registerView('today',      () => initToday());
 registerView('calendar',   () => initCalendar());
 registerView('nous',       () => initNous());
+registerView('intime',     () => { initIntimacy(); initKinks(); });
 registerView('auth',       () => initAuthView());
 registerView('pairing',    () => initPairingView());
 registerView('onboarding', () => initOnboarding());

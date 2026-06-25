@@ -960,6 +960,157 @@ body.demo-mode .demo-badge {
 .stub h3 { font-size: 22px; font-weight: 800; margin-bottom: 12px; color: var(--text); }
 .stub p { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   MODULE INTIME
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Quick add */
+.btn-quick-add {
+  width: 100%; margin-top: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: linear-gradient(135deg, var(--elle-light), var(--violet-light));
+  border: 1.5px solid var(--elle-mid); border-radius: 16px;
+  color: var(--elle); font-family: "DM Sans"; font-size: 14px; font-weight: 700;
+  padding: 15px; cursor: pointer; transition: all .2s;
+}
+.btn-quick-add:hover { box-shadow: var(--sh-elle); transform: translateY(-1px); }
+
+/* Méta délai + initiation */
+.intime-meta { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
+.meta-chip {
+  font-size: 12px; font-weight: 600; font-family: "DM Mono", monospace;
+  color: var(--muted); background: var(--surface2);
+  border: 1.5px solid var(--line); border-radius: 100px; padding: 4px 12px;
+}
+
+/* Fenêtre de désir */
+.desire-hot {
+  background: linear-gradient(135deg, var(--elle-light), var(--violet-light));
+  border: 1.5px solid var(--elle-mid); border-radius: 14px;
+  padding: 14px 16px; font-size: 14px; font-weight: 700; color: var(--elle);
+  text-align: center;
+}
+.desire-info {
+  background: var(--surface2); border: 1.5px solid var(--line); border-radius: 14px;
+  padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--muted); text-align: center;
+}
+
+/* Sessions récentes */
+.session-card {
+  padding: 12px 0; border-top: 1.5px solid var(--line);
+}
+.session-card:first-child { border-top: none; }
+.session-meta { display: flex; align-items: flex-start; gap: 12px; }
+.session-mood  { font-size: 24px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.session-date  { font-size: 14px; font-weight: 600; color: var(--text); }
+.session-details { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.session-sat { font-family: "DM Mono", monospace; font-size: 13px; font-weight: 600; color: var(--elle); margin-left: auto; flex-shrink: 0; }
+.session-note { font-size: 13px; color: var(--muted); margin-top: 6px; padding-left: 36px; line-height: 1.5; font-style: italic; }
+
+/* Compteur match */
+.match-counter-label { font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted); }
+
+/* Chips match */
+.match-chip {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-top: 1.5px solid var(--line);
+}
+.match-chip:first-child { border-top: none; }
+.match-label  { font-size: 14px; font-weight: 600; color: var(--text); }
+.match-scores { font-family: "DM Mono", monospace; font-size: 12px; color: var(--elle); }
+
+/* Kinks slider */
+.kink-category { margin-bottom: 18px; }
+.kink-cat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--faint); margin-bottom: 10px; }
+.kink-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.kink-row:first-of-type { border-top: none; }
+.kink-label { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
+.kink-slider-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.kink-slider {
+  width: 80px; -webkit-appearance: none; appearance: none;
+  height: 4px; background: var(--line); border-radius: 2px; outline: none; cursor: pointer;
+}
+.kink-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px;
+  background: var(--elle); border-radius: 50%; cursor: pointer;
+}
+.kink-val { font-family: "DM Mono", monospace; font-size: 12px; color: var(--elle); width: 18px; text-align: center; }
+
+/* Wish-list */
+.wish-item { padding: 12px 0; border-top: 1.5px solid var(--line); }
+.wish-item:first-child { border-top: none; }
+.wish-status { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--faint); margin-bottom: 4px; }
+.wish-content { font-size: 14px; color: var(--text); line-height: 1.5; margin-bottom: 6px; }
+.wish-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.wish-by { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; }
+.wish-select {
+  background: var(--surface2); border: 1.5px solid var(--line); border-radius: 8px;
+  color: var(--muted); font-family: "DM Sans"; font-size: 11px; padding: 4px 8px;
+  cursor: pointer; outline: none; -webkit-appearance: none;
+}
+
+/* Limites */
+.limit-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-top: 1.5px solid var(--line); flex-wrap: wrap;
+}
+.limit-item:first-child { border-top: none; }
+.limit-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  border-radius: 100px; padding: 3px 9px; border: 1px solid; flex-shrink: 0;
+}
+.limit-text { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+.limit-note-text { font-size: 12px; color: var(--muted); width: 100%; padding-left: 0; }
+.limit-row { padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.limit-row:first-child { border-top: none; }
+.limit-row.hard { color: var(--red); }
+.limit-who { font-weight: 700; margin-right: 8px; }
+.limit-practice { flex: 1; }
+.limit-note { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
+
+/* Safeword */
+.safeword-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--violet-light); border: 1.5px solid var(--violet-dim);
+  border-radius: 10px; padding: 8px 14px; font-size: 13px; color: var(--violet);
+  margin: 0 6px 6px 0;
+}
+
+/* Santé */
+.health-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1.5px solid var(--line); }
+.health-row:first-child { border-top: none; }
+.health-icon { font-size: 20px; flex-shrink: 0; }
+.health-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.health-date  { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; margin-top: 3px; }
+
+/* Défis */
+.challenge-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1.5px solid var(--line); }
+.challenge-row:first-child { border-top: none; }
+.challenge-row.done { opacity: .5; }
+.challenge-check { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0; flex-shrink: 0; }
+.challenge-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.challenge-date  { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; margin-top: 3px; }
+
+/* Session sheet — grilles mood/loc */
+.mood-grid, .loc-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.mood-btn, .loc-btn {
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 10px 6px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-family: "DM Sans"; font-size: 18px; transition: all .18s; color: var(--muted);
+}
+.mood-btn span, .loc-btn span { font-size: 10px; font-weight: 700; letter-spacing: .02em; }
+.loc-btn { font-size: 12px; flex-direction: row; justify-content: center; gap: 5px; }
+.mood-btn.sel, .loc-btn.sel { border-color: var(--elle); background: var(--elle-light); color: var(--elle); box-shadow: var(--sh-elle); }
+
+/* Utilitaires intime */
+.intime-empty { font-size: 13px; color: var(--faint); font-style: italic; line-height: 1.6; }
+.btn-inline {
+  background: none; border: none; color: var(--elle);
+  font-family: "DM Sans"; font-size: 13px; font-weight: 700; cursor: pointer;
+  padding: 0; text-decoration: underline; text-underline-offset: 3px;
+}
+
 /* ─── Accessibility + motion ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 :focus-visible { outline: 2.5px solid var(--elle); outline-offset: 2px; }

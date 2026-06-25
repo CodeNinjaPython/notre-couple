@@ -97,14 +97,7 @@
 
 ## D. Points de vigilance (à lire avant de coder)
 
-**1. Médias intimes = le risque n°1.** Une galerie de photos/vidéos intimes est la feature la plus dangereuse de toute l'app.
-- Par défaut, garde-les **en local sur l'appareil**, pas dans le cloud.
-- Si tu veux la synchro cloud quand même : **chiffrement côté client AVANT l'upload** — Supabase ne doit jamais voir le clair. Clé dérivée d'une passphrase connue de vous deux seulement, **jamais stockée sur le serveur** (sinon ce n'est pas du vrai chiffrement de bout en bout).
-- Si tu ne peux pas garantir ça proprement : ne fais pas la feature. Ça ne vaut pas le risque d'une fuite.
 
-**2. « Chiffrement de bout en bout » : sois honnête.** Supabase Storage n'est pas E2E nativement. N'affiche pas une promesse de sécurité que l'implémentation ne tient pas — pour vous deux ça crée une fausse confiance.
-
-**3. Verrou biométrique : limité en PWA.** Une PWA iOS ne peut pas vraiment verrouiller par Face ID comme une app native. Tu peux faire un **code PIN applicatif** + « tout masquer » rapide, mais ne survends pas la sécurité.
 
 **4. Gamification : attention aux streaks.** Mettre un compteur « X jours de suite » sur la fréquence sexuelle peut transformer l'intimité en **quota / obligation** — c'est contre-productif pour un couple. Garde ça optionnel, et centre les stats sur la **satisfaction et le consentement**, pas la performance. C'est un meilleur design relationnel.
 
@@ -112,7 +105,6 @@
 
 **6. Santé : pas de diagnostic.** Les alertes type « consulte si douleur persiste » sont bien, mais l'app oriente vers un pro, elle ne conclut pas.
 
-**7. Rupture.** Ces données sont encore plus sensibles que le cycle. Prévoir une **suppression mutuelle immédiate**, en effaçant les **médias en premier**.
 
 ---
 
