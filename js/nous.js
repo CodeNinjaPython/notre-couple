@@ -3,6 +3,13 @@ import { signOut } from './auth.js';
 import { navigate } from './router.js';
 import { getMyMembership, getPartnerMembership } from './pairing.js';
 import { getCycleMode, setCycleMode } from './onboarding.js';
+import {
+  computeSyncScore, computeWeeklyTrends, computeEventsByPhase,
+  computeConflictsByPhase, detectCycleAnomalies, predictPeriodDuration,
+  loadAnalyticsData,
+} from './analytics.js';
+import { currentWeekDates } from './date-utils.js';
+import { exportPDF } from './pdf.js';
 
 const MODE_DESCS = {
   rules:      'Comprendre vos rythmes communs — corrélations, synchronie et insights par phase.',
@@ -101,18 +108,10 @@ async function loadRecentEvents(coupleId, days = 30) {
 }
 
 // ---------------------------------------------------------------------------
-// Semaine courante (Lun–Dim)
+// Semaine courante (Lun–Dim) — utilise date-utils
 // ---------------------------------------------------------------------------
 function weekBounds() {
-  const now = new Date();
-  const dow = (now.getDay() + 6) % 7; // 0=Lun
-  const mon = new Date(now.getTime() - dow * 864e5);
-  const dates = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(mon.getTime() + i * 864e5);
-    dates.push(d.toISOString().split('T')[0]);
-  }
-  return dates;
+  return currentWeekDates();
 }
 
 // ---------------------------------------------------------------------------
@@ -126,20 +125,24 @@ export async function initNous() {
   document.getElementById('today-date').textContent =
     new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  // Charger données en parallèle
-  const [entries, events] = await Promise.all([
-    loadEntries(90),
-    partner ? loadRecentEvents(me.couple_id, 30) : Promise.resolve([]),
-  ]);
+  // Charger données en parallèle (analytics centralisé)
+  const { entries, events, cycles } = await loadAnalyticsData(me.couple_id);
 
   // Identifier elle/lui
   const elleId = me.tracks_cycle ? me.user_id : partner?.user_id;
   const luiId  = me.tracks_cycle ? partner?.user_id : me.user_id;
 
+  const syncScore = computeSyncScore(entries, elleId, luiId);
+
   renderWeekStats(entries, events, elleId, luiId, me, partner);
+  renderSyncScore(syncScore);
   renderTrends(entries, elleId, luiId);
+  renderWeeklyChart(entries, elleId, luiId);
   renderCorrelations(entries, elleId, luiId, partner);
-  renderSettings(me);
+  renderEventsByPhase(events, cycles);
+  renderConflictHeatmap(events, cycles);
+  renderAnomalies(cycles);
+  renderSettings(me, partner);
 }
 
 // ---------------------------------------------------------------------------
@@ -283,9 +286,141 @@ function renderCorrelations(entries, elleId, luiId, partner) {
 }
 
 // ---------------------------------------------------------------------------
+// Score de synchronie global
+// ---------------------------------------------------------------------------
+function renderSyncScore(score) {
+  const el = document.getElementById('sync-score');
+  if (!el) return;
+  if (score == null) { el.closest('.card')?.style && (el.closest('.card').style.display = 'none'); return; }
+  el.closest('.card') && (el.closest('.card').style.display = 'block');
+  const color = score >= 60 ? 'var(--elle)' : score >= 35 ? 'var(--lui)' : 'var(--faint)';
+  const label = score >= 60 ? 'Excellente' : score >= 35 ? 'Bonne' : 'En construction';
+  el.innerHTML = `
+    <div class="sync-circle" style="--score:${score}%;--color:${color}">
+      <div class="sync-value">${score}</div>
+      <div class="sync-max">/100</div>
+    </div>
+    <div class="sync-label">${label} synchronie</div>
+    <div class="sync-sub">Moyenne de ${score >= 35 ? 'plusieurs' : 'quelques'} indicateurs Pearson</div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Tendances 3 mois (sparklines hebdomadaires)
+// ---------------------------------------------------------------------------
+function renderWeeklyChart(entries, elleId, luiId) {
+  const el = document.getElementById('nous-weekly-chart');
+  if (!el) return;
+  const trends = computeWeeklyTrends(entries, elleId, luiId, 12);
+  if (!trends.some(t => t.elleEnergy != null)) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  const W = 340, H = 80, n = trends.length;
+  const valid = (arr) => arr.filter(v => v != null);
+  const allVals = [...trends.map(t=>t.elleEnergy), ...trends.map(t=>t.luiEnergy)].filter(v=>v!=null);
+  const minV = Math.min(...allVals) - 0.3;
+  const maxV = Math.max(...allVals) + 0.3;
+  const xP = i => 10 + (i / (n-1)) * (W - 20);
+  const yP = v => H - 8 - ((v - minV) / (maxV - minV)) * (H - 16);
+
+  const path = (data, color) => {
+    const pts = data.map((v, i) => v != null ? [xP(i), yP(v)] : null).filter(Boolean);
+    if (pts.length < 2) return '';
+    let d = `M ${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const cx = (pts[i-1][0] + pts[i][0]) / 2;
+      d += ` C ${cx} ${pts[i-1][1]}, ${cx} ${pts[i][1]}, ${pts[i][0]} ${pts[i][1]}`;
+    }
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2" opacity=".9"/>`;
+  };
+
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;border-radius:10px;background:var(--surface2)">
+    ${path(trends.map(t=>t.elleEnergy), '#E84375')}
+    ${path(trends.map(t=>t.luiEnergy),  '#4278C4')}
+  </svg>
+  <div class="legend" style="margin-top:8px">
+    <span><i class="dot g"></i>Énergie Elle</span>
+    <span><i class="dot s"></i>Énergie Lui</span>
+  </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Répartition des moments par phase
+// ---------------------------------------------------------------------------
+const PHASE_COLORS_MAP = { Menstruelle:'#E53935', Folliculaire:'#4278C4', Ovulation:'#7C5CFC', Lutéale:'#E84375' };
+const PHASE_ORDER = ['Menstruelle', 'Folliculaire', 'Ovulation', 'Lutéale'];
+
+function renderEventsByPhase(events, cycles) {
+  const el = document.getElementById('events-by-phase');
+  if (!el) return;
+  if (!events.length) { el.innerHTML = '<div class="msg info">Pas encore d\'événements.</div>'; return; }
+
+  const counts = computeEventsByPhase(events, cycles);
+  const total  = PHASE_ORDER.reduce((s, p) => s + (counts[p] || 0), 0) || 1;
+
+  el.innerHTML = PHASE_ORDER.map(phase => {
+    const n = counts[phase] || 0;
+    const pct = Math.round(n / total * 100);
+    return `<div class="phase-bar-row">
+      <span class="phase-bar-label">${phase}</span>
+      <div class="phase-bar-track">
+        <div class="phase-bar-fill" style="width:${pct}%;background:${PHASE_COLORS_MAP[phase]}"></div>
+      </div>
+      <span class="phase-bar-count">${n}</span>
+    </div>`;
+  }).join('');
+}
+
+// ---------------------------------------------------------------------------
+// Heatmap conflits par phase
+// ---------------------------------------------------------------------------
+function renderConflictHeatmap(events, cycles) {
+  const el = document.getElementById('conflict-heatmap');
+  if (!el) return;
+  const conflicts = events.filter(e => e.event_type === 'conflict');
+  if (!conflicts.length) { el.innerHTML = '<div style="color:var(--faint);font-size:13px">Aucun conflit enregistré.</div>'; return; }
+
+  const counts = computeConflictsByPhase(conflicts, cycles);
+  const max = Math.max(...PHASE_ORDER.map(p => counts[p] || 0), 1);
+
+  el.innerHTML = `<div class="heatmap-grid">
+    ${PHASE_ORDER.map(phase => {
+      const n = counts[phase] || 0;
+      const intensity = Math.round((n / max) * 100);
+      return `<div class="heatmap-cell" title="${n} conflit${n > 1 ? 's' : ''} · ${phase}"
+        style="background:${PHASE_COLORS_MAP[phase]};opacity:${0.15 + (intensity / 100) * 0.85}">
+        <span class="heatmap-n">${n}</span>
+        <span class="heatmap-label">${phase.slice(0, 4)}.</span>
+      </div>`;
+    }).join('')}
+  </div>
+  <p style="font-size:11px;color:var(--faint);margin-top:8px;font-family:'DM Mono',monospace">Intensité = fréquence relative des tensions</p>`;
+}
+
+// ---------------------------------------------------------------------------
+// Anomalies de cycle
+// ---------------------------------------------------------------------------
+function renderAnomalies(cycles) {
+  const el = document.getElementById('cycle-anomalies');
+  if (!el) return;
+  const anomalies = detectCycleAnomalies(cycles);
+  const duration  = predictPeriodDuration(cycles);
+
+  if (!anomalies.length && !duration) { el.innerHTML = '<div style="color:var(--faint);font-size:13px">Aucune anomalie détectée.</div>'; return; }
+
+  const durLine = duration
+    ? `<div class="anomaly-row" style="color:var(--lui)">📊 Durée de règles habituelle : <strong>${duration} jours</strong></div>`
+    : '';
+
+  el.innerHTML = durLine + anomalies.map(a => `
+    <div class="anomaly-row" style="color:${a.type === 'court' ? 'var(--red)' : 'var(--violet)'}">
+      ${a.type === 'court' ? '⚡' : '📅'} Cycle ${a.type} : <strong>${a.len} jours</strong> (${a.date})
+    </div>`).join('');
+}
+
+// ---------------------------------------------------------------------------
 // Réglages
 // ---------------------------------------------------------------------------
-function renderSettings(me) {
+function renderSettings(me, partner) {
   const nameEl     = document.getElementById('settings-name-val');
   const nameInput  = document.getElementById('settings-name-input');
   const btnEdit    = document.getElementById('btn-settings-edit');
@@ -336,8 +471,10 @@ function renderSettings(me) {
 
   document.getElementById('btn-export-json')?.addEventListener('click', () => exportData('json'));
   document.getElementById('btn-export-csv')?.addEventListener('click',  () => exportData('csv'));
+  document.getElementById('btn-export-pdf')?.addEventListener('click',  () => exportPDF(me?.couple_id, me, partner));
   document.getElementById('btn-delete-data')?.addEventListener('click', () => deleteAllData(me));
   document.getElementById('btn-unlink')?.addEventListener('click', () => unlinkAccount(me));
+  initNotifSettings();
 
   // Mode cycle tabs
   renderModeTabs();
@@ -487,3 +624,43 @@ async function unlinkAccount(me) {
     if (btn) { btn.disabled = false; btn.textContent = 'Se délier du couple'; }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Paramètres notifications
+// ---------------------------------------------------------------------------
+const NOTIF_KEY = 'nc-notif-settings';
+const NOTIF_DEFAULTS = { daily: true, rules: true, fertile: false, hour: 20 };
+
+function getNotifSettings() {
+  try { return { ...NOTIF_DEFAULTS, ...JSON.parse(localStorage.getItem(NOTIF_KEY)) }; }
+  catch { return { ...NOTIF_DEFAULTS }; }
+}
+function saveNotifSettings(s) { localStorage.setItem(NOTIF_KEY, JSON.stringify(s)); }
+
+function initNotifSettings() {
+  const s = getNotifSettings();
+
+  const dailyEl   = document.getElementById('notif-toggle-daily');
+  const rulesEl   = document.getElementById('notif-toggle-rules');
+  const fertileEl = document.getElementById('notif-toggle-fertile');
+  const hourEl    = document.getElementById('notif-hour');
+
+  if (dailyEl)   dailyEl.checked   = s.daily;
+  if (rulesEl)   rulesEl.checked   = s.rules;
+  if (fertileEl) fertileEl.checked = s.fertile;
+  if (hourEl)    hourEl.value      = s.hour;
+
+  const save = () => saveNotifSettings({
+    daily:   dailyEl?.checked  ?? s.daily,
+    rules:   rulesEl?.checked  ?? s.rules,
+    fertile: fertileEl?.checked ?? s.fertile,
+    hour:    parseInt(hourEl?.value ?? s.hour),
+  });
+
+  dailyEl?.addEventListener('change', save);
+  rulesEl?.addEventListener('change', save);
+  fertileEl?.addEventListener('change', save);
+  hourEl?.addEventListener('change', save);
+}
+
+export { getNotifSettings };

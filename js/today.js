@@ -8,6 +8,9 @@ import {
 } from './cycles.js';
 import { subscribeToEvents, subscribeToPartnerLogs } from './realtime.js';
 import { maybeRemindToLog, checkPartnerLoggedToday, showNotification, checkRulesImminentes } from './notifications.js';
+import { localDateStr, daysAgo, fmtDate, diffDays } from './date-utils.js';
+import { computeStreak } from './analytics.js';
+import { getCycleMode } from './onboarding.js';
 
 const PHASES_DATA = {
   Menstruelle: {
@@ -49,20 +52,23 @@ const PHASES_DATA = {
 };
 const METRICS = {
   elle: [
-    { id: 'mood',     label: 'Humeur',  type: 'enum',    opts: ['😣','😔','😐','🙂','😊'] },
-    { id: 'energy',   label: 'Énergie', type: 'scale' },
-    { id: 'flow',     label: 'Flux',    type: 'enum',    opts: ['·','◦','●','◆'] },
-    { id: 'cramps',   label: 'Crampes', type: 'scale' },
-    { id: 'libido',   label: 'Libido',  type: 'scale' },
-    { id: 'sleep',    label: 'Sommeil', type: 'scale' },
+    { id: 'mood',     label: 'Humeur',      type: 'enum',    opts: ['😣','😔','😐','🙂','😊'] },
+    { id: 'energy',   label: 'Énergie',     type: 'scale' },
+    { id: 'flow',     label: 'Flux',        type: 'enum',    opts: ['·','◦','●','◆'] },
+    { id: 'cramps',   label: 'Crampes',     type: 'scale' },
+    { id: 'libido',   label: 'Libido',      type: 'scale' },
+    { id: 'sleep',    label: 'Sommeil',     type: 'scale' },
+    { id: 'bbt',      label: 'Temp. basale',type: 'bbt' },
+    { id: 'note',     label: 'Note du jour',type: 'text' },
   ],
   lui: [
-    { id: 'mood',     label: 'Humeur',  type: 'enum',    opts: ['😣','😔','😐','🙂','😊'] },
-    { id: 'energy',   label: 'Énergie', type: 'scale' },
-    { id: 'stress',   label: 'Stress',  type: 'scale' },
-    { id: 'libido',   label: 'Libido',  type: 'scale' },
-    { id: 'sleep',    label: 'Sommeil', type: 'scale' },
-    { id: 'exercise', label: 'Sport',   type: 'boolean', opts: ['—', '✓'] },
+    { id: 'mood',     label: 'Humeur',      type: 'enum',    opts: ['😣','😔','😐','🙂','😊'] },
+    { id: 'energy',   label: 'Énergie',     type: 'scale' },
+    { id: 'stress',   label: 'Stress',      type: 'scale' },
+    { id: 'libido',   label: 'Libido',      type: 'scale' },
+    { id: 'sleep',    label: 'Sommeil',     type: 'scale' },
+    { id: 'exercise', label: 'Sport',       type: 'boolean', opts: ['—', '✓'] },
+    { id: 'note',     label: 'Note du jour',type: 'text' },
   ],
 };
 const EVENT_TYPES = {
@@ -113,14 +119,16 @@ export async function initToday() {
 
   state.prediction = predictNextPeriod(history);
 
-  state.logDate = new Date().toISOString().split('T')[0];
+  state.logDate = localDateStr();  // timezone locale, pas UTC
   state.logDateOffset = 0;
   await loadEntriesForDate(state.logDate);
 
   renderHeader();
+  await renderStreak();
   renderCycleControls();
   renderWhoToggle();
   initDateNav();
+  initCopyHier();
   await renderChart();
   renderMetrics();
   renderInsight();
@@ -211,6 +219,22 @@ function initDateNav() {
 function renderHeader() {
   const eyebrow   = document.getElementById('eyebrow');
   const phaseName = document.getElementById('phase-name');
+  const mode      = getCycleMode();
+
+  if (mode === 'pregnancy') {
+    const dpa = localStorage.getItem('nc-dpa-date');
+    if (dpa) {
+      const weeks = Math.floor(diffDays(localDateStr(), dpa) / 7);
+      const days  = diffDays(localDateStr(), dpa) % 7;
+      if (eyebrow)   eyebrow.textContent   = `Semaine ${weeks} · Grossesse`;
+      if (phaseName) phaseName.textContent = `S${weeks}+${days}`;
+    } else {
+      if (eyebrow)   eyebrow.textContent   = 'Mode grossesse';
+      if (phaseName) phaseName.textContent = 'Grossesse';
+    }
+    return;
+  }
+
   if (state.cycleDay && state.phaseName) {
     if (eyebrow)   eyebrow.textContent   = `Jour ${state.cycleDay} · ${state.phaseName}`;
     if (phaseName) phaseName.textContent = state.phaseName;
@@ -218,6 +242,41 @@ function renderHeader() {
     if (eyebrow)   eyebrow.textContent   = 'Pas de cycle en cours';
     if (phaseName) phaseName.textContent = 'Notre rythme';
   }
+}
+
+// --- Streak ----------------------------------------------------------------
+async function renderStreak() {
+  const streakEl = document.getElementById('streak-badge');
+  if (!streakEl) return;
+  const { data } = await supabase.from('log_entries')
+    .select('log_date').order('log_date', { ascending: false }).limit(60);
+  const streak = computeStreak(data || []);
+  if (streak >= 3) {
+    streakEl.textContent = `🔥 ${streak} jours`;
+    streakEl.style.display = 'inline-flex';
+  } else {
+    streakEl.style.display = 'none';
+  }
+}
+
+// --- Comme hier ------------------------------------------------------------
+function initCopyHier() {
+  document.getElementById('btn-comme-hier')?.addEventListener('click', async () => {
+    const hier = daysAgo(1);
+    const { data } = await supabase.from('log_entries')
+      .select('category_id,value').eq('log_date', hier);
+    if (!data?.length) { showToast('Aucune saisie hier'); return; }
+    const today = localDateStr();
+    await Promise.all(data.map(e =>
+      supabase.from('log_entries').upsert(
+        { log_date: today, category_id: e.category_id, value: e.value, shared: true },
+        { onConflict: 'user_id,log_date,category_id' }
+      )
+    ));
+    await loadEntriesForDate(state.logDate);
+    renderMetrics();
+    showToast(`Saisie de ${fmtDate(hier, { weekday: 'long' })} copiée ✓`);
+  });
 }
 
 // --- Cycle controls (elle uniquement) --------------------------------------
@@ -397,25 +456,28 @@ async function handleMetricClick(event) {
  */
 function getMetricDisplayValue(metric, value) {
   if (value == null) return '—';
-  if (metric.type === 'enum' || metric.type === 'boolean') {
-    return metric.opts[value] ?? value;
-  }
+  if (metric.type === 'enum' || metric.type === 'boolean') return metric.opts[value] ?? value;
+  if (metric.type === 'bbt')  return value ? `${value}°C` : '—';
+  if (metric.type === 'text') return value ? String(value).slice(0, 22) + (String(value).length > 22 ? '…' : '') : '—';
   return value;
 }
 
-/**
- * Génère le HTML pour les "chips" d'une métrique.
- * @param {object} metric
- * @param {string|number|null} savedValue
- * @returns {string}
- */
 function getMetricChipsHTML(metric, savedValue) {
+  if (metric.type === 'bbt') {
+    return `<div class="bbt-input-wrap">
+      <input type="number" class="bbt-input" data-id="${metric.id}"
+        min="35.0" max="38.5" step="0.1" placeholder="36.5"
+        value="${savedValue || ''}" aria-label="Température basale">
+      <span class="bbt-unit">°C</span>
+    </div>`;
+  }
+  if (metric.type === 'text') {
+    return `<textarea class="note-input" data-id="${metric.id}"
+      placeholder="Écris quelque chose…" rows="2">${savedValue || ''}</textarea>`;
+  }
   const isSelected = (v) => String(savedValue) === String(v) ? ' sel' : '';
-
   const options = (metric.type === 'enum' || metric.type === 'boolean')
-    ? metric.opts
-    : Array.from({ length: 5 }, (_, i) => i + 1);
-
+    ? metric.opts : Array.from({ length: 5 }, (_, i) => i + 1);
   return options.map((opt, i) => {
     const value = (metric.type === 'enum' || metric.type === 'boolean') ? i : opt;
     const chipClass = metric.type === 'scale' ? 'chip scalechip' : 'chip';
@@ -423,17 +485,13 @@ function getMetricChipsHTML(metric, savedValue) {
   }).join('');
 }
 
-/**
- * Affiche les métriques pour l'utilisateur courant et attache les gestionnaires d'événements.
- */
 function renderMetrics() {
   const wrap = document.getElementById('metrics');
   if (!wrap) return;
 
   wrap.innerHTML = METRICS[state.cur].map(metric => {
-    const savedRaw = state.savedValues[metric.id];
+    const savedRaw   = state.savedValues[metric.id];
     const savedValue = savedRaw != null ? (savedRaw.v ?? savedRaw) : null;
-
     return `
       <div class="metric">
         <div class="ml">
@@ -446,6 +504,38 @@ function renderMetrics() {
 
   wrap.removeEventListener('click', handleMetricClick);
   wrap.addEventListener('click', handleMetricClick);
+
+  // BBT — input number avec debounce
+  wrap.querySelectorAll('.bbt-input').forEach(input => {
+    let timer;
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const val = parseFloat(input.value);
+        if (isNaN(val) || val < 35 || val > 39) return;
+        const id = input.dataset.id;
+        document.getElementById(`val-${id}`).textContent = `${val.toFixed(1)}°C`;
+        await saveEntry(id, String(val.toFixed(1)));
+        state.savedValues[id] = { v: String(val.toFixed(1)) };
+      }, 800);
+    });
+  });
+
+  // Note libre — textarea avec debounce
+  wrap.querySelectorAll('.note-input').forEach(ta => {
+    let timer;
+    ta.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const id  = ta.dataset.id;
+        const val = ta.value.trim();
+        document.getElementById(`val-${id}`).textContent = val
+          ? val.slice(0, 22) + (val.length > 22 ? '…' : '') : '—';
+        await saveEntry(id, val);
+        state.savedValues[id] = { v: val };
+      }, 900);
+    });
+  });
 }
 
 async function saveEntry(categoryId, value) {

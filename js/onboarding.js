@@ -64,9 +64,23 @@ export function initOnboarding() {
   });
   document.getElementById('btn-onboard-3')?.addEventListener('click', () => {
     setCycleMode(chosenMode);
-    // Si mode grossesse → pas de saisie de règles, on passe directement
+    // Si mode grossesse → saisir la DPA
     if (chosenMode === 'pregnancy') {
-      finish(null);
+      showStep(4);
+      const dpaInput = document.getElementById('onboard-period-date');
+      const dpaLabel = document.querySelector('[for="onboard-period-date"]');
+      const dpaBtn4  = document.getElementById('btn-onboard-4');
+      const dpaSkip  = document.getElementById('btn-onboard-4-skip');
+      if (dpaLabel) dpaLabel.textContent = 'Date prévue d\'accouchement (DPA)';
+      if (dpaInput) { dpaInput.removeAttribute('max'); dpaInput.value = ''; }
+      if (dpaBtn4)  dpaBtn4.textContent = 'Commencer le suivi →';
+      if (dpaSkip)  dpaSkip.style.display = 'block';
+      // Désactiver l'ancien listener et ajouter un spécifique DPA
+      document.getElementById('btn-onboard-4')?.addEventListener('click', () => {
+        const dpa = dpaInput?.value;
+        if (dpa) localStorage.setItem('nc-dpa-date', dpa);
+        finishPregnancy();
+      }, { once: true });
     } else {
       showStep(4);
     }
@@ -87,6 +101,13 @@ export function initOnboarding() {
     finish(d);
   });
   document.getElementById('btn-onboard-4-skip')?.addEventListener('click', () => finish(null));
+}
+
+async function finishPregnancy() {
+  markOnboardingDone();
+  const { getMyMembership } = await import('./pairing.js');
+  const me = await getMyMembership();
+  navigate(me ? 'today' : 'pairing');
 }
 
 async function finish(periodDate) {

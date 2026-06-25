@@ -35,11 +35,13 @@ export function showNotification(title, body, tag = 'notre-rythme') {
 }
 
 // Rappel quotidien si l'utilisateur n'a pas encore saisi aujourd'hui
-// Appelé lors de l'ouverture de l'app (>= 19h)
+// Appelé lors de l'ouverture de l'app (>= heure configurée)
 export async function maybeRemindToLog() {
   if (Notification.permission !== 'granted') return;
+  const settings = getSettings();
+  if (!settings.daily) return;
   const hour = new Date().getHours();
-  if (hour < 19) return;
+  if (hour < (settings.hour || 19)) return;
 
   const today = new Date().toISOString().split('T')[0];
   const { data } = await supabase
@@ -63,9 +65,11 @@ export async function checkPartnerLoggedToday(partnerUserId) {
   return !!(data?.length);
 }
 
-// Alerte règles imminentes (< 3 jours)
+// Alerte règles imminentes (< 3 jours) — respecte les settings
 export function checkRulesImminentes(prediction) {
   if (!prediction || Notification.permission !== 'granted') return;
+  const settings = getSettings();
+  if (!settings.rules) return;
   const daysUntil = Math.round((new Date(prediction.nextPeriodDate) - new Date()) / 864e5);
   if (daysUntil >= 0 && daysUntil <= 2) {
     const msg = daysUntil === 0
@@ -73,4 +77,29 @@ export function checkRulesImminentes(prediction) {
       : `Les règles sont prévues dans ${daysUntil} jour${daysUntil > 1 ? 's' : ''}.`;
     showNotification('Notre rythme · Rappel cycle', msg, 'regles-imminentes');
   }
+}
+
+// Alerte fenêtre fertile (mode conception)
+export function checkFertileWindow(prediction) {
+  if (!prediction || Notification.permission !== 'granted') return;
+  const settings = getSettings();
+  if (!settings.fertile) return;
+  const daysUntilFertile = Math.round(
+    (new Date(prediction.fertileStart) - new Date()) / 864e5
+  );
+  if (daysUntilFertile === 2) {
+    showNotification('Notre rythme · Conception', 'La fenêtre fertile commence dans 2 jours.', 'fertile');
+  }
+}
+
+// Alerte partenaire — partenaire a commencé ses règles
+export function notifyPartnerPeriodStart(partnerName) {
+  if (Notification.permission !== 'granted') return;
+  showNotification('Notre rythme', `${partnerName} vient de noter le début de ses règles.`, 'partner-rules');
+}
+
+// Lecture des settings
+function getSettings() {
+  try { return { daily:true, rules:true, fertile:false, hour:20, ...JSON.parse(localStorage.getItem('nc-notif-settings') || '{}') }; }
+  catch { return { daily:true, rules:true, fertile:false, hour:20 }; }
 }

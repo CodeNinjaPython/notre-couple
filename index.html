@@ -286,17 +286,24 @@
         <div class="phase" id="phase-name">Notre rythme</div>
         <div class="date" id="today-date"></div>
         <span class="demo-badge">Mode démo · données locales</span>
+        <span id="streak-badge" class="streak-badge" style="display:none"></span>
       </header>
 
       <!-- Contrôle cycle (visible uniquement pour elle) -->
       <div id="cycle-controls" style="margin-top:16px;display:none">
-        <button id="btn-cycle-toggle" class="btn-primary">Mes règles commencent</button>
+        <button type="button" id="btn-cycle-toggle" class="btn-primary">Mes règles commencent</button>
       </div>
 
-      <!-- Qui saisit ? -->
-      <div class="who" id="who-toggle" role="tablist" style="margin-top:16px">
-        <button data-p="elle">Elle</button>
-        <button data-p="lui">Lui</button>
+      <!-- Qui saisit ? + Comme hier -->
+      <div class="who-row">
+        <div class="who" id="who-toggle" role="tablist">
+          <button type="button" data-p="elle">Elle</button>
+          <button type="button" data-p="lui">Lui</button>
+        </div>
+        <button type="button" id="btn-comme-hier" class="btn-comme-hier" title="Copier la saisie d'hier">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Comme hier
+        </button>
       </div>
 
       <!-- Double rythme -->
@@ -471,8 +478,14 @@
         <div class="date" id="today-date"></div>
       </header>
 
+      <!-- Score synchronie -->
+      <div class="card" style="margin-top:20px" id="sync-card">
+        <h2>Synchronie du couple</h2>
+        <div id="sync-score"></div>
+      </div>
+
       <!-- Stats de la semaine -->
-      <div class="card" style="margin-top:20px">
+      <div class="card">
         <h2>Cette semaine</h2>
         <div id="nous-week"></div>
       </div>
@@ -483,6 +496,12 @@
         <div id="nous-trends"></div>
       </div>
 
+      <!-- Tendances 3 mois (sparklines) -->
+      <div class="card">
+        <h2>Énergie · 12 semaines</h2>
+        <div id="nous-weekly-chart"></div>
+      </div>
+
       <!-- Corrélations (§9) -->
       <div class="card">
         <h2>Corrélations · 90 jours</h2>
@@ -490,6 +509,24 @@
           Coefficient de Pearson sur les jours où vous avez tous les deux saisi.
         </p>
         <div id="nous-correlations"></div>
+      </div>
+
+      <!-- Répartition moments par phase -->
+      <div class="card">
+        <h2>Vos moments · par phase</h2>
+        <div id="events-by-phase"></div>
+      </div>
+
+      <!-- Heatmap conflits -->
+      <div class="card">
+        <h2>Tensions · par phase</h2>
+        <div id="conflict-heatmap"></div>
+      </div>
+
+      <!-- Anomalies cycle -->
+      <div class="card">
+        <h2>Analyse du cycle</h2>
+        <div id="cycle-anomalies"></div>
       </div>
 
       <!-- Réglages profil -->
@@ -543,6 +580,7 @@
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px"><path d="M12 3v13M5 10l7 7 7-7"/><path d="M3 21h18"/></svg>
             Installer l'app (écran d'accueil)
           </button>
+          <button type="button" id="btn-export-pdf"   class="btn-secondary">Exporter en PDF (bilan mensuel)</button>
           <button type="button" id="btn-export-json"  class="btn-secondary">Exporter en JSON</button>
           <button type="button" id="btn-export-csv"   class="btn-secondary">Exporter en CSV</button>
           <button type="button" id="btn-delete-data"  class="btn-secondary btn-danger">Supprimer toutes mes données</button>
@@ -556,6 +594,33 @@
         <div class="settings-actions">
           <button type="button" id="btn-unlink"       class="btn-secondary btn-danger">Se délier du couple</button>
           <button type="button" id="btn-nous-signout" class="btn-secondary">Se déconnecter</button>
+        </div>
+      </div>
+
+      <!-- Paramètres notifications -->
+      <div class="card">
+        <h2>Rappels</h2>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Rappel quotidien de saisie</div></div>
+          <label class="toggle"><input type="checkbox" id="notif-toggle-daily"><span class="toggle-track"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Alerte règles imminentes</div></div>
+          <label class="toggle"><input type="checkbox" id="notif-toggle-rules"><span class="toggle-track"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Fenêtre fertile (mode conception)</div></div>
+          <label class="toggle"><input type="checkbox" id="notif-toggle-fertile"><span class="toggle-track"></span></label>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">Heure du rappel quotidien</span>
+          <select id="notif-hour" class="hour-select">
+            <option value="18">18h00</option>
+            <option value="19">19h00</option>
+            <option value="20" selected>20h00</option>
+            <option value="21">21h00</option>
+            <option value="22">22h00</option>
+          </select>
         </div>
       </div>
 
