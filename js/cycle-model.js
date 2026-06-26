@@ -118,10 +118,14 @@ export class DailyLog {
     this.satisfactionPartenaire = null; // 1-10
     this.sextoys                = [];   // vibromasseur | gode | plug | anneau | sextoy_couple
     this.lubrifiant             = false;
-    this.positionsUtilisees     = [];   // ids depuis POSITIONS (intimacy-library.js)
+    this.positionsUtilisees     = [];   // missionnaire | levrette | cowgirl | reverse_cowgirl | cuillere | lotus | 69 | debout | doggy | amazon | spooning | mur | table | autre + perso[]
+    this.positionsPersonnalisees = [];  // String[] — positions ajoutées par l'utilisateur
+    this.masturElle             = [];   // humping | douche | doigts_clito | doigts_interne | vibromasseur | dildo | suction | wand | plug | squirting | edging | regarder_partner | mutuelle
+    this.masturLui              = [];   // main | fleshlight | prostate | edging | ruined | regarder_partner | mutuelle
     this.kinksDate              = [];   // kink ids pratiqués ce jour
     this.aftercare              = false;
     this.aftercareNote          = null; // String
+    this.notePrivee             = null; // String — chiffrée via crypto-notes.js si PIN actif
 
     // ── FACTEURS COUPLE ───────────────────────────────────────────────────
     this.stressCouple = null; // aucun | tension | dispute | reconciliation | bonne_ambiance
@@ -202,7 +206,7 @@ export class DailyLog {
       'etatPeau','etatCheveux','urineSymptomes',
       'vieSociale','loisirs','fete','libidoPratiques',
       'contraceptionActifs','traitements','symptomsAutres','tags',
-      'sextoys','positionsUtilisees','kinksDate',
+      'sextoys','positionsUtilisees','positionsPersonnalisees','masturElle','masturLui','kinksDate',
     ];
     arrays.forEach(k => { if (!Array.isArray(log[k])) log[k] = []; });
     if (typeof log.grossesse !== 'object' || !log.grossesse) {

@@ -12,6 +12,22 @@ import { initKinks } from './kinks.js';
 import { initQuickHide } from './pin-lock.js';
 import { initQuickLogBar } from './quick-log-bar.js';
 
+// Gestionnaire d'erreur global — remplace l'écran gris par un message lisible
+window.addEventListener('unhandledrejection', e => {
+  console.error('[App] Unhandled rejection:', e.reason);
+});
+window.addEventListener('error', e => {
+  console.error('[App] Uncaught error:', e.message);
+  const v = document.getElementById('view');
+  if (v && !v.innerHTML) {
+    v.innerHTML = `<div style="padding:40px 20px;font-family:system-ui;color:#E53935">
+      <h2>Erreur de chargement</h2>
+      <p style="margin-top:8px;font-size:14px">${e.message}</p>
+      <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#E84375;color:#fff;border:none;border-radius:8px;cursor:pointer">Recharger</button>
+    </div>`;
+  }
+});
+
 // Mode démo : indicateur sur le body
 if (IS_DEMO) document.body.classList.add('demo-mode');
 

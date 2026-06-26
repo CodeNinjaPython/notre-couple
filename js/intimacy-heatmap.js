@@ -44,14 +44,11 @@ async function _load() {
   const first = `${year}-${String(month + 1).padStart(2,'0')}-01`;
   const last  = localDateStr(new Date(year, month + 1, 0));
 
-  const [{ data: sessDates }, { data: feedbacks }, { data: logs }] = await Promise.all([
+  const [{ data: sessDates }, { data: logs }] = await Promise.all([
     supabase.from('intimate_sessions')
       .select('id,session_date,duration_min,mood')
       .eq('couple_id', coupleId)
       .gte('session_date', first).lte('session_date', last),
-    supabase.from('session_feedback')
-      .select('session_id,user_id,satisfaction,orgasms')
-      .gte('session_id', '00000000-0000-0000-0000-000000000000'), // all — filtered below
     supabase.from('log_entries')
       .select('log_date,value')
       .eq('user_id', elleId)
@@ -59,11 +56,18 @@ async function _load() {
       .gte('log_date', first).lte('log_date', last),
   ]);
 
+  // Charger les feedbacks séparément (évite await imbriqué + .in vide)
+  const sessIds = (sessDates || []).map(s => s.id);
+  const { data: feedbacks } = sessIds.length
+    ? await supabase.from('session_feedback')
+        .select('session_id,user_id,satisfaction,orgasms')
+        .in('session_id', sessIds)
+    : { data: [] };
+
   // Sessions map: session_date → [{...session, feedbacks:[]}]
   const sessMap = {};
-  const sessIds = new Set((sessDates || []).map(s => s.id));
   const fbMap   = {};
-  (feedbacks || []).filter(f => sessIds.has(f.session_id)).forEach(f => {
+  (feedbacks || []).forEach(f => {
     if (!fbMap[f.session_id]) fbMap[f.session_id] = [];
     fbMap[f.session_id].push(f);
   });

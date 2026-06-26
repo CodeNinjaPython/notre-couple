@@ -16,19 +16,20 @@ import { Cycle } from './cycle-model.js';
  */
 export async function loadSessionsWithFeedback(coupleId) {
   const since = daysAgo(90);
-  const [{ data: sessions }, { data: feedbacks }] = await Promise.all([
-    supabase.from('intimate_sessions')
-      .select('id,couple_id,created_by,session_date,duration_min,prelim_min,location,mood,note')
-      .eq('couple_id', coupleId)
-      .gte('session_date', since)
-      .order('session_date', { ascending: false }),
-    supabase.from('session_feedback')
-      .select('session_id,user_id,satisfaction,orgasms,loved_txt,shared')
-      .in('session_id',
-        (await supabase.from('intimate_sessions').select('id').eq('couple_id', coupleId).gte('session_date', since))
-          .data?.map(s => s.id) ?? []
-      ),
-  ]);
+
+  // Deux requêtes séquentielles pour éviter le await imbriqué dans Promise.all
+  const { data: sessions } = await supabase.from('intimate_sessions')
+    .select('id,couple_id,created_by,session_date,duration_min,prelim_min,location,mood,note')
+    .eq('couple_id', coupleId)
+    .gte('session_date', since)
+    .order('session_date', { ascending: false });
+
+  const ids = (sessions || []).map(s => s.id);
+  const { data: feedbacks } = ids.length
+    ? await supabase.from('session_feedback')
+        .select('session_id,user_id,satisfaction,orgasms,loved_txt,shared')
+        .in('session_id', ids)
+    : { data: [] };
 
   const fbBySession = {};
   (feedbacks || []).forEach(fb => {
