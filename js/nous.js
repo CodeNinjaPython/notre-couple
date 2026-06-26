@@ -560,7 +560,7 @@ async function unlinkAccount(me) {
 // Paramètres notifications
 // ---------------------------------------------------------------------------
 const NOTIF_KEY = 'nc-notif-settings';
-const NOTIF_DEFAULTS = { daily: true, rules: true, fertile: false, hour: 20 };
+const NOTIF_DEFAULTS = { daily: true, rules: true, fertile: false, libido_aligned: false, hour: 20 };
 
 function getNotifSettings() {
   try { return { ...NOTIF_DEFAULTS, ...JSON.parse(localStorage.getItem(NOTIF_KEY)) }; }
@@ -574,23 +574,27 @@ function initNotifSettings() {
   const dailyEl   = document.getElementById('notif-toggle-daily');
   const rulesEl   = document.getElementById('notif-toggle-rules');
   const fertileEl = document.getElementById('notif-toggle-fertile');
+  const libidoEl  = document.getElementById('notif-toggle-libido-aligned');
   const hourEl    = document.getElementById('notif-hour');
 
   if (dailyEl)   dailyEl.checked   = s.daily;
   if (rulesEl)   rulesEl.checked   = s.rules;
   if (fertileEl) fertileEl.checked = s.fertile;
+  if (libidoEl)  libidoEl.checked  = s.libido_aligned;
   if (hourEl)    hourEl.value      = s.hour;
 
   const save = () => saveNotifSettings({
-    daily:   dailyEl?.checked  ?? s.daily,
-    rules:   rulesEl?.checked  ?? s.rules,
-    fertile: fertileEl?.checked ?? s.fertile,
-    hour:    parseInt(hourEl?.value ?? s.hour),
+    daily:          dailyEl?.checked   ?? s.daily,
+    rules:          rulesEl?.checked   ?? s.rules,
+    fertile:        fertileEl?.checked ?? s.fertile,
+    libido_aligned: libidoEl?.checked  ?? s.libido_aligned,
+    hour:           parseInt(hourEl?.value ?? s.hour),
   });
 
   dailyEl?.addEventListener('change', save);
   rulesEl?.addEventListener('change', save);
   fertileEl?.addEventListener('change', save);
+  libidoEl?.addEventListener('change', save);
   hourEl?.addEventListener('change', save);
 }
 

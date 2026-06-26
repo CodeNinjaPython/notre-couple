@@ -13,10 +13,12 @@ import { localDateStr, fmtDate, diffDays } from './date-utils.js';
 import { renderRecentSessions, openFullSessionSheet, openFastTrack, initSessionSheetListeners } from './intimacy-sessions.js';
 import {
   renderDesireWindow, renderSouvenirDuJour, renderDebriefPostDispute,
-  renderEquitePlaisir, renderMonthlyHeatmap, renderSatisfactionCurve, renderOrgasmByPhase,
+  renderEquitePlaisir, renderMonthlyHeatmap, renderSatisfactionCurve,
+  renderOrgasmByPhase, renderHealthAlerts,
 } from './intimacy-stats.js';
 import { renderLibrary, getSuggestions, getDateNightIdeas, PHASES_LABELS } from './intimacy-library.js';
 import { hasPIN, isLocked, showLockScreen, initQuickHide, initPINSettings } from './pin-lock.js';
+import { notifyLibidosAligned } from './notifications.js';
 
 export let st = { me: null, partner: null, coupleId: null };
 
@@ -65,6 +67,10 @@ export async function initIntimacy() {
   renderMonthlyHeatmap(st.coupleId);
   renderSatisfactionCurve(st.me?.user_id);
   renderOrgasmByPhase(st);
+  renderHealthAlerts(st.me?.user_id);
+
+  // §4 — notification libidos alignées (si opt-in)
+  notifyLibidosAligned();
 
   // Bibliothèque
   renderLibrarySection();
@@ -165,22 +171,87 @@ async function renderCycleXIntimite() {
 
 // ─── Bibliothèque de positions ─────────────────────────────────────────────
 
-function renderLibrarySection() {
+// §4 — filtre phase actuelle automatique
+const PHASE_FROM_DAY = (day) => {
+  if (day <=  5) return 'menstruelle';
+  if (day <= 13) return 'folliculaire';
+  if (day <= 16) return 'ovulation';
+  return 'luteale';
+};
+const PHASE_LABEL = {
+  menstruelle: 'Menstruelle', folliculaire: 'Folliculaire',
+  ovulation: 'Ovulation',    luteale: 'Lutéale',
+};
+
+async function renderLibrarySection() {
   const grid = document.getElementById('library-grid');
   if (!grid) return;
-  renderLibrary(grid);
 
-  // Filtres
+  // Détecter la phase courante pour pré-filtrer
+  let currentPhase = null;
+  try {
+    const { data: cycle } = await supabase
+      .from('cycles').select('period_start')
+      .order('period_start', { ascending: false }).limit(1).maybeSingle();
+    if (cycle?.period_start) {
+      const day = diffDays(localDateStr(), cycle.period_start) + 1;
+      currentPhase = PHASE_FROM_DAY(day);
+    }
+  } catch (_) { /* pas de cycle → pas de filtre auto */ }
+
+  // Bouton "Phase actuelle" au-dessus des filtres
+  const phaseBtnWrap = document.getElementById('library-phase-filter');
+  if (phaseBtnWrap && currentPhase) {
+    phaseBtnWrap.innerHTML = `
+      <button type="button" class="phase-filter-pill active" data-phase="${currentPhase}"
+        aria-pressed="true" aria-label="Filtrer pour la phase ${PHASE_LABEL[currentPhase]}">
+        ✨ Phase ${PHASE_LABEL[currentPhase]} · maintenant
+      </button>
+      <button type="button" class="phase-filter-pill" data-phase=""
+        aria-pressed="false" aria-label="Afficher toutes les positions">
+        Toutes
+      </button>`;
+    phaseBtnWrap.style.display = 'flex';
+
+    phaseBtnWrap.querySelectorAll('.phase-filter-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        phaseBtnWrap.querySelectorAll('.phase-filter-pill').forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+        const phase = btn.dataset.phase || undefined;
+        renderLibrary(grid, collectFilters(phase));
+      });
+    });
+
+    // Afficher la phase actuelle par défaut
+    renderLibrary(grid, { phase: currentPhase });
+  } else {
+    phaseBtnWrap && (phaseBtnWrap.style.display = 'none');
+    renderLibrary(grid);
+  }
+
+  // Filtres select (intensité, confort, catégorie)
   ['intensity', 'comfort', 'category'].forEach(key => {
-    document.getElementById(`filter-${key}`)?.addEventListener('change', (e) => {
-      const val = e.target.value || undefined;
-      const filters = {};
-      if (key === 'intensity') filters.intensity = val ? parseInt(val) : undefined;
-      if (key === 'comfort')   filters.comfort   = val ? parseInt(val) : undefined;
-      if (key === 'category')  filters.category  = val;
-      renderLibrary(grid, filters);
+    document.getElementById(`filter-${key}`)?.addEventListener('change', () => {
+      const activePhase = phaseBtnWrap?.querySelector('.phase-filter-pill.active')?.dataset.phase;
+      renderLibrary(grid, collectFilters(activePhase || undefined));
     });
   });
+}
+
+function collectFilters(phase) {
+  const intensity = document.getElementById('filter-intensity')?.value;
+  const comfort   = document.getElementById('filter-comfort')?.value;
+  const category  = document.getElementById('filter-category')?.value;
+  return {
+    phase:     phase || undefined,
+    intensity: intensity ? parseInt(intensity) : undefined,
+    comfort:   comfort   ? parseInt(comfort)   : undefined,
+    category:  category  || undefined,
+  };
 }
 
 // ─── Suggestions contextuelles ─────────────────────────────────────────────

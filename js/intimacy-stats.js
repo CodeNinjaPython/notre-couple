@@ -446,3 +446,55 @@ export async function renderEquitePlaisir(st) {
     console.error('renderEquitePlaisir:', e.message);
   }
 }
+
+// ─── §2C — Alertes santé récurrentes ──────────────────────────────────────
+// Détecte les mentions d'inconfort dans le feedback libre (≥ 2 fois / 30 jours).
+// Non diagnostique : oriente vers un professionnel, ne conclut pas.
+
+const PAIN_KEYWORDS = [
+  'douleur', 'douloureux', 'doulou', 'mal ',
+  'inconfort', 'inconfortable',
+  'brûle', 'brûlure', 'brule', 'brulure',
+  'saigne', 'saignement',
+  'sèche', 'sécheresse', 'seche', 'secheresse',
+  'irritation', 'irrité', 'irritée',
+  'piqûre', 'pique', 'sensible', 'sensibilité',
+];
+
+export async function renderHealthAlerts(userId) {
+  const el = document.getElementById('health-alerts');
+  if (!el) return;
+
+  try {
+    const since = new Date(Date.now() - 30 * 864e5).toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('session_feedback')
+      .select('improve_txt, created_at')
+      .eq('user_id', userId)
+      .gte('created_at', since + 'T00:00:00Z')
+      .not('improve_txt', 'is', null);
+
+    if (error) throw error;
+
+    const painMentions = (data || []).filter(f =>
+      PAIN_KEYWORDS.some(k => f.improve_txt?.toLowerCase().includes(k))
+    );
+
+    if (painMentions.length < 2) { el.style.display = 'none'; return; }
+
+    el.style.display = 'block';
+    el.innerHTML = `<div class="health-alert-card" role="note" aria-label="Note de bien-être">
+      <div class="health-alert-icon">💙</div>
+      <div class="health-alert-body">
+        <div class="health-alert-title">Un inconfort noté plusieurs fois</div>
+        <p>Tu as mentionné un inconfort dans ${painMentions.length} feedbacks des 30 derniers jours. Si ça persiste, consulter un professionnel de santé peut aider — sans urgence, juste pour prendre soin de toi.</p>
+        <p class="health-alert-note">Ce message est informatif, pas un diagnostic.</p>
+      </div>
+    </div>`;
+
+  } catch (e) {
+    el.style.display = 'none';
+    console.error('renderHealthAlerts:', e.message);
+  }
+}

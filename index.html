@@ -616,6 +616,13 @@
           <div><div class="toggle-label">Fenêtre fertile (mode conception)</div></div>
           <label class="toggle"><input type="checkbox" id="notif-toggle-fertile"><span class="toggle-track"></span></label>
         </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Libidos alignées ❤️</div>
+            <div class="toggle-sub">Notification douce quand vos deux libidos sont ≥ 4</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="notif-toggle-libido-aligned"><span class="toggle-track"></span></label>
+        </div>
         <div class="settings-row">
           <span class="settings-label">Heure du rappel quotidien</span>
           <select id="notif-hour" class="hour-select">
@@ -725,6 +732,8 @@
       <!-- Bibliothèque de positions -->
       <div class="card">
         <h2>Bibliothèque de positions</h2>
+        <!-- Filtre phase courante (injecté dynamiquement par JS) -->
+        <div id="library-phase-filter" class="library-phase-filter" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
         <div class="library-filters">
           <select id="filter-intensity" class="library-filter-select" aria-label="Filtrer par intensité">
             <option value="">Toute intensité</option>
@@ -800,6 +809,8 @@
       <!-- Santé (privé par défaut) -->
       <div class="card">
         <h2>Santé — privé par défaut</h2>
+        <!-- §2C : alerte santé récurrente (non diagnostique) -->
+        <div id="health-alerts" style="display:none;margin-bottom:14px"></div>
         <div id="health-summary"></div>
         <button type="button" id="btn-add-health" class="btn-secondary" style="margin-top:12px">+ Ajouter une entrée</button>
       </div>

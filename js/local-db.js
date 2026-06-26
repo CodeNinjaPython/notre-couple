@@ -234,7 +234,7 @@ const chanNoop = () => ({ on() { return this; }, subscribe() { return this; }, u
 
 // ─── Seed (30 jours de données réalistes) ─────────────────────────────────
 function seed() {
-  if (ls.get('seeded') === '4') return; // version 4 du seed (module intime complet)
+  if (ls.get('seeded') === '5') return; // version 5 du seed (44 kinks, health alerts)
 
   const T  = new Date();
   // Utilise la date locale pour éviter le décalage UTC (important UTC+4)
@@ -339,21 +339,52 @@ function seed() {
     { id:'fb2', session_id:'ses1', user_id:LUI,  satisfaction:9, orgasms:1, loved_txt:'Le moment',    improve_txt:null, shared:true,  created_at:new Date(T-3*864e5).toISOString() },
     { id:'fb3', session_id:'ses2', user_id:ELLE, satisfaction:7, orgasms:0, loved_txt:null, improve_txt:'Plus de temps', shared:false, created_at:new Date(T-10*864e5).toISOString() },
   ]);
+  // Seed 44 kinks — miroir exact du schema_intimite.sql
   ls.set('kinks', [
-    { id:'mood_candles',  label:'Bougies & lumière tamisée', category:'atmosphere' },
-    { id:'mood_music',    label:'Musique choisie ensemble',  category:'atmosphere' },
-    { id:'mood_massage',  label:'Massage avant',             category:'atmosphere' },
-    { id:'mood_bath',     label:'Bain ou douche ensemble',   category:'atmosphere' },
-    { id:'comm_fantasy',  label:'Partage de fantasmes',      category:'communication' },
-    { id:'comm_aftercare',label:'Temps de tendresse après',  category:'communication' },
-    { id:'comm_surprise', label:'Proposition surprise',      category:'communication' },
-    { id:'loc_travel',    label:'En voyage',                 category:'lieux' },
-    { id:'loc_hotel',     label:'Hôtel / nuit ailleurs',    category:'lieux' },
-    { id:'act_slowdown',  label:'Ralentir, prendre le temps','category':'pratiques' },
-    { id:'act_roleplay',  label:'Jeu de rôles léger',       category:'pratiques' },
-    { id:'act_toys',      label:'Accessoires',              category:'pratiques' },
-    { id:'game_dare',     label:'Questions / défis',        category:'jeux' },
-    { id:'game_date',     label:'Date night thématique',    category:'jeux' },
+    { id:'mood_candles',     label:'Bougies & lumière tamisée',        category:'atmosphere' },
+    { id:'mood_music',       label:'Musique choisie ensemble',          category:'atmosphere' },
+    { id:'mood_massage',     label:'Massage avant',                     category:'atmosphere' },
+    { id:'mood_bath',        label:'Bain ou douche ensemble',           category:'atmosphere' },
+    { id:'mood_scent',       label:'Parfum / huile de massage',         category:'atmosphere' },
+    { id:'mood_food',        label:'Apéro ou dessert au lit',           category:'atmosphere' },
+    { id:'mood_dress',       label:"Tenue choisie pour l'autre",        category:'atmosphere' },
+    { id:'comm_fantasy',     label:'Partage de fantasmes',              category:'communication' },
+    { id:'comm_aftercare',   label:'Temps de tendresse après',          category:'communication' },
+    { id:'comm_surprise',    label:'Proposition surprise',               category:'communication' },
+    { id:'comm_vocal',       label:"Exprimer ce qu'on aime pendant",    category:'communication' },
+    { id:'comm_letter',      label:'Petit mot / message avant',         category:'communication' },
+    { id:'comm_debrief',     label:'Débrief doux après',                category:'communication' },
+    { id:'loc_outside',      label:'Extérieur / nature',                category:'lieux' },
+    { id:'loc_travel',       label:'En voyage',                         category:'lieux' },
+    { id:'loc_hotel',        label:'Hôtel / nuit ailleurs',             category:'lieux' },
+    { id:'loc_car',          label:'Voiture',                           category:'lieux' },
+    { id:'loc_other_room',   label:'Autre pièce de la maison',          category:'lieux' },
+    { id:'act_slowdown',     label:'Ralentir, prendre le temps',        category:'pratiques' },
+    { id:'act_roleplay',     label:'Jeu de rôles léger',                category:'pratiques' },
+    { id:'act_bondage_soft', label:'Contrainte douce (foulard…)',        category:'pratiques' },
+    { id:'act_toys',         label:'Accessoires',                       category:'pratiques' },
+    { id:'act_oral',         label:'Câlins buccaux',                    category:'pratiques' },
+    { id:'act_sixty_nine',   label:'Partage simultané',                 category:'pratiques' },
+    { id:'act_exhib_soft',   label:'Légère exhibition (entre vous)',     category:'pratiques' },
+    { id:'act_temperature',  label:'Chaud / froid (bougie, glaçon)',    category:'pratiques' },
+    { id:'act_mirror',       label:'Miroir',                            category:'pratiques' },
+    { id:'act_blindfold',    label:'Yeux bandés',                       category:'pratiques' },
+    { id:'act_photo_priv',   label:'Photos privées',                    category:'pratiques' },
+    { id:'act_extended',     label:'Session longue sans précipitation', category:'pratiques' },
+    { id:'game_dare',        label:'Questions / défis',                 category:'jeux' },
+    { id:'game_challenge',   label:'Défi du mois',                      category:'jeux' },
+    { id:'game_date',        label:'Date night thématique',             category:'jeux' },
+    { id:'game_quiz',        label:'Quiz de compatibilité',             category:'jeux' },
+    { id:'game_strip',       label:'Jeu de déshabillage',               category:'jeux' },
+    { id:'game_fantasy_box', label:'Boîte à fantasmes',                 category:'jeux' },
+    { id:'sens_slow_touch',  label:'Effleurement très lent',            category:'sensations' },
+    { id:'sens_deep_eye',    label:'Contact visuel prolongé',           category:'sensations' },
+    { id:'sens_voice',       label:"Voix à l'oreille",                  category:'sensations' },
+    { id:'sens_breathe',     label:'Synchroniser la respiration',       category:'sensations' },
+    { id:'sens_music_tempo', label:'Rythme calé sur la musique',        category:'sensations' },
+    { id:'sens_no_goal',     label:'Sans objectif défini',              category:'sensations' },
+    { id:'sens_outdoor_sky', label:'À la belle étoile',                 category:'sensations' },
+    { id:'sens_tantric',     label:'Approche tantrique (lenteur)',       category:'sensations' },
   ]);
   ls.set('kink_ratings', [
     { id:'kr1', user_id:ELLE, kink_id:'mood_candles',  desire:5, shared:true,  updated_at:new Date().toISOString() },
@@ -389,7 +420,7 @@ function seed() {
   // Démo : onboarding considéré comme complété, mode par défaut
   localStorage.setItem('nc-onboarding-v1', 'done');
   localStorage.setItem('nc-cycle-mode', 'rules');
-  ls.set('seeded', '4');
+  ls.set('seeded', '5');
 }
 
 // ─── Export ────────────────────────────────────────────────────────────────

@@ -99,8 +99,44 @@ export function notifyPartnerPeriodStart(partnerName) {
   showNotification('Notre rythme', `${partnerName} vient de noter le début de ses règles.`, 'partner-rules');
 }
 
+// §4 — Notification "Vos libidos sont alignées aujourd'hui"
+// Strictement optionnelle : nécessite libido_aligned = true dans les settings.
+// Déclenchée une seule fois par jour (guard localStorage).
+export async function notifyLibidosAligned() {
+  if (Notification.permission !== 'granted') return;
+  const settings = getSettings();
+  if (!settings.libido_aligned) return;
+
+  // Guard : ne notifier qu'une fois par jour
+  const today   = localDateStr();
+  const lastKey = 'nc-libido-notif-date';
+  if (localStorage.getItem(lastKey) === today) return;
+
+  const { data } = await supabase
+    .from('log_entries')
+    .select('user_id, value')
+    .eq('category_id', 'libido')
+    .eq('log_date', today);
+
+  if (!data || data.length < 2) return;
+
+  const vals = data.map(e => Number(e.value?.v ?? e.value));
+  if (vals.length >= 2 && vals.every(v => v >= 4)) {
+    showNotification(
+      'Notre rythme ❤️',
+      'Vos libidos sont alignées aujourd\'hui.',
+      'libido-aligned'
+    );
+    localStorage.setItem(lastKey, today);
+  }
+}
+
 // Lecture des settings
 function getSettings() {
-  try { return { daily:true, rules:true, fertile:false, hour:20, ...JSON.parse(localStorage.getItem('nc-notif-settings') || '{}') }; }
-  catch { return { daily:true, rules:true, fertile:false, hour:20 }; }
+  try {
+    return {
+      daily: true, rules: true, fertile: false, libido_aligned: false, hour: 20,
+      ...JSON.parse(localStorage.getItem('nc-notif-settings') || '{}'),
+    };
+  } catch { return { daily: true, rules: true, fertile: false, libido_aligned: false, hour: 20 }; }
 }

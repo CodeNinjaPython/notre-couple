@@ -1180,6 +1180,31 @@ body.demo-mode .demo-badge {
 }
 .fb-sat-btn.sel { border-color: var(--elle); background: var(--elle-light); box-shadow: var(--sh-elle); }
 
+/* ─── §2C — Alerte santé récurrente ──────────────────────────────────── */
+.health-alert-card {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--lui-light); border: 1.5px solid var(--lui-mid);
+  border-radius: 14px; padding: 16px; margin-bottom: 4px;
+}
+.health-alert-icon { font-size: 26px; flex-shrink: 0; line-height: 1; }
+.health-alert-title { font-size: 14px; font-weight: 700; color: var(--lui); margin-bottom: 6px; }
+.health-alert-body p { font-size: 13px; color: var(--text); line-height: 1.6; }
+.health-alert-note { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; margin-top: 6px !important; }
+
+/* ─── §4 — Filtre phase courante bibliothèque ─────────────────────────── */
+.library-phase-filter { display: flex; }  /* rendu flex par JS si phase détectée */
+.phase-filter-pill {
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 100px; font-family: "DM Sans"; font-size: 12px; font-weight: 700;
+  color: var(--muted); padding: 8px 16px; cursor: pointer; transition: all .2s;
+  min-height: 36px; white-space: nowrap;
+}
+.phase-filter-pill.active {
+  background: var(--elle-light); border-color: var(--elle);
+  color: var(--elle); box-shadow: 0 2px 8px var(--elle-dim);
+}
+.phase-filter-pill:hover:not(.active) { border-color: var(--faint); color: var(--text); }
+
 /* ─── Préliminaires ───────────────────────────────────────────────────── */
 .prelim-expand {
   max-height: 0;
