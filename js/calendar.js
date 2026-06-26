@@ -4,8 +4,8 @@ import { getCycleHistory, predictNextPeriod } from './cycles.js';
 import { localDateStr } from './date-utils.js';
 import { renderSymptomTracker } from './symptoms.js';
 import { initCollapsibles } from './collapse.js';
-import { DailyLog } from './cycle-model.js';
-import { renderDailyLogForm } from './ring-chart.js';
+import { DailyLog, computeCyclePrediction } from './cycle-model.js';
+import { renderLogCategoryAccordion, renderCalendarDaySummary } from './daily-log-ui.js';
 
 const PHASES = [
   [1,  5,  'Menstruelle',  '#E53935'],
@@ -38,29 +38,26 @@ export async function initCalendar() {
   renderCalendar();
   bindNav();
 
-  // Saisie DailyLog (avec icônes)
+  // Saisie DailyLog — accordéon complet
   const dlWrap = document.getElementById('daily-log-form');
   if (dlWrap && calState.me) {
-    const log = new DailyLog({ date: localDateStr(), userId: calState.me.user_id });
-    // Pré-charger les données existantes du jour
-    const { data: existingEntries } = await supabase.from('log_entries')
-      .select('category_id, value').eq('log_date', localDateStr());
-    const filledLog = DailyLog.fromLogEntries(existingEntries || [], localDateStr(), calState.me.user_id);
+    const today = localDateStr();
+    const { data: existing } = await supabase.from('log_entries')
+      .select('*').eq('log_date', today).eq('category_id', 'journal').maybeSingle();
+    const log = existing ? DailyLog.fromDB(existing) : new DailyLog({ date: today, userId: calState.me.user_id });
 
-    renderDailyLogForm(dlWrap, filledLog, async (savedLog) => {
-      const entries = savedLog.toLogEntries();
-      for (const entry of entries) {
-        await supabase.from('log_entries').upsert(
-          { ...entry, user_id: calState.me.user_id },
-          { onConflict: 'user_id,log_date,category_id' }
-        );
-      }
-      // Toast feedback
-      const toast = document.createElement('div');
-      toast.className = 'toast show';
-      toast.textContent = 'Journée enregistrée ✓';
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2800);
+    renderLogCategoryAccordion(dlWrap, log, async (updatedLog) => {
+      await supabase.from('log_entries').upsert(
+        { ...updatedLog.toDBEntry(), user_id: calState.me.user_id },
+        { onConflict: 'user_id,log_date,category_id' }
+      );
+      // Toast
+      let toast = document.getElementById('toast');
+      if (!toast) { toast = document.createElement('div'); toast.id = 'toast'; toast.className = 'toast'; document.body.appendChild(toast); }
+      toast.textContent = 'Enregistré ✓';
+      toast.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toast.classList.remove('show'), 2500);
     });
   }
 
@@ -251,31 +248,29 @@ function renderCycleHistory() {
   }).join('');
 }
 
-function showDayDetail(dateStr) {
+async function showDayDetail(dateStr) {
   const detail = document.getElementById('day-detail');
   const title  = document.getElementById('day-detail-date');
   const body   = document.getElementById('day-detail-body');
   if (!detail) return;
 
-  const d = new Date(dateStr);
-  title.textContent = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  title.textContent = new Date(dateStr + 'T12:00:00')
+    .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  const entry = calState.entries[dateStr];
-  if (!entry || !Object.keys(entry).length) {
-    body.innerHTML = '<div style="color:var(--faint);font-size:13px;padding:8px 0">Aucune saisie ce jour.</div>';
-  } else {
-    const LABELS = { mood:'Humeur', energy:'Énergie', flow:'Flux', cramps:'Crampes',
-                     libido:'Libido', sleep:'Sommeil', stress:'Stress', exercise:'Sport' };
-    const MOOD_OPTS = ['😣','😔','😐','🙂','😊'];
-    const FLOW_OPTS = ['·','◦','●','◆'];
-    body.innerHTML = Object.entries(entry).map(([k, v]) => {
-      let display = v;
-      if (k === 'mood') display = MOOD_OPTS[v] ?? v;
-      if (k === 'flow') display = FLOW_OPTS[v] ?? v;
-      if (k === 'exercise') display = v == 1 ? '✓' : '—';
-      return `<div class="detail-row"><span>${LABELS[k] || k}</span><span style="color:var(--gold);font-family:'DM Mono',monospace">${display}</span></div>`;
-    }).join('');
-  }
+  // Chercher le journal DailyLog du jour (category_id = 'journal')
+  let log = null;
+  try {
+    const { data } = await supabase.from('log_entries')
+      .select('*').eq('log_date', dateStr).eq('category_id', 'journal').maybeSingle();
+    if (data) log = DailyLog.fromDB(data);
+  } catch (_) {}
+
+  // Calculer le jour et la phase dans le cycle
+  const pred = computeCyclePrediction(calState.cycles || []);
+  const cycleDay   = pred?.jourDuCycleActuel ?? null;
+  const phaseName  = pred?.phaseDuCycle     ?? null;
+
+  renderCalendarDaySummary(body, log, cycleDay, phaseName, dateStr);
 
   detail.classList.add('open');
   document.getElementById('btn-detail-close')?.addEventListener('click', () => {
