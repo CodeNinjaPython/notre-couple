@@ -286,8 +286,8 @@ export const JOURNAL_CATEGORIES = [
         placeholder: 'Ce qui a aidé à se sentir bien après…', maxlength: 500 },
       { key: 'kinksDate', label: 'Kinks pratiqués', type: 'tags',
         placeholder: 'Ajouter un kink…' },
-      { key: 'notePrivee', label: 'Note privée (chiffrée)', type: 'text',
-        placeholder: 'Note confidentielle — chiffrée si PIN actif', maxlength: 2000 },
+      { key: 'notePrivee', label: 'Note privée', type: 'text',
+        placeholder: 'Visible par toi seul·e — non partagée avec ton partenaire', maxlength: 2000 },
     ],
   },
 
