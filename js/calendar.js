@@ -2,6 +2,8 @@ import { supabase } from './supabase.js';
 import { getMyMembership } from './pairing.js';
 import { getCycleHistory, predictNextPeriod } from './cycles.js';
 import { localDateStr } from './date-utils.js';
+import { renderSymptomTracker } from './symptoms.js';
+import { initCollapsibles } from './collapse.js';
 
 const PHASES = [
   [1,  5,  'Menstruelle',  '#E53935'],
@@ -33,6 +35,15 @@ export async function initCalendar() {
   await loadMonthEntries();
   renderCalendar();
   bindNav();
+
+  // Symptômes du jour dans le tracker Calendrier
+  const symptWrap = document.getElementById('symptom-tracker');
+  if (symptWrap && calState.me) {
+    renderSymptomTracker(symptWrap, { me: calState.me, partner: null }, localDateStr());
+  }
+
+  // Accordéons de la vue Calendrier
+  initCollapsibles(document.getElementById('view'));
 }
 
 async function loadMonthEntries() {

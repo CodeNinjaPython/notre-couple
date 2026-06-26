@@ -322,36 +322,78 @@ body[data-cur="lui"] .chip.sel {
 /* ─── Cycle controls ──────────────────────────────────────────────────── */
 #cycle-controls { margin-top: 16px; }
 
-/* ─── Bottom navigation (pill flottante) ─────────────────────────────── */
+/* ─── Bottom navigation (pill flottante, 4 onglets) ──────────────────── */
 nav {
   position: fixed;
-  bottom: calc(16px + env(safe-area-inset-bottom));
+  bottom: calc(14px + env(safe-area-inset-bottom));
   left: 50%; transform: translateX(-50%);
-  width: calc(100% - 32px); max-width: 400px;
+  width: calc(100% - 28px); max-width: 420px;
   background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 100px;
-  padding: 6px;
-  display: none; gap: 4px; z-index: 10;
+  padding: 5px;
+  display: none; gap: 3px; z-index: 10;
   box-shadow: var(--sh-lg);
 }
 nav.visible { display: flex; }
 nav button {
   flex: 1; border: none; background: transparent;
   color: var(--faint);
-  border-radius: 100px; padding: 10px 0 8px;
-  font-family: "DM Sans"; font-size: 10.5px; font-weight: 700;
-  cursor: pointer; letter-spacing: .04em;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  transition: all .2s;
+  border-radius: 100px; padding: 9px 0 7px;
+  font-family: "DM Sans"; font-size: 9.5px; font-weight: 700;
+  cursor: pointer; letter-spacing: .03em;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  transition: all .2s; min-height: 52px; /* A11Y */
 }
-nav button.on {
-  background: var(--elle-light);
-  color: var(--elle);
-}
+nav button.on { background: var(--elle-light); color: var(--elle); }
+nav button[data-nav="intime"].on { background: rgba(232,67,117,.1); color: var(--elle); }
+nav button[data-nav="nous"].on   { background: var(--lui-light); color: var(--lui); }
 nav button svg {
-  width: 19px; height: 19px;
+  width: 18px; height: 18px;
   stroke: currentColor; fill: none; stroke-width: 2;
+}
+
+/* ─── Système d'accordéons collapsibles ───────────────────────────────── */
+
+/* Le header devient un bouton pleine largeur */
+.collapsible-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; background: transparent; border: none;
+  padding: 0; cursor: pointer; text-align: left; gap: 8px;
+  min-height: 44px; /* A11Y tap target */
+}
+.collapsible-header h2 { margin-bottom: 0; pointer-events: none; }
+
+/* Chevron animé */
+.collapsible-chevron {
+  flex-shrink: 0; color: var(--faint);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.collapsible-section.collapsed .collapsible-chevron {
+  transform: rotate(-90deg);
+}
+
+/* Corps : animation max-height */
+.collapsible-body {
+  max-height: 3000px;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease;
+  opacity: 1;
+}
+.collapsible-section.collapsed .collapsible-body {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Card avec header collapsible (remplace le h2 seul) */
+.card.collapsible-section { padding-bottom: 0; }
+.card.collapsible-section .collapsible-body { padding-bottom: 20px; }
+.card.collapsible-section.collapsed { padding-bottom: 4px; }
+
+/* Séparateur sous le header quand ouvert */
+.collapsible-header::after {
+  display: none; /* pas de séparateur par défaut */
 }
 
 /* ─── Forms ───────────────────────────────────────────────────────────── */

@@ -1,4 +1,5 @@
-const NAV_VIEWS = ['today', 'calendar', 'nous', 'intime'];
+// Ordre des onglets : Aujourd'hui · Cycle · Intime · Analyse
+const NAV_VIEWS = ['today', 'calendar', 'intime', 'nous'];
 const viewInits = {};
 let currentView = null;
 

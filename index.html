@@ -26,23 +26,23 @@
     </div>
   </div>
 
-  <!-- Bottom navigation (masquée sur auth/pairing) -->
-  <nav id="main-nav">
-    <button type="button" data-nav="today" class="on">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+  <!-- Bottom navigation — 4 onglets : Aujourd'hui · Cycle · Intime · Analyse -->
+  <nav id="main-nav" aria-label="Navigation principale">
+    <button type="button" data-nav="today" class="on" aria-label="Aujourd'hui">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
       Aujourd'hui
     </button>
-    <button type="button" data-nav="calendar">
-      <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
-      Calendrier
+    <button type="button" data-nav="calendar" aria-label="Cycle">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
+      Cycle
     </button>
-    <button type="button" data-nav="nous">
-      <svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><circle cx="16" cy="11" r="2.5"/><path d="M4 19c0-3 2.5-5 5-5s5 2 5 5M14 19c0-2 1-3.5 2.5-3.5S19 17 19 19"/></svg>
-      Nous
-    </button>
-    <button type="button" data-nav="intime">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <button type="button" data-nav="intime" aria-label="Intime">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       Intime
+    </button>
+    <button type="button" data-nav="nous" aria-label="Analyse">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analyse
     </button>
   </nav>
 
@@ -285,6 +285,8 @@
        ================================================================ -->
   <template id="tpl-today">
     <div class="app">
+
+      <!-- En-tête -->
       <header>
         <div class="eyebrow" id="eyebrow">—</div>
         <div class="phase" id="phase-name">Notre rythme</div>
@@ -293,7 +295,7 @@
         <span id="streak-badge" class="streak-badge" style="display:none"></span>
       </header>
 
-      <!-- Contrôle cycle (visible uniquement pour elle) -->
+      <!-- Contrôle cycle (uniquement pour elle) -->
       <div id="cycle-controls" style="margin-top:16px;display:none">
         <button type="button" id="btn-cycle-toggle" class="btn-primary">Mes règles commencent</button>
       </div>
@@ -305,12 +307,12 @@
           <button type="button" data-p="lui">Lui</button>
         </div>
         <button type="button" id="btn-comme-hier" class="btn-comme-hier" title="Copier la saisie d'hier">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           Comme hier
         </button>
       </div>
 
-      <!-- Double rythme -->
+      <!-- ① Double rythme (toujours visible) -->
       <div class="card rhythm">
         <h2>Notre rythme · ce cycle</h2>
         <svg id="chart" viewBox="0 0 340 148" preserveAspectRatio="none"
@@ -321,79 +323,82 @@
         </div>
       </div>
 
-      <!-- Saisie du jour -->
+      <!-- ② Saisie du jour (toujours visible — action principale) -->
       <div class="card">
-        <!-- Navigation date (saisie antérieure) -->
         <div class="log-date-nav">
           <button type="button" id="btn-log-prev" class="log-nav-btn" aria-label="Jour précédent">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <span id="log-date-label" class="log-date-label">Aujourd'hui</span>
           <button type="button" id="btn-log-next" class="log-nav-btn" aria-label="Jour suivant" disabled>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
           </button>
         </div>
         <h2 id="log-title">Elle</h2>
         <div id="metrics">
-          <!-- État vide initial (remplacé par renderMetrics) -->
           <div class="empty-state-inline">
             <div class="es-icon">✏️</div>
-            <p>Chargement des données…</p>
+            <p>Chargement…</p>
           </div>
         </div>
       </div>
 
-      <!-- Insight -->
-      <div class="card insight">
-        <h2>Cette semaine</h2>
-        <div class="body" id="insight-body"></div>
-        <div class="meta" id="insight-meta">Données en cours d'accumulation</div>
-      </div>
-
-      <!-- Conseil (lui) -->
-      <div class="card tip" id="tip-card" style="display:none">
-        <h2>Pour toi</h2>
-        <p id="tip-text"></p>
-      </div>
-
-      <!-- Prédiction (≥ 2 cycles) -->
-      <div class="card" id="prediction-card" style="display:none">
-        <h2>Prochainement</h2>
-        <div class="pred-row">
-          <div class="pred-item">
-            <div class="pred-label">Règles</div>
-            <div class="pred-val" style="color:var(--rose)" id="pred-next">—</div>
-            <div class="pred-sub" id="pred-next-date"></div>
+      <!-- ③ Insight + Conseil lui (collapsible, ouvert par défaut) -->
+      <div class="card collapsible-section" data-default-open="true">
+        <button type="button" class="collapsible-header" aria-expanded="true">
+          <h2>Cette semaine</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div class="card insight" style="margin-top:0;box-shadow:none;border:none;padding:0">
+            <div class="body" id="insight-body"></div>
+            <div class="meta" id="insight-meta">Données en cours d'accumulation</div>
           </div>
-          <div class="pred-item">
-            <div class="pred-label">Ovulation</div>
-            <div class="pred-val" style="color:var(--gold)" id="pred-ovulation">—</div>
-          </div>
-          <div class="pred-item">
-            <div class="pred-label">Cycle moy.</div>
-            <div class="pred-val" id="pred-avg">—</div>
+          <div class="card tip" id="tip-card" style="display:none;margin-top:12px;box-shadow:none">
+            <h2>Pour toi</h2>
+            <p id="tip-text"></p>
           </div>
         </div>
-        <div class="pred-disclaimer">Indicatif · pas un outil contraceptif</div>
       </div>
 
-      <!-- Tracker de symptômes (Clue-inspired) -->
-      <div class="card">
-        <h2>Symptômes du jour</h2>
-        <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.6">
-          Données privées · non partagées avec votre partenaire.
-        </p>
-        <div id="symptom-tracker"></div>
+      <!-- ④ Prédiction (collapsible, ouverte si dispo) -->
+      <div class="card collapsible-section" id="prediction-card" style="display:none" data-default-open="true">
+        <button type="button" class="collapsible-header" aria-expanded="true">
+          <h2>Prochainement</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div class="pred-row">
+            <div class="pred-item">
+              <div class="pred-label">Règles</div>
+              <div class="pred-val" style="color:var(--rose)" id="pred-next">—</div>
+              <div class="pred-sub" id="pred-next-date"></div>
+            </div>
+            <div class="pred-item">
+              <div class="pred-label">Ovulation</div>
+              <div class="pred-val" style="color:var(--violet)" id="pred-ovulation">—</div>
+            </div>
+            <div class="pred-item">
+              <div class="pred-label">Cycle moy.</div>
+              <div class="pred-val" id="pred-avg">—</div>
+            </div>
+          </div>
+          <div class="pred-disclaimer">Indicatif · pas un outil contraceptif</div>
+        </div>
       </div>
 
-      <!-- Moments partagés -->
-      <div class="card">
-        <h2>Nos moments</h2>
-        <div id="events-list"></div>
-        <button class="addev" id="btn-addev">+ Noter un moment</button>
+      <!-- ⑤ Nos moments (collapsible, fermé par défaut) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Nos moments</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="events-list"></div>
+          <button class="addev" id="btn-addev">+ Noter un moment</button>
+        </div>
       </div>
 
-      <!-- Disclaimer -->
       <p class="disclaimer" style="margin-bottom:16px">
         Ce n'est pas un moyen de contraception.<br>
         Les prédictions sont indicatives uniquement.
@@ -427,19 +432,19 @@
   <template id="tpl-calendar">
     <div class="app">
       <header>
-        <div class="eyebrow">Vue du cycle</div>
-        <div class="phase">Calendrier</div>
+        <div class="eyebrow">Suivi du cycle</div>
+        <div class="phase">Cycle</div>
         <div class="date" id="today-date"></div>
       </header>
 
       <!-- Navigation mois -->
       <div class="cal-nav">
         <button id="cal-prev" class="cal-nav-btn" aria-label="Mois précédent">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <span id="cal-month-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
         <button id="cal-next" class="cal-nav-btn" aria-label="Mois suivant">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
 
@@ -454,16 +459,40 @@
         <span><i class="cal-legend-dot" style="border:1.5px dashed var(--faint);background:transparent"></i>Prévu</span>
       </div>
 
-      <!-- Prédiction -->
-      <div class="card" style="margin-top:16px">
-        <h2>Prédiction</h2>
-        <div id="cal-prediction"></div>
+      <!-- Prédiction (collapsible, ouverte) -->
+      <div class="card collapsible-section" style="margin-top:16px" data-default-open="true">
+        <button type="button" class="collapsible-header" aria-expanded="true">
+          <h2>Prédiction</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="cal-prediction"></div>
+        </div>
       </div>
 
-      <!-- Historique cycles -->
-      <div class="card">
-        <h2>Historique</h2>
-        <div id="cal-history"></div>
+      <!-- Symptômes du jour (collapsible, fermée par défaut) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Symptômes du jour</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.6">
+            Privé · non partagé avec votre partenaire.
+          </p>
+          <div id="symptom-tracker"></div>
+        </div>
+      </div>
+
+      <!-- Historique cycles (collapsible, fermée par défaut) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Historique des cycles</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="cal-history"></div>
+        </div>
       </div>
 
       <p class="disclaimer">Indicatif · pas un outil contraceptif</p>
@@ -486,64 +515,86 @@
   <template id="tpl-nous">
     <div class="app">
       <header>
-        <div class="eyebrow">Analyse · 90 jours</div>
-        <div class="phase">Nous</div>
+        <div class="eyebrow">Statistiques · 90 jours</div>
+        <div class="phase">Analyse</div>
         <div class="date" id="today-date"></div>
       </header>
 
-      <!-- Score synchronie -->
+      <!-- Score synchronie (toujours visible — indicateur clé) -->
       <div class="card" style="margin-top:20px" id="sync-card">
         <h2>Synchronie du couple</h2>
         <div id="sync-score"></div>
       </div>
 
-      <!-- Stats de la semaine -->
-      <div class="card">
-        <h2>Cette semaine</h2>
-        <div id="nous-week"></div>
+      <!-- Stats semaine + tendances (collapsible, ouvert) -->
+      <div class="card collapsible-section" data-default-open="true">
+        <button type="button" class="collapsible-header" aria-expanded="true">
+          <h2>Cette semaine</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="nous-week"></div>
+          <div style="margin-top:16px" id="nous-trends"></div>
+        </div>
       </div>
 
-      <!-- Tendances 7 jours -->
-      <div class="card">
-        <h2>Tendances · 7 jours</h2>
-        <div id="nous-trends"></div>
+      <!-- Énergie 12 semaines (collapsible, fermé) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Énergie · 12 semaines</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="nous-weekly-chart"></div>
+        </div>
       </div>
 
-      <!-- Tendances 3 mois (sparklines) -->
-      <div class="card">
-        <h2>Énergie · 12 semaines</h2>
-        <div id="nous-weekly-chart"></div>
+      <!-- Corrélations (collapsible, fermé) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Corrélations · 90 jours</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:16px;line-height:1.6">
+            Coefficient de Pearson sur les jours où vous avez tous les deux saisi.
+          </p>
+          <div id="nous-correlations"></div>
+        </div>
       </div>
 
-      <!-- Corrélations (§9) -->
-      <div class="card">
-        <h2>Corrélations · 90 jours</h2>
-        <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;letter-spacing:.04em;margin-bottom:16px;line-height:1.6">
-          Coefficient de Pearson sur les jours où vous avez tous les deux saisi.
-        </p>
-        <div id="nous-correlations"></div>
+      <!-- Moments + conflits par phase (collapsible, fermé) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Moments &amp; Tensions par phase</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="events-by-phase"></div>
+          <div style="margin-top:20px" id="conflict-heatmap"></div>
+        </div>
       </div>
 
-      <!-- Répartition moments par phase -->
-      <div class="card">
-        <h2>Vos moments · par phase</h2>
-        <div id="events-by-phase"></div>
+      <!-- Analyse du cycle (collapsible, fermé) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Analyse du cycle</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="cycle-anomalies"></div>
+        </div>
       </div>
 
-      <!-- Heatmap conflits -->
-      <div class="card">
-        <h2>Tensions · par phase</h2>
-        <div id="conflict-heatmap"></div>
-      </div>
-
-      <!-- Anomalies cycle -->
-      <div class="card">
-        <h2>Analyse du cycle</h2>
-        <div id="cycle-anomalies"></div>
-      </div>
-
-      <!-- Réglages profil -->
-      <div class="card">
+      <!-- Réglages (collapsible, fermé) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Réglages &amp; Profil</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+      <!-- Profil -->
+      <div style="margin-bottom:4px">
         <h2>Mon profil</h2>
 
         <div class="settings-row">
@@ -645,7 +696,7 @@
       </div>
 
       <!-- RGPD -->
-      <div class="card">
+      <div class="card" style="margin-top:12px">
         <h2>Confidentialité</h2>
         <div class="rgpd-block">
           <p>Vos données sont stockées uniquement dans votre espace Supabase personnel. Aucun partage avec des tiers, aucun analytics intrusif.</p>
@@ -653,6 +704,9 @@
           <p>Cette application <strong>n'est pas un dispositif médical</strong> et ne remplace pas l'avis d'un professionnel de santé.</p>
         </div>
       </div>
+
+        </div><!-- /collapsible-body Réglages -->
+      </div><!-- /collapsible-section Réglages -->
 
       <p class="disclaimer">
         Ce n'est pas un outil contraceptif.<br>

@@ -20,6 +20,7 @@ import { renderLibrary, getSuggestions, getDateNightIdeas, PHASES_LABELS } from 
 import { hasPIN, isLocked, showLockScreen, initQuickHide, initPINSettings } from './pin-lock.js';
 import { notifyLibidosAligned } from './notifications.js';
 import { cachedQuery, invalidateCache } from './query-cache.js';
+import { initCollapsibles } from './collapse.js';
 
 export let st = { me: null, partner: null, coupleId: null };
 
@@ -77,6 +78,9 @@ export async function initIntimacy() {
   renderLibrarySection();
 
   // Interactions
+  // Accordéons de la vue Intime
+  initCollapsibles(document.getElementById('view'));
+
   initQuickAdd();
   initSessionSheetListeners();
   initDarkModeToggle();
