@@ -32,15 +32,8 @@ export function navigate(name, params = {}) {
     nav.querySelectorAll('button').forEach(btn =>
       btn.classList.toggle('on', btn.dataset.nav === name)
     );
-    // Mettre à jour la sidebar (desktop) si elle existe
-    document.querySelectorAll('#sidebar [data-nav]').forEach(btn =>
-      btn.classList.toggle('on', btn.dataset.nav === name)
-    );
   } else {
     nav.classList.remove('visible');
-    document.querySelectorAll('#sidebar [data-nav]').forEach(btn =>
-      btn.classList.remove('on')
-    );
   }
 
   if (viewInits[name]) viewInits[name](params);

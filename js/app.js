@@ -176,7 +176,6 @@ async function routeAfterAuth() {
     navigate('pairing');
   } else {
     navigate('today');
-    showSidebar();
     initQuickLogBar();
     if (!IS_DEMO) setTimeout(() => maybeShowNotifBanner(), 2000);
   }
@@ -204,14 +203,6 @@ function maybeShowNotifBanner() {
   }, { once: true });
 }
 
-// ── Sidebar (desktop) ──────────────────────────────────────────────────────
-function showSidebar() {
-  const sb = document.getElementById('sidebar');
-  if (sb) sb.hidden = false;
-}
-document.querySelectorAll('#sidebar [data-nav]').forEach(btn => {
-  btn.addEventListener('click', () => navigate(btn.dataset.nav));
-});
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 initNavButtons();
