@@ -22,16 +22,20 @@ export const JOURNAL_CATEGORIES = [
     fields: [
       { key: 'fluxMenstruel', label: 'Flux menstruel', type: 'single',
         options: [
-          o('aucun','Aucun','○'), o('leger','Léger','🩸'),
-          o('modere','Modéré','🩸🩸'), o('abondant','Abondant','🩸🩸🩸'),
+          o('aucun','Aucun','○'), o('legeres','Légères','🩸'),
+          o('modere','Modérées','🩸🩸'), o('abondant','Abondantes','🩸🩸🩸'),
+          o('tres_abondant','Très abondant','🩸🩸🩸🩸'),
         ]},
       { key: 'spotting', label: 'Spotting', type: 'single',
-        options: [o('rouge','Rouge','🔴'), o('marron','Marron','🟤')]},
+        options: [
+          o('rouge','Rouge','🔴'), o('marron','Marron','🟤'),
+          o('rose','Rose','🩷'),   o('taches','Taches','•'),
+        ]},
       { key: 'textureFlux', label: 'Texture', type: 'single',
         options: [
-          o('fluide','Fluide','💧'), o('normale','Normale','◯'),
-          o('epaisse','Épaisse','🔶'), o('caillotsRoses','Caillots roses','💗'),
-          o('caillotsNoirs','Caillots foncés','⚫'),
+          o('fluide','Fluide','💧'), o('visqueux','Visqueux','🍯'),
+          o('normale','Normale','◯'), o('epaisse','Épaisse','🔶'),
+          o('caillotsRoses','Caillots roses','💗'), o('caillotsNoirs','Caillots foncés','⚫'),
         ]},
     ],
   },
@@ -42,12 +46,14 @@ export const JOURNAL_CATEGORIES = [
     fields: [
       { key: 'protectionType', label: 'Type de protection', type: 'single',
         options: [
-          o('serviette','Serviette','📄'), o('tampon','Tampon','◎'),
-          o('coupe','Coupe','☕'), o('sous_vetements','Sous-vêtements','👙'),
-          o('protegeSlip','Protège-slip','🩲'),
+          o('tampon','Tampon','◎'), o('serviette','Serviette','📄'),
+          o('protegeSlip','Protège-slip','🩲'), o('coupe','Coupe menstruelle','☕'),
+          o('culotte_regles','Culotte de règles','👙'),
         ]},
-      { key: 'protectionFreq', label: 'Changements par jour', type: 'number',
-        unit: 'fois', min: 1, max: 10 },
+      { key: 'protectionFreq', label: 'Fréquence de changement', type: 'single',
+        options: [
+          o('normal','Normal','✅'), o('frequent','Fréquent','⚠️'), o('tres_frequent','Très fréquent','🔴'),
+        ]},
     ],
   },
 
@@ -55,26 +61,22 @@ export const JOURNAL_CATEGORIES = [
   {
     id: 'emotions', label: 'Émotions & SPM', icon: '😊', color: '#7C5CFC',
     fields: [
-      { key: 'emotionsPositives', label: 'Émotions positives', type: 'multi',
+      { key: 'emotions', label: 'Humeur', type: 'multi',
         options: [
-          o('heureuse','Heureuse','😊'), o('calme','Calme','😌'),
-          o('confiante','Confiante','💪'), o('aimante','Aimante','🥰'),
-          o('energique','Énergique','⚡'), o('creative','Créative','🎨'),
-        ]},
-      { key: 'emotionsNegatives', label: 'Émotions difficiles', type: 'multi',
-        options: [
-          o('triste','Triste','😢'), o('irritable','Irritable','😤'),
-          o('anxieuse','Anxieuse','😰'), o('deprimee','Déprimée','😞'),
-          o('en_colere','En colère','😠'), o('sautes_humeur','Sautes d\'humeur','🎭'),
-          o('sensible','Sensible','🥹'), o('pas_controle','Pas en contrôle','😵'),
-          o('indifferente','Indifférence','😑'),
+          o('rien','Rien','—'), o('heureuse','Heureuse','😊'), o('triste','Triste','😢'),
+          o('en_colere','En colère','😠'), o('sensible','Sensible','🥹'),
+          o('anxieuse','Anxieuse','😰'), o('irritable','Irritable','😤'),
+          o('stressee','Stressée','😫'), o('calme','Calme','😌'),
+          o('confiante','Confiante','💪'), o('sautes_humeur',"Sautes d'humeur",'🎭'),
+          o('pas_controle','Pas en contrôle','😵'),
         ]},
       { key: 'etatCognitif', label: 'État cognitif', type: 'multi',
         options: [
-          o('concentree','Concentrée','🎯'), o('creative','Créative','💡'),
-          o('motivee','Motivée','🚀'), o('productive','Productive','✅'),
-          o('distraite','Distraite','😶'), o('brouillard','Brouillard mental','🌫️'),
-          o('inefficace','Inefficace','⚡'), o('stressee','Stressée','😫'),
+          o('brouillard','Brouillard mental','🌫️'), o('trous_memoire','Trous de mémoire','🕳️'),
+          o('distraite','Distraite','😶'), o('hyper_concentree','Hyper-concentrée','🎯'),
+          o('creative','Créative','💡'), o('pas_motivation','Pas de motivation','📉'),
+          o('concentree','Concentrée','✅'), o('motivee','Motivée','🚀'),
+          o('productive','Productive','⚡'), o('inefficace','Inefficace','🚫'),
         ]},
     ],
   },
@@ -83,27 +85,20 @@ export const JOURNAL_CATEGORIES = [
   {
     id: 'energie_sommeil', label: 'Énergie & Sommeil', icon: '⚡', color: '#D97706',
     fields: [
-      { key: 'niveauEnergie', label: 'Niveau d\'énergie', type: 'single',
+      { key: 'niveauEnergie', label: 'Énergie', type: 'single',
         options: [
           o('epuisee','Épuisée','🪫'), o('fatiguee','Fatiguée','😴'),
-          o('normale','Normale','🔋'), o('bonne','Bonne','⚡'),
-          o('excellente','Excellente','✨'),
+          o('ok','OK','🔋'), o('en_forme','En forme','⚡'),
         ]},
-      { key: 'qualiteSommeil', label: 'Qualité du sommeil', type: 'single',
+      { key: 'symptomesSommeil', label: 'Qualité du sommeil', type: 'multi',
         options: [
-          o('mauvaise','Mauvaise','💤'), o('agitee','Agitée','🌀'),
-          o('normale','Normale','😴'), o('bonne','Bonne','🌙'),
-          o('tres_bonne','Très bonne','✨'),
+          o('dur_endormir',"Dur de s'endormir",'🌙'), o('reveil_en_forme','Réveil en forme','☀️'),
+          o('fatigue_reveil','Fatigue au réveil','😩'), o('sommeil_agite','Sommeil agité','🌀'),
+          o('insomnie','Insomnie','🚫'), o('reves_intenses','Rêves intenses','💭'),
+          o('sueurs_nocturnes','Sueurs nocturnes','💦'),
         ]},
       { key: 'dureeSommeil', label: 'Durée de sommeil (h)', type: 'number',
         unit: 'h', min: 0, max: 24, step: 0.5 },
-      { key: 'symptomesSommeil', label: 'Symptômes du sommeil', type: 'multi',
-        options: [
-          o('insomnie','Insomnie','🚫'), o('reveils_frequents','Réveils','🔔'),
-          o('reves_intenses','Rêves intenses','🌙'), o('sueurs_nocturnes','Sueurs','💦'),
-          o('fatigue_reveil','Fatigue au réveil','🛌'),
-          o('bouffees_chaleur','Bouffées de chaleur','🔥'),
-        ]},
     ],
   },
 
@@ -111,18 +106,17 @@ export const JOURNAL_CATEGORIES = [
   {
     id: 'douleurs', label: 'Douleurs', icon: '💊', color: '#DC2626',
     fields: [
-      { key: 'douleursPelviennes', label: 'Douleurs pelviennes', type: 'multi',
+      { key: 'douleursPelviennes', label: 'Zone pelvienne', type: 'multi',
         options: [
-          o('crampes','Crampes','🔥'), o('pelviennes','Pelviennes','🌡️'),
-          o('dos','Dos', '🦴'), o('hanches','Hanches','🦿'), o('coccyx','Coccyx','📍'),
+          o('aucune','Aucune douleur','✅'), o('crampes','Crampes','🔥'),
+          o('ovulation','Ovulation','🥚'), o('tiraillements','Tiraillements','〰️'),
         ]},
-      { key: 'douleursCorps', label: 'Autres douleurs', type: 'multi',
+      { key: 'douleursCorps', label: 'Zone corporelle', type: 'multi',
         options: [
-          o('tete','Tête','🤕'), o('migraine','Migraine','💥'),
-          o('migraine_aura','Migraine+aura','⚡'), o('seins_sensibles','Seins sensibles','🌡️'),
-          o('seins_gonfles','Seins gonflés','💠'), o('jambes_lourdes','Jambes lourdes','🦵'),
-          o('articulaires','Articulaires','🦴'), o('urinaire','Urinaire','💧'),
-          o('demangeaisons','Démangeaisons','🌿'),
+          o('seins_sensibles','Seins sensibles','🌡️'), o('seins_douloureux','Seins douloureux','💠'),
+          o('lombaires','Lombaires','🦴'), o('migraine','Migraine','💥'),
+          o('tete','Mal de tête','🤕'), o('articulaires','Articulaires','🦿'),
+          o('jambes_lourdes','Jambes lourdes','🦵'),
         ]},
     ],
   },
@@ -131,21 +125,17 @@ export const JOURNAL_CATEGORIES = [
   {
     id: 'digestion', label: 'Digestion', icon: '🥑', color: '#16A34A',
     fields: [
-      { key: 'fringales', label: 'Fringales', type: 'multi',
+      { key: 'fringales', label: 'Fringales & Appétit', type: 'multi',
         options: [
-          o('sucre','Sucré','🍫'), o('sale','Salé','🧂'), o('chocolat','Chocolat','🍫'),
-          o('alcool','Alcool','🍷'), o('epice','Épicé','🌶️'), o('gras','Gras','🍟'),
+          o('sucre','Sucré','🍫'), o('sale','Salé','🧂'),
+          o('gras','Gras','🍟'), o('epice','Épicé','🌶️'),
+          o('perte_appetit','Perte d\'appétit','🚫'), o('nausees','Nausées','🤢'),
         ]},
       { key: 'transit', label: 'Transit', type: 'single',
         options: [
-          o('normal','Normal','✅'), o('constipation','Constipation','🔒'),
+          o('ok','OK','✅'), o('constipation','Constipation','🔒'),
           o('diarrhee','Diarrhée','💨'), o('ballonnements','Ballonnements','🫃'),
-          o('flatulences','Flatulences','💨'),
-        ]},
-      { key: 'symptomsGastriques', label: 'Symptômes gastriques', type: 'multi',
-        options: [
-          o('aigreurs','Aigreurs','🔥'), o('nausees','Nausées','🤢'),
-          o('vomissements','Vomissements','🤮'),
+          o('flatulences','Flatulences','💨'), o('aigreurs','Aigreurs','🔥'),
         ]},
     ],
   },
@@ -156,10 +146,15 @@ export const JOURNAL_CATEGORIES = [
     fields: [
       { key: 'glaireCervicale', label: 'Glaire cervicale', type: 'single',
         options: [
-          o('absence','Absente','—'), o('seche','Sèche','🏜️'),
-          o('collante','Collante','🍯'), o('cremeuse','Crémeuse','☁️'),
-          o('aqueuse','Aqueuse','💧'), o('blanc_oeuf','Blanc d\'œuf','🥚'),
-          o('fertile','Fertile','💦'),
+          o('aucune','Aucune','—'), o('visqueuses','Visqueuses','🍯'),
+          o('cremeuses','Crémeuses','☁️'), o('blanches','Blanches','⬜'),
+          o('filantes','Filantes','🥚'), o('aqueuse','Aqueuse','💧'),
+        ]},
+      { key: 'urineSymptomes', label: 'Urine', type: 'multi',
+        options: [
+          o('envie_frequente','Envie fréquente','🚽'),
+          o('brulure','Sensation de brûlure','🔥'),
+          o('fuites','Fuites','💧'),
         ]},
       { key: 'etatPeau', label: 'Peau', type: 'multi',
         options: [
@@ -184,28 +179,28 @@ export const JOURNAL_CATEGORIES = [
   {
     id: 'quotidien', label: 'Vie quotidienne', icon: '🌅', color: '#65A30D',
     fields: [
-      { key: 'activitesSociales', label: 'Activités sociales', type: 'multi',
+      { key: 'vieSociale', label: 'Vie sociale', type: 'multi',
         options: [
-          o('sortie','Sortie','🎉'), o('travail','Travail','💼'),
-          o('teletravail','Télétravail','🏠'), o('repos','Jour de repos','🛋️'),
-          o('rencard','Rencard','💑'), o('vacances','Vacances','🏖️'),
-          o('gala','Grande soirée','🥂'),
+          o('sociable','Sociable','😄'), o('introversion','Introversion','🙈'),
+          o('solidaire','Solidaire','🤝'), o('conflictuelle','Conflictuelle','⚡'),
+        ]},
+      { key: 'loisirs', label: 'Loisirs & Voyages', type: 'multi',
+        options: [
+          o('vacances','Vacances','🏖️'), o('voyage','Voyage','✈️'), o('rencard','Rencard','💑'),
+        ]},
+      { key: 'fete', label: 'Fête & Sorties', type: 'multi',
+        options: [
+          o('alcool','Alcool','🍷'), o('cigarettes','Cigarettes','🚬'),
+          o('grosse_soiree','Grosse soirée','🥂'), o('gueule_de_bois','Gueule de bois','😵'),
         ]},
       { key: 'exercice', label: 'Exercice', type: 'single',
         options: [
-          o('aucun','Aucun','—'), o('marche','Marche','🚶'), o('yoga','Yoga','🧘'),
-          o('leger','Léger','🏃'), o('modere','Modéré','💪'),
-          o('intense','Intense','🏋️'), o('course','Course','🏃'),
-          o('natation','Natation','🏊'),
+          o('aucun','Aucun','—'), o('course','Course','🏃'), o('natation','Natation','🏊'),
+          o('yoga','Yoga','🧘'), o('velo','Vélo','🚴'), o('marche','Marche','🚶'),
+          o('musculation','Musculation','🏋️'),
         ]},
-      { key: 'meditation', label: 'Méditation', type: 'bool', icon: '🧘' },
-      { key: 'stressJournalier', label: 'Niveau de stress (1–5)', type: 'number',
-        unit: '/5', min: 1, max: 5, step: 1 },
-      { key: 'toxiques', label: 'Toxiques', type: 'multi',
-        options: [
-          o('alcool','Alcool','🍷'), o('tabac','Tabac','🚬'),
-          o('cannabis','Cannabis','🌿'), o('cafeine_elevee','Caféine élevée','☕'),
-        ]},
+      { key: 'meditation', label: 'Méditation (min)', type: 'number',
+        unit: 'min', min: 0, max: 180, step: 5 },
     ],
   },
 
@@ -213,19 +208,19 @@ export const JOURNAL_CATEGORIES = [
   {
     id: 'sexualite', label: 'Sexualité', icon: '❤️', color: '#E84375',
     fields: [
-      { key: 'rapports', label: 'Rapports', type: 'single',
+      { key: 'rapports', label: 'Activité', type: 'single',
         options: [
-          o('aucun','Aucun','—'), o('avec_protection','Protégé','🛡️'),
-          o('sans_protection','Non protégé','💑'), o('masturbation','Masturbation','✨'),
+          o('avec_protection','Avec protection','🛡️'),
+          o('sans_protection','Sans protection','💑'),
+          o('retrait','Retrait','⬅️'),
+          o('pas_sexe','Pas de sexe','—'),
         ]},
-      { key: 'libido', label: 'Libido', type: 'single',
+      { key: 'libidoPratiques', label: 'Pratiques & Libido', type: 'multi',
         options: [
-          o('faible','Faible','📉'), o('normale','Normale','➡️'), o('elevee','Élevée','📈'),
-        ]},
-      { key: 'pratiquesIntimes', label: 'Pratiques', type: 'multi',
-        options: [
-          o('oral','Oral','💋'), o('vaginal','Vaginal','💑'),
-          o('anal','Anal','🔒'), o('sextoys','Sextoys','✨'), o('autre','Autre','⭐'),
+          o('oral','Sexe oral','💋'), o('touche_sensuel','Touché sensuel','🤲'),
+          o('want_cute_kiss','Want cute kiss','😘'),
+          o('masturbation','Masturbation','✨'),
+          o('libido_elevee','Libido élevée','📈'), o('libido_basse','Libido en baisse','📉'),
         ]},
       { key: 'orgasme', label: 'Orgasme', type: 'bool', icon: '⭐' },
     ],
@@ -279,12 +274,27 @@ export const JOURNAL_CATEGORIES = [
     ],
   },
 
-  // ── Note libre ── Gris ───────────────────────────────────────────────────
+  // ── Périménopause ── Gris bleu ───────────────────────────────────────────
   {
-    id: 'note', label: 'Note du jour', icon: '📝', color: '#6B7280',
+    id: 'perimenopauses', label: 'Périménopause', icon: '🌸', color: '#7E5BAE',
     fields: [
-      { key: 'noteDuJour', label: 'Note', type: 'text',
-        placeholder: 'Écris librement ce que tu ressens…' },
+      { key: 'perimenopauses.bouffeesChaleur', label: 'Bouffées de chaleur', type: 'single',
+        options: [
+          o('pas_aujourd_hui','Pas aujourd\'hui','✅'),
+          o('legeres','Légères','🌡️'), o('moderees','Modérées','🔥'), o('intenses','Intenses','🔥🔥'),
+        ]},
+      { key: 'perimenopauses.secheresseVaginale', label: 'Sécheresse vaginale', type: 'bool', icon: '💧' },
+    ],
+  },
+
+  // ── Note & Tags ── Gris ───────────────────────────────────────────────────
+  {
+    id: 'note', label: 'Note & Tags', icon: '📝', color: '#6B7280',
+    fields: [
+      { key: 'noteDuJour', label: 'Note du jour (3000 caractères max)', type: 'text',
+        placeholder: 'Écris librement ce que tu ressens…', maxlength: 3000 },
+      { key: 'tags', label: 'Tags personnalisés', type: 'tags',
+        placeholder: 'Ajouter un tag…' },
     ],
   },
 ];
@@ -404,6 +414,50 @@ export function renderLogCategoryAccordion(container, log, onUpdate) {
     });
   });
 
+  // Tags personnalisés
+  container.querySelectorAll('.tag-input').forEach(input => {
+    const wrap = input.closest('.tags-wrap');
+    const field = wrap?.dataset?.field;
+    input.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ',') return;
+      e.preventDefault();
+      const tag = input.value.trim().replace(/,/g, '');
+      if (!tag) return;
+      const arr = getNestedValue(log, field) || [];
+      if (!arr.includes(tag)) { arr.push(tag); setNestedValue(log, field, arr); onUpdate?.(log); }
+      input.value = '';
+      // Re-render les pills
+      wrap.querySelectorAll('.tag-pill').forEach(p => p.remove());
+      arr.forEach(t => {
+        const pill = document.createElement('span');
+        pill.className = 'tag-pill';
+        pill.innerHTML = `${t}<button type="button" class="tag-remove" data-tag="${t}" aria-label="Retirer ${t}">×</button>`;
+        wrap.insertBefore(pill, input);
+      });
+      wrap.querySelectorAll('.tag-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const arr2 = getNestedValue(log, field) || [];
+          const idx  = arr2.indexOf(btn.dataset.tag);
+          if (idx >= 0) arr2.splice(idx, 1);
+          setNestedValue(log, field, arr2);
+          btn.closest('.tag-pill').remove();
+          onUpdate?.(log);
+        });
+      });
+    });
+  });
+
+  // Compteur note
+  container.querySelectorAll('.log-textarea').forEach(ta => {
+    const counter = ta.nextElementSibling;
+    if (!counter?.classList.contains('note-counter')) return;
+    ta.addEventListener('input', () => {
+      const max = parseInt(ta.getAttribute('maxlength'));
+      counter.textContent = `${ta.value.length}/${max}`;
+      counter.style.color = ta.value.length > max * 0.9 ? 'var(--red)' : 'var(--faint)';
+    });
+  });
+
   // Gestion de la case "enceinte" — réafficher si la catégorie grossesse change
   container.querySelector('[data-field="enceinte"]')?.addEventListener('click', () => {
     setTimeout(() => renderLogCategoryAccordion(container, log, onUpdate), 50);
@@ -418,12 +472,26 @@ export function renderLogCategoryAccordion(container, log, onUpdate) {
 function _renderField(field, log, catColor) {
   const value = getNestedValue(log, field.key);
 
+  if (field.type === 'tags') {
+    const tagsArr = Array.isArray(value) ? value : [];
+    return `<div class="lca-field">
+      <div class="lca-field-label">${field.label}</div>
+      <div class="tags-wrap" data-field="${field.key}">
+        ${tagsArr.map(t => `<span class="tag-pill">${t}<button type="button" class="tag-remove" data-tag="${t}" aria-label="Retirer ${t}">×</button></span>`).join('')}
+        <input type="text" class="tag-input" placeholder="${field.placeholder || 'Ajouter…'}"
+          aria-label="Ajouter un tag personnalisé">
+      </div>
+    </div>`;
+  }
+
   if (field.type === 'text') {
     return `<div class="lca-field">
       <div class="lca-field-label">${field.label}</div>
       <textarea class="note-input log-textarea" data-field="${field.key}"
         placeholder="${field.placeholder || ''}"
-        rows="3" aria-label="${field.label}">${value ?? ''}</textarea>
+        rows="3" maxlength="${field.maxlength || 10000}"
+        aria-label="${field.label}">${value ?? ''}</textarea>
+      ${field.maxlength ? `<div class="note-counter" aria-live="polite">${(value ?? '').length}/${field.maxlength}</div>` : ''}
     </div>`;
   }
 

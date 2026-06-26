@@ -1602,6 +1602,43 @@ body.intime-dark .card:hover {
   border-radius: 100px; padding: 4px 10px;
 }
 
+/* ─── Puces colorées calendrier (par catégorie DailyLog) ─────────────── */
+.cal-dot-flux     { background: #E53935; }
+.cal-dot-douleurs { background: #4278C4; }
+.cal-dot-emotions { background: #D97706; }
+.cal-dot-sexu     { background: #16A34A; }
+.cal-dot-energie  { background: #D97706; opacity: .6; }
+
+/* ─── Tags personnalisés (type 'tags' dans daily-log-ui.js) ──────────── */
+.tags-wrap {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding: 8px 0;
+}
+.tag-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 100px; padding: 4px 10px;
+  font-size: 12px; font-weight: 600; color: var(--text);
+}
+.tag-remove {
+  background: none; border: none; color: var(--faint);
+  cursor: pointer; font-size: 15px; line-height: 1; padding: 0;
+  transition: color .15s;
+}
+.tag-remove:hover { color: var(--red); }
+.tag-input {
+  border: none; background: transparent; outline: none;
+  font-family: "DM Sans"; font-size: 13px; color: var(--text);
+  min-width: 120px; padding: 4px 0;
+}
+.tag-input::placeholder { color: var(--faint); }
+
+/* ─── Compteur de caractères note ────────────────────────────────────── */
+.note-counter {
+  font-family: "DM Mono", monospace; font-size: 10px; color: var(--faint);
+  text-align: right; margin-top: 4px;
+}
+
 /* ─── §2C — Alerte santé récurrente ──────────────────────────────────── */
 .health-alert-card {
   display: flex; gap: 14px; align-items: flex-start;

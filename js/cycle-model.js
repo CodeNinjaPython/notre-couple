@@ -63,55 +63,50 @@ export class DailyLog {
     this.userId = userId;
 
     // ── FLUX & SAIGNEMENTS ─────────────────────────────────────────────────
-    // Enum strict (choix unique)
-    this.fluxMenstruel = null; // aucun | leger | modere | abondant
-    this.spotting      = null; // rouge | marron
-    this.textureFlux   = null; // fluide | normale | epaisse | caillotsRoses | caillotsNoirs
+    this.fluxMenstruel = null; // aucun | legeres | modere | abondant | tres_abondant
+    this.spotting      = null; // rouge | marron | rose | taches
+    this.textureFlux   = null; // fluide | visqueux | normale | epaisse | caillotsRoses | caillotsNoirs
 
     // ── PROTECTIONS ────────────────────────────────────────────────────────
-    this.protectionType  = null; // serviette | tampon | coupe | sous_vetements | protegeSlip
-    this.protectionFreq  = null; // int (nb de changements/jour)
+    this.protectionType  = null; // serviette | tampon | coupe | culotte_regles | protegeSlip
+    this.protectionFreq  = null; // normal | frequent | tres_frequent  (enum, remplace l'ancien int)
 
-    // ── ÉMOTIONS & SPM ────────────────────────────────────────────────────
-    // Set<String> encodé en Array pour JSON
-    this.emotionsPositives = []; // heureuse | calme | confiante | aimante | creative | energique
-    this.emotionsNegatives = []; // triste | irritable | anxieuse | deprimee | en_colere | sautes_humeur | sensible | pas_controle | indifferente
-    this.etatCognitif      = []; // concentree | creative | motivee | productive | distraite | brouillard | inefficace | stressee
+    // ── ÉMOTIONS & HUMEUR ────────────────────────────────────────────────
+    this.emotions      = []; // rien | heureuse | triste | en_colere | sensible | anxieuse | irritable | stressee | calme | confiante | sautes_humeur | pas_controle
+    this.etatCognitif  = []; // brouillard | trous_memoire | distraite | hyper_concentree | creative | pas_motivation | concentree | motivee | productive | inefficace | stressee
 
     // ── ÉNERGIE & SOMMEIL ─────────────────────────────────────────────────
-    this.niveauEnergie    = null; // epuisee | fatiguee | normale | bonne | excellente
-    this.qualiteSommeil   = null; // mauvaise | agitee | normale | bonne | tres_bonne
+    this.niveauEnergie    = null; // epuisee | fatiguee | ok | en_forme
+    this.symptomesSommeil = [];   // dur_endormir | reveil_en_forme | fatigue_reveil | sommeil_agite | insomnie | reves_intenses | sueurs_nocturnes
     this.dureeSommeil     = null; // Float (heures)
-    this.symptomesSommeil = [];   // insomnie | reveils_frequents | reves_intenses | sueurs_nocturnes | fatigue_reveil | bouffees_chaleur
 
     // ── DOULEURS ──────────────────────────────────────────────────────────
-    this.douleursPelviennes = []; // crampes | pelviennes | dos | hanches | coccyx
-    this.douleursCorps      = []; // tete | migraine | migraine_aura | seins_sensibles | seins_gonfles | jambes_lourdes | articulaires | urinaire | demangeaisons
+    this.douleursPelviennes = []; // aucune | crampes | ovulation | tiraillements | dos | hanches
+    this.douleursCorps      = []; // seins_sensibles | seins_douloureux | lombaires | migraine | tete | articulaires | jambes_lourdes
 
     // ── DIGESTION ─────────────────────────────────────────────────────────
-    this.fringales           = []; // sucre | sale | chocolat | alcool | epice | gras
-    this.transit             = null; // normal | constipation | diarrhee | ballonnements | flatulences
-    this.symptomsGastriques  = [];   // aigreurs | nausees | vomissements
+    this.fringales          = []; // sucre | sale | gras | epice | perte_appetit | nausees
+    this.transit            = null; // ok | constipation | diarrhee | ballonnements | flatulences | aigreurs
 
-    // ── ÉTAT CORPOREL ─────────────────────────────────────────────────────
-    this.glaireCervicale  = null; // seche | collante | cremeuse | aqueuse | blanc_oeuf | fertile | absence
-    this.etatPeau         = [];   // normale | acne | grasse | seche | eclatante | sensible
-    this.etatCheveux      = [];   // normaux | gras | secs | cuir_sec | racines_grasses
+    // ── SÉCRÉTIONS & CORPS ────────────────────────────────────────────────
+    this.glaireCervicale   = null; // aucune | visqueuses | cremeuses | blanches | filantes | aqueuse
+    this.etatPeau          = [];   // correct | belle | acne | seche
+    this.etatCheveux       = [];   // ok | top | pas_top | gras | perte
+    this.urineSymptomes    = [];   // envie_frequente | brulure | fuites   ← NOUVEAU
     this.temperatureBasale = null; // Float (°C)
     this.poids             = null; // Float (kg)
 
-    // ── VIE QUOTIDIENNE ───────────────────────────────────────────────────
-    this.activitesSociales  = []; // sortie | travail | teletravail | repos | rencard | vacances | gala
-    this.toxiques           = []; // alcool | tabac | cannabis | cafeine_elevee
-    this.exercice           = null; // aucun | marche | leger | modere | intense | yoga | course | natation
-    this.meditation         = false;
-    this.stressJournalier   = null; // Int 1–5
+    // ── LIFESTYLE ─────────────────────────────────────────────────────────
+    this.vieSociale        = []; // sociable | introversion | solidaire | conflictuelle
+    this.loisirs           = []; // vacances | voyage | rencard
+    this.fete              = []; // alcool | cigarettes | grosse_soiree | gueule_de_bois
+    this.exercice          = null; // course | natation | yoga | velo | marche | musculation | aucun
+    this.meditation        = null; // Int (minutes) ou null
 
     // ── SEXUALITÉ ─────────────────────────────────────────────────────────
-    this.rapports         = null; // aucun | avec_protection | sans_protection | masturbation
-    this.libido           = null; // faible | normale | elevee
-    this.pratiquesIntimes = [];   // oral | vaginal | anal | sextoys | autre
-    this.orgasme          = null; // boolean
+    this.rapports          = null; // avec_protection | sans_protection | retrait | pas_sexe
+    this.libidoPratiques   = [];   // oral | touche_sensuel | want_cute_kiss | masturbation | libido_elevee | libido_basse
+    this.orgasme           = null; // boolean
 
     // ── MÉDICAL & CONTRACEPTION ───────────────────────────────────────────
     // Enum strict pour contraceptifs actifs
@@ -124,15 +119,22 @@ export class DailyLog {
     // ── MODE GROSSESSE ────────────────────────────────────────────────────
     this.enceinte = false;
     this.grossesse = {
-      trimestre:            null, // 1 | 2 | 3
-      symptomsGrossesse:    [],   // nausees | vomissements | fatigue | seins | vergetures | oedemes | reflux | contractions_braxton
-      superPouvoirs:        [],   // energie | intuition | creativite | cheveux_brillants | peau_rayonnante
+      trimestre:            null,
+      symptomsGrossesse:    [], // nausees | vomissements | fatigue | seins | vergetures | oedemes | reflux | contractions_braxton | nidification | connexion | nez_bouche | gout_odorat | orgasmes_intenses | eclat
+      superPouvoirs:        [], // energie | intuition | creativite | cheveux_brillants | peau_rayonnante
       mouvementsFrequence:  null, // aucun | rares | normaux | frequents
       douleursBasDos:       false,
     };
 
-    // ── NOTE LIBRE ────────────────────────────────────────────────────────
-    this.noteDuJour = null; // String
+    // ── PÉRIMÉNOPAUSE ─────────────────────────────────────────────────────
+    this.perimenopauses = {
+      bouffeesChaleur:    null, // pas_aujourd_hui | legeres | moderees | intenses
+      secheresseVaginale: false,
+    };
+
+    // ── NOTE & TAGS ───────────────────────────────────────────────────────
+    this.noteDuJour = null; // String (max 3000 chars)
+    this.tags       = [];   // String[] tags personnalisés créés par l'utilisateur
   }
 
   // ─── Sérialisation (retire les valeurs vides pour compacité) ─────────────
@@ -177,10 +179,11 @@ export class DailyLog {
     Object.assign(log, data);
     // S'assurer que les tableaux restent des tableaux après Object.assign
     const arrays = [
-      'emotionsPositives','emotionsNegatives','etatCognitif','symptomesSommeil',
-      'douleursPelviennes','douleursCorps','fringales','symptomsGastriques',
-      'etatPeau','etatCheveux','activitesSociales','toxiques','pratiquesIntimes',
-      'contraceptionActifs','traitements','symptomsAutres',
+      'emotions','etatCognitif','symptomesSommeil',
+      'douleursPelviennes','douleursCorps','fringales',
+      'etatPeau','etatCheveux','urineSymptomes',
+      'vieSociale','loisirs','fete','libidoPratiques',
+      'contraceptionActifs','traitements','symptomsAutres','tags',
     ];
     arrays.forEach(k => { if (!Array.isArray(log[k])) log[k] = []; });
     if (typeof log.grossesse !== 'object' || !log.grossesse) {
@@ -314,6 +317,14 @@ export function computeCyclePrediction(cyclesHistory = []) {
     fertileEnd    = localDateStr(new Date(ov.getTime() + 864e5));
   }
 
+  // Variabilité (écart-type des durées) ←── NOUVEAU
+  let variabilite = 0;
+  if (cycleLengths.length > 1) {
+    const mean2 = cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length;
+    const v2    = cycleLengths.reduce((s, l) => s + (l - mean2) ** 2, 0) / cycleLengths.length;
+    variabilite = Math.round(Math.sqrt(v2) * 10) / 10;
+  }
+
   const confidence = cycleLengths.length >= 4 ? 'haute'
                    : cycleLengths.length >= 2 ? 'moyenne'
                    : 'faible';
@@ -324,6 +335,7 @@ export function computeCyclePrediction(cyclesHistory = []) {
     dateDesProchainesRegles,
     avgCycleLength,
     avgPeriodDuration,
+    variabilite,        // ← écart-type des durées de cycles (jours)
     ovulationDate,
     fertileStart,
     fertileEnd,

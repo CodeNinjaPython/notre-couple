@@ -85,7 +85,10 @@ async function loadMonthEntries() {
   calState.entries = {};
   (data || []).forEach(r => {
     if (!calState.entries[r.log_date]) calState.entries[r.log_date] = {};
-    calState.entries[r.log_date][r.category_id] = r.value?.v ?? r.value;
+    // 'journal' est le DailyLog complet (JSONB) — on le stocke tel quel
+    calState.entries[r.log_date][r.category_id] = r.category_id === 'journal'
+      ? (r.value?.v ?? r.value)
+      : (r.value?.v ?? r.value);
   });
 }
 
@@ -128,11 +131,32 @@ function renderMonthGrid() {
     if (isToday) cls += ' today';
     if (isFuture) cls += ' future';
 
+    // Puces colorées par catégorie de données saisies
     let dots = '';
+    const journal = entry?.journal;
     if (entry) {
-      if (entry.flow != null) dots += '<span class="cal-dot flow"></span>';
-      if (entry.mood != null) dots += '<span class="cal-dot mood"></span>';
-      if (entry.energy != null) dots += '<span class="cal-dot energy"></span>';
+      // Flux (rouge) — depuis journal ou ancien 'flow'
+      const hasFlux = (journal?.fluxMenstruel && journal.fluxMenstruel !== 'aucun')
+                   || (entry.flow != null);
+      if (hasFlux) dots += '<span class="cal-dot cal-dot-flux" title="Flux"></span>';
+
+      // Douleurs (bleu)
+      const hasDouleurs = (journal?.douleursPelviennes?.length || journal?.douleursCorps?.length)
+                       || (entry.cramps != null);
+      if (hasDouleurs) dots += '<span class="cal-dot cal-dot-douleurs" title="Douleurs"></span>';
+
+      // Humeur/Émotions (orange)
+      const hasEmotion = (journal?.emotions?.length || journal?.etatCognitif?.length)
+                      || (entry.mood != null);
+      if (hasEmotion) dots += '<span class="cal-dot cal-dot-emotions" title="Humeur"></span>';
+
+      // Sexualité (vert)
+      const hasSexu = journal?.rapports && journal.rapports !== 'pas_sexe';
+      if (hasSexu) dots += '<span class="cal-dot cal-dot-sexu" title="Sexualité"></span>';
+
+      // Énergie/Sommeil (ambre)
+      if (journal?.niveauEnergie || entry.energy != null)
+        dots += '<span class="cal-dot cal-dot-energie" title="Énergie"></span>';
     }
 
     let phaseBg = '';
