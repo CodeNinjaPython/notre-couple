@@ -13,6 +13,8 @@ import { computeStreak } from './analytics.js';
 import { getCycleMode } from './onboarding.js';
 import { cachedQuery, invalidateCache } from './query-cache.js';
 import { initCollapsibles } from './collapse.js';
+import { Cycle, predictNextPeriodAdvanced } from './cycle-model.js';
+import { renderCycleRing, renderRingLegend } from './ring-chart.js';
 
 const PHASES_DATA = {
   Menstruelle: {
@@ -127,6 +129,7 @@ export async function initToday() {
 
   renderHeader();
   await renderStreak();
+  renderRingChart();     // ← anneau SVG interactif
   renderCycleControls();
   renderWhoToggle();
   initDateNav();
@@ -218,6 +221,40 @@ function initDateNav() {
   });
 
   updateDisplay();
+}
+
+// --- Anneau SVG du cycle ---------------------------------------------------
+function renderRingChart() {
+  const ring   = document.getElementById('cycle-ring');
+  const legend = document.getElementById('ring-legend');
+  if (!ring) return;
+
+  const cycleObj = state.currentCycle
+    ? new Cycle(state.currentCycle)
+    : null;
+
+  const day         = cycleObj?.getDayInCycle(state.logDate) ?? 1;
+  const totalDays   = cycleObj?.dureeCycle ?? 28;
+  const fertile     = cycleObj?.getFertileWindow() ?? { start:9, end:15, ovulation:14 };
+  const phaseName   = cycleObj ? Cycle.phaseName(day, totalDays) : '';
+
+  // Jours avec données saisies dans le cycle en cours
+  const loggedSet = new Set(
+    Object.keys(state.savedValues).length ? [day] : []
+  );
+
+  renderCycleRing(ring, {
+    totalDays,
+    currentDay:   day,
+    periodDays:   cycleObj?.dureeRegles ?? 5,
+    fertileStart: fertile.start,
+    fertileEnd:   fertile.end,
+    ovulationDay: fertile.ovulation,
+    phaseName,
+    loggedDays:   loggedSet,
+  });
+
+  renderRingLegend(legend);
 }
 
 // --- Header ----------------------------------------------------------------

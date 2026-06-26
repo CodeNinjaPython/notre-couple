@@ -295,8 +295,14 @@
         <span id="streak-badge" class="streak-badge" style="display:none"></span>
       </header>
 
+      <!-- ① Anneau de cycle SVG (pièce maîtresse) -->
+      <div class="ring-wrap">
+        <div id="cycle-ring" aria-live="polite"></div>
+        <div id="ring-legend"></div>
+      </div>
+
       <!-- Contrôle cycle (uniquement pour elle) -->
-      <div id="cycle-controls" style="margin-top:16px;display:none">
+      <div id="cycle-controls" style="margin-top:12px;display:none">
         <button type="button" id="btn-cycle-toggle" class="btn-primary">Mes règles commencent</button>
       </div>
 
@@ -470,10 +476,21 @@
         </div>
       </div>
 
-      <!-- Symptômes du jour (collapsible, fermée par défaut) -->
+      <!-- Saisie du jour — DailyLog (collapsible, ouverte) -->
+      <div class="card collapsible-section" data-default-open="true">
+        <button type="button" class="collapsible-header" aria-expanded="true">
+          <h2>Saisie du jour</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="daily-log-form"></div>
+        </div>
+      </div>
+
+      <!-- Symptômes Clue (collapsible, fermée par défaut) -->
       <div class="card collapsible-section" data-default-open="false">
         <button type="button" class="collapsible-header" aria-expanded="false">
-          <h2>Symptômes du jour</h2>
+          <h2>Symptômes détaillés</h2>
           <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <div class="collapsible-body">
@@ -575,10 +592,21 @@
         </div>
       </div>
 
+      <!-- Historique cycles — graphique barres (collapsible, ouvert) -->
+      <div class="card collapsible-section" data-default-open="true">
+        <button type="button" class="collapsible-header" aria-expanded="true">
+          <h2>Historique des cycles</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="cycles-history-chart"></div>
+        </div>
+      </div>
+
       <!-- Analyse du cycle (collapsible, fermé) -->
       <div class="card collapsible-section" data-default-open="false">
         <button type="button" class="collapsible-header" aria-expanded="false">
-          <h2>Analyse du cycle</h2>
+          <h2>Anomalies &amp; durée des règles</h2>
           <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <div class="collapsible-body">

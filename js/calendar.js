@@ -4,6 +4,8 @@ import { getCycleHistory, predictNextPeriod } from './cycles.js';
 import { localDateStr } from './date-utils.js';
 import { renderSymptomTracker } from './symptoms.js';
 import { initCollapsibles } from './collapse.js';
+import { DailyLog } from './cycle-model.js';
+import { renderDailyLogForm } from './ring-chart.js';
 
 const PHASES = [
   [1,  5,  'Menstruelle',  '#E53935'],
@@ -36,7 +38,33 @@ export async function initCalendar() {
   renderCalendar();
   bindNav();
 
-  // Symptômes du jour dans le tracker Calendrier
+  // Saisie DailyLog (avec icônes)
+  const dlWrap = document.getElementById('daily-log-form');
+  if (dlWrap && calState.me) {
+    const log = new DailyLog({ date: localDateStr(), userId: calState.me.user_id });
+    // Pré-charger les données existantes du jour
+    const { data: existingEntries } = await supabase.from('log_entries')
+      .select('category_id, value').eq('log_date', localDateStr());
+    const filledLog = DailyLog.fromLogEntries(existingEntries || [], localDateStr(), calState.me.user_id);
+
+    renderDailyLogForm(dlWrap, filledLog, async (savedLog) => {
+      const entries = savedLog.toLogEntries();
+      for (const entry of entries) {
+        await supabase.from('log_entries').upsert(
+          { ...entry, user_id: calState.me.user_id },
+          { onConflict: 'user_id,log_date,category_id' }
+        );
+      }
+      // Toast feedback
+      const toast = document.createElement('div');
+      toast.className = 'toast show';
+      toast.textContent = 'Journée enregistrée ✓';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2800);
+    });
+  }
+
+  // Symptômes détaillés (Clue)
   const symptWrap = document.getElementById('symptom-tracker');
   if (symptWrap && calState.me) {
     renderSymptomTracker(symptWrap, { me: calState.me, partner: null }, localDateStr());

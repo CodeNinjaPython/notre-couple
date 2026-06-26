@@ -3,6 +3,7 @@ import { signOut } from './auth.js';
 import { navigate } from './router.js';
 import { getMyMembership, getPartnerMembership } from './pairing.js';
 import { initCollapsibles } from './collapse.js';
+import { renderHistoryChart } from './ring-chart.js';
 import { getCycleMode, setCycleMode } from './onboarding.js';
 import {
   computeSyncScore, computeWeeklyTrends, computeEventsByPhase,
@@ -74,6 +75,7 @@ export async function initNous() {
   renderEventsByPhase(events, cycles);
   renderConflictHeatmap(events, cycles);
   renderAnomalies(cycles);
+  renderHistoryChart(document.getElementById('cycles-history-chart'), cycles);
   renderSettings(me, partner);
 
   // Accordéons de la vue Analyse
