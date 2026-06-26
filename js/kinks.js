@@ -8,7 +8,7 @@
  * - Personne ne découvre l'intérêt de l'autre en avançant seul.
  */
 import { supabase } from './supabase.js';
-import { getIntimacyState } from './intimacy.js';
+import { getIntimacyState, initKinkSliderGradients } from './intimacy.js';
 
 const CATEGORIES = {
   atmosphere:    '✨ Atmosphère',
@@ -87,6 +87,9 @@ async function renderKinkList(st) {
       timers[kinkId] = setTimeout(() => saveKinkRating(kinkId, val), 600);
     });
   });
+
+  // Gradients dès le rendu
+  initKinkSliderGradients();
 }
 
 async function saveKinkRating(kinkId, desire) {

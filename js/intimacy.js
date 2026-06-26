@@ -19,6 +19,7 @@ import {
 import { renderLibrary, getSuggestions, getDateNightIdeas, PHASES_LABELS } from './intimacy-library.js';
 import { hasPIN, isLocked, showLockScreen, initQuickHide, initPINSettings } from './pin-lock.js';
 import { notifyLibidosAligned } from './notifications.js';
+import { cachedQuery, invalidateCache } from './query-cache.js';
 
 export let st = { me: null, partner: null, coupleId: null };
 
@@ -78,6 +79,10 @@ export async function initIntimacy() {
   // Interactions
   initQuickAdd();
   initSessionSheetListeners();
+  initDarkModeToggle();
+  initVoiceInput();
+  initKinkSliderGradients();
+  initSwipeNav();
   initQuickHide();
   initPINSettings();
   initHealthAdd();
@@ -436,6 +441,132 @@ async function renderChallenges() {
       catch (e) { alert('Impossible d\'enregistrer.'); }
     });
   } catch (e) { el.innerHTML = '<div class="msg error">Impossible de charger les défis. Vérifiez votre connexion.</div>'; }
+}
+
+// ─── Dark mode dédié section intime ────────────────────────────────────────
+function initDarkModeToggle() {
+  const btn = document.getElementById('btn-intime-dark');
+  if (!btn) return;
+
+  // Restaurer la préférence
+  if (localStorage.getItem('nc-intime-dark') === '1') {
+    document.body.classList.add('intime-dark');
+    btn.setAttribute('aria-pressed', 'true');
+  }
+
+  btn.addEventListener('click', () => {
+    const dark = document.body.classList.toggle('intime-dark');
+    localStorage.setItem('nc-intime-dark', dark ? '1' : '0');
+    btn.setAttribute('aria-pressed', dark);
+    btn.title = dark ? 'Mode clair' : 'Mode sombre';
+  });
+}
+
+// Nettoyer le dark mode quand on quitte la vue intime
+export function cleanupIntimacy() {
+  document.body.classList.remove('intime-dark');
+}
+
+// ─── Voice input (Web Speech API) ──────────────────────────────────────────
+function initVoiceInput() {
+  const btn = document.getElementById('btn-voice-feedback');
+  if (!btn) return;
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { btn.style.display = 'none'; return; }
+
+  const recognition = new SR();
+  recognition.lang = 'fr-FR';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  let listening = false;
+
+  btn.addEventListener('click', () => {
+    if (listening) { recognition.stop(); return; }
+    try {
+      recognition.start();
+    } catch (e) {
+      console.warn('Speech recognition:', e.message);
+    }
+  });
+
+  recognition.addEventListener('start', () => {
+    listening = true;
+    btn.classList.add('listening');
+    btn.setAttribute('aria-label', 'Arrêter la dictée');
+    btn.textContent = '🔴';
+  });
+
+  recognition.addEventListener('result', (e) => {
+    const text = e.results[0][0].transcript;
+    ['fb-improve', 'fb-loved', 'session-note-input'].forEach(id => {
+      const el = document.getElementById(id);
+      // Remplir le premier champ visible non vide ou vide en priorité
+      if (el && document.getElementById('feedback-sheet')?.classList.contains('open')) {
+        el.value = el.value ? el.value + ' ' + text : text;
+      }
+    });
+  });
+
+  recognition.addEventListener('end', () => {
+    listening = false;
+    btn.classList.remove('listening');
+    btn.setAttribute('aria-label', 'Dicter le feedback');
+    btn.textContent = '🎙️';
+  });
+
+  recognition.addEventListener('error', (e) => {
+    listening = false;
+    btn.classList.remove('listening');
+    btn.textContent = '🎙️';
+    if (e.error !== 'aborted') console.error('Speech error:', e.error);
+  });
+}
+
+// ─── Slider kinks : gradient dynamique ─────────────────────────────────────
+export function initKinkSliderGradients() {
+  document.querySelectorAll('.kink-slider').forEach(slider => {
+    function update() {
+      const pct = (Number(slider.value) / 5 * 100).toFixed(1);
+      slider.style.setProperty('--fill', `${pct}%`);
+    }
+    update(); // initialiser au chargement
+    slider.addEventListener('input', update);
+  });
+}
+
+// ─── Swipe navigation entre sections du dashboard ──────────────────────────
+function initSwipeNav() {
+  const container = document.querySelector('.app');
+  if (!container) return;
+
+  let startX = 0, startY = 0;
+  const THRESHOLD = 60; // px minimum pour déclencher
+
+  container.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = Math.abs(e.changedTouches[0].clientY - startY);
+
+    // Ne déclencher que pour des swipes horizontaux nets (ratio dx/dy > 1.5)
+    if (Math.abs(dx) < THRESHOLD || dy > Math.abs(dx) * 0.7) return;
+
+    // Swipe gauche → vue suivante, swipe droite → vue précédente
+    const NAV = ['today', 'calendar', 'nous', 'intime'];
+    const hash = window.location.hash.replace('#', '') || 'today';
+    const idx  = NAV.indexOf(hash);
+    if (idx < 0) return;
+
+    if (dx < 0 && idx < NAV.length - 1) {
+      import('./router.js').then(({ navigate }) => navigate(NAV[idx + 1]));
+    } else if (dx > 0 && idx > 0) {
+      import('./router.js').then(({ navigate }) => navigate(NAV[idx - 1]));
+    }
+  }, { passive: true });
 }
 
 // ─── Export état pour kinks.js ─────────────────────────────────────────────

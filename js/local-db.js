@@ -44,8 +44,9 @@ function applyRLS(table, rows) {
     case 'first_times':
       return rows.filter(r => r.couple_id === cid);
     case 'session_activities':
-      // accessible via session_id → on filtre par couple_id des sessions
       return rows; // simplifié pour le mode démo
+    case 'daily_symptoms':
+      return rows.filter(r => r.user_id === uid); // strictement privé
     case 'session_feedback':
       return rows.filter(r => r.user_id === uid || (r.shared === true && inSameCouple(r.user_id)));
     case 'kink_ratings':
@@ -234,7 +235,7 @@ const chanNoop = () => ({ on() { return this; }, subscribe() { return this; }, u
 
 // ─── Seed (30 jours de données réalistes) ─────────────────────────────────
 function seed() {
-  if (ls.get('seeded') === '5') return; // version 5 du seed (44 kinks, health alerts)
+  if (ls.get('seeded') === '6') return; // version 6 du seed (symptoms table)
 
   const T  = new Date();
   // Utilise la date locale pour éviter le décalage UTC (important UTC+4)
@@ -416,11 +417,12 @@ function seed() {
     { id:'ft2', couple_id:CID, created_by:LUI,  description:'Premier massage partagé', date:dt(-25), note:null, created_at:new Date(T-25*864e5).toISOString() },
   ]);
   ls.set('session_activities', []);
+  ls.set('daily_symptoms', []);  // table symptoms — vide au départ, l'utilisateur saisit
 
   // Démo : onboarding considéré comme complété, mode par défaut
   localStorage.setItem('nc-onboarding-v1', 'done');
   localStorage.setItem('nc-cycle-mode', 'rules');
-  ls.set('seeded', '5');
+  ls.set('seeded', '6');
 }
 
 // ─── Export ────────────────────────────────────────────────────────────────

@@ -17,6 +17,10 @@ export function navigate(name, params = {}) {
   if (currentView === 'today' && name !== 'today') {
     import('./realtime.js').then(m => m.unsubscribeAll());
   }
+  // Enlever le dark mode intime quand on quitte la vue intime
+  if (currentView === 'intime' && name !== 'intime') {
+    import('./intimacy.js').then(m => m.cleanupIntimacy?.());
+  }
   currentView = name;
 
   container.innerHTML = '';

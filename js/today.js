@@ -11,6 +11,8 @@ import { maybeRemindToLog, checkPartnerLoggedToday, showNotification, checkRules
 import { localDateStr, daysAgo, fmtDate, diffDays } from './date-utils.js';
 import { computeStreak } from './analytics.js';
 import { getCycleMode } from './onboarding.js';
+import { renderSymptomTracker } from './symptoms.js';
+import { cachedQuery, invalidateCache } from './query-cache.js';
 
 const PHASES_DATA = {
   Menstruelle: {
@@ -135,6 +137,12 @@ export async function initToday() {
   renderTip();
   renderPrediction();
   await renderEvents();
+
+  // Tracker de symptômes (Clue-inspired)
+  const symptWrap = document.getElementById('symptom-tracker');
+  if (symptWrap) {
+    renderSymptomTracker(symptWrap, { me: state.me, partner: state.partner }, state.logDate);
+  }
 
   // Realtime : rafraîchir les moments en temps réel
   if (state.coupleId) {
@@ -544,7 +552,10 @@ async function saveEntry(categoryId, value) {
     { onConflict: 'user_id,log_date,category_id' }
   );
   if (error) console.error('saveEntry:', error.message);
-  else showToast('Sauvegardé ✓');
+  else {
+    showToast('Sauvegardé ✓');
+    invalidateCache(`log-entries-${state.logDate}`); // invalide le cache du jour
+  }
 }
 
 // --- Insight ---------------------------------------------------------------
