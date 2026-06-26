@@ -1987,6 +1987,27 @@ nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
 
 /* Sidebar supprimée — app exclusivement smartphone, nav bottom conservée */
 
+/* ─── Progression de grossesse (mode pregnancy) ───────────────────────── */
+.preg-ring {
+  width: min(240px, 74vw); height: min(240px, 74vw);
+  border-radius: 50%; margin: 12px auto;
+  background: conic-gradient(var(--elle) var(--p, 0%), var(--surface2) 0%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--sh-md);
+}
+.preg-ring-inner {
+  width: 78%; height: 78%; border-radius: 50%;
+  background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+}
+.preg-week {
+  font-family: "DM Mono", monospace; font-size: 38px; font-weight: 700;
+  color: var(--elle); line-height: 1;
+}
+.preg-sub  { font-size: 14px; font-weight: 700; color: var(--text); }
+.preg-rem  { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; }
+
 /* ═══════════════════════════════════════════════════════════════════════
    INSIGHTS AUTO-GÉNÉRÉS
    ═══════════════════════════════════════════════════════════════════════ */

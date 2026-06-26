@@ -66,7 +66,9 @@ export async function initIntimacy() {
   ]);
 
   // Stats avancées (chargement différé — section stats)
-  renderMonthlyHeatmap(st.coupleId);
+  // elleId = la personne qui suit son cycle (même logique que nous.js)
+  const elleId = st.me?.tracks_cycle ? st.me.user_id : st.partner?.user_id;
+  renderMonthlyHeatmap(st.coupleId, elleId);
   renderSatisfactionCurve(st.me?.user_id);
   renderOrgasmByPhase(st);
   renderHealthAlerts(st.me?.user_id);

@@ -6,6 +6,7 @@
 import { supabase } from './supabase.js';
 import { localDateStr, fmtDate, diffDays } from './date-utils.js';
 import { POSITIONS } from './intimacy-library.js';
+import { syncSessionToDailyLog } from './session-bridge.js';
 
 const MOODS = { tender:'🥰', playful:'😄', passionate:'🔥', spontaneous:'⚡' };
 const MOOD_LABELS = { tender:'Tendre', playful:'Joueur·se', passionate:'Passionné·e', spontaneous:'Spontané·e' };
@@ -231,7 +232,7 @@ async function saveFullSession(st) {
 
     // Ouvrir le feedback post-séance, pré-rempli avec l'orgasme déclaré
     if (session?.id) {
-      setTimeout(() => openFeedbackSheet(session.id, st, myOrgasms), 350);
+      setTimeout(() => openFeedbackSheet(session.id, st, myOrgasms, date), 350);
     }
 
   } catch (e) {
@@ -301,6 +302,9 @@ async function saveFastTrack(st) {
       });
     }
 
+    // Liaison vers le journal du jour (DailyLog)
+    await syncSessionToDailyLog(localDateStr(), st.me?.user_id, { satisfaction: sat, orgasms });
+
     closeFastTrack();
     await renderRecentSessions(st);
 
@@ -315,9 +319,11 @@ async function saveFastTrack(st) {
 // ─── Feedback post-séance ──────────────────────────────────────────────────
 
 let _pendingFeedbackId = null;
+let _pendingFeedbackDate = null;
 
-export function openFeedbackSheet(sessionId, st, prefilledOrgasms = 0) {
+export function openFeedbackSheet(sessionId, st, prefilledOrgasms = 0, sessionDate = null) {
   _pendingFeedbackId = sessionId;
+  _pendingFeedbackDate = sessionDate || localDateStr();
   const sheet = document.getElementById('feedback-sheet');
   if (!sheet) return;
 
@@ -347,6 +353,7 @@ export function closeFeedbackSheet() {
   const sheet = document.getElementById('feedback-sheet');
   if (sheet) { sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
   _pendingFeedbackId = null;
+  _pendingFeedbackDate = null;
 }
 
 async function saveFeedback(st) {
@@ -356,6 +363,7 @@ async function saveFeedback(st) {
   const orgasms = document.getElementById('fb-orgasm')?.checked ? 1 : 0;
   const loved   = document.getElementById('fb-loved')?.value.trim()    || null;
   const improve = document.getElementById('fb-improve')?.value.trim()  || null;
+  const sessionDate = _pendingFeedbackDate || localDateStr();
 
   try {
     const { error } = await supabase.from('session_feedback').upsert({
@@ -369,6 +377,10 @@ async function saveFeedback(st) {
     }, { onConflict: 'session_id,user_id' });
 
     if (error) throw error;
+
+    // Liaison vers le journal du jour (DailyLog) avec les valeurs finales
+    await syncSessionToDailyLog(sessionDate, st.me?.user_id, { satisfaction: sat, orgasms });
+
     closeFeedbackSheet();
 
   } catch (e) {

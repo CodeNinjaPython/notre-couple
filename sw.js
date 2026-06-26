@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v19';
+const CACHE = 'notre-rythme-v20';
 const SHELL = [
   '/',
   '/index.html',
@@ -39,7 +39,11 @@ const SHELL = [
   '/js/insights.js',
   '/js/intimacy-heatmap.js',
   '/js/session-bridge.js',
+  '/js/skeleton.js',
   '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png',
 ];
 
 self.addEventListener('install', e => {

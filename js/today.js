@@ -108,6 +108,12 @@ export async function initToday() {
   state.cur = state.me?.tracks_cycle ? 'elle' : 'lui';
   document.body.dataset.cur = state.cur;
 
+  // Skeleton pendant le chargement de l'anneau de cycle
+  const ringWrap = document.getElementById('cycle-ring');
+  if (ringWrap && !ringWrap.innerHTML) {
+    ringWrap.innerHTML = '<div class="skeleton" style="width:min(260px,80vw);height:min(260px,80vw);border-radius:50%;margin:12px auto"></div>';
+  }
+
   // Charger cycle + historique + entrées en parallèle
   const [cycle, history] = await Promise.all([
     getCurrentCycle(),
@@ -223,11 +229,57 @@ function initDateNav() {
   updateDisplay();
 }
 
+// --- Statut de fertilité (mode conception) ---------------------------------
+function computeFertilityStatus(prediction) {
+  if (!prediction?.fertileStart || !prediction?.ovulationDate) return null;
+  const today = localDateStr();
+  const { fertileStart, fertileEnd, ovulationDate } = prediction;
+  if (today === ovulationDate)
+    return { label: 'Pic de fertilité — ovulation aujourd\'hui', hot: true };
+  if (today >= fertileStart && today <= (fertileEnd || ovulationDate))
+    return { label: 'Fenêtre fertile en cours', hot: true };
+  if (today < fertileStart) {
+    const d = diffDays(fertileStart, today);
+    return { label: `Fenêtre fertile dans ${d} jour${d > 1 ? 's' : ''}`, hot: false };
+  }
+  return { label: 'Hors fenêtre fertile', hot: false };
+}
+
+// --- Progression de grossesse (mode pregnancy) -----------------------------
+function renderPregnancyProgress(container) {
+  const dpa = localStorage.getItem('nc-dpa-date');
+  let weeks = null, tri = null, pct = 0, remaining = null;
+  if (dpa) {
+    const daysToDue = diffDays(dpa, localDateStr()); // jours avant terme
+    const elapsed   = 280 - daysToDue;               // 40 semaines = 280 j
+    weeks     = Math.max(0, Math.floor(elapsed / 7));
+    remaining = Math.max(0, 40 - weeks);
+    pct       = Math.min(100, Math.max(0, Math.round(elapsed / 280 * 100)));
+    tri       = weeks < 13 ? 1 : weeks < 27 ? 2 : 3;
+  }
+  container.innerHTML = `
+    <div class="preg-ring" style="--p:${pct}%" role="img"
+      aria-label="${weeks != null ? `Semaine ${weeks} de grossesse` : 'Grossesse'}">
+      <div class="preg-ring-inner">
+        <div class="preg-week">${weeks != null ? 'S' + weeks : '🤰'}</div>
+        <div class="preg-sub">${tri ? 'Trimestre ' + tri : 'Grossesse'}</div>
+        ${remaining != null ? `<div class="preg-rem">${remaining} sem. restantes</div>` : ''}
+      </div>
+    </div>`;
+}
+
 // --- Anneau SVG du cycle ---------------------------------------------------
 function renderRingChart() {
   const ring   = document.getElementById('cycle-ring');
   const legend = document.getElementById('ring-legend');
   if (!ring) return;
+
+  // Mode grossesse : l'anneau de cycle n'a pas de sens → progression de grossesse
+  if (getCycleMode() === 'pregnancy') {
+    renderPregnancyProgress(ring);
+    if (legend) legend.innerHTML = '';
+    return;
+  }
 
   const cycleObj = state.currentCycle
     ? new Cycle(state.currentCycle)
@@ -273,6 +325,19 @@ function renderHeader() {
     } else {
       if (eyebrow)   eyebrow.textContent   = 'Mode grossesse';
       if (phaseName) phaseName.textContent = 'Grossesse';
+    }
+    return;
+  }
+
+  // Mode conception : mettre en avant le statut de fertilité
+  if (mode === 'conception') {
+    const fert = computeFertilityStatus(state.prediction);
+    if (state.cycleDay && state.phaseName) {
+      if (eyebrow)   eyebrow.textContent   = fert ? `🌱 ${fert.label}` : `Jour ${state.cycleDay} · ${state.phaseName}`;
+      if (phaseName) phaseName.textContent = fert?.hot ? 'Fenêtre fertile' : state.phaseName;
+    } else {
+      if (eyebrow)   eyebrow.textContent   = '🌱 Mode conception';
+      if (phaseName) phaseName.textContent = 'Conception';
     }
     return;
   }
@@ -620,6 +685,12 @@ function renderTip() {
 function renderPrediction() {
   const card = document.getElementById('prediction-card');
   if (!card) return;
+
+  // Mode grossesse : pas de prédiction de règles
+  if (getCycleMode() === 'pregnancy') {
+    card.style.display = 'none';
+    return;
+  }
 
   const p = state.prediction;
   const history = p?.cyclesUsed;

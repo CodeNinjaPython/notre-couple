@@ -1,0 +1,9 @@
+#!/bin/sh
+# Garde-fou anti écran-gris : syntaxe + graphe import/export + tests.
+# Activé via : git config core.hooksPath .githooks
+node scripts/validate.mjs || {
+  echo ""
+  echo "Commit bloqué par scripts/validate.mjs."
+  echo "Corrige les erreurs ci-dessus, ou force avec: git commit --no-verify"
+  exit 1
+}

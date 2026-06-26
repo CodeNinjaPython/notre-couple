@@ -6,6 +6,7 @@ import { renderSymptomTracker } from './symptoms.js';
 import { initCollapsibles } from './collapse.js';
 import { DailyLog, computeCyclePrediction } from './cycle-model.js';
 import { renderLogCategoryAccordion, renderCalendarDaySummary } from './daily-log-ui.js';
+import { getCycleMode } from './onboarding.js';
 
 const PHASES = [
   [1,  5,  'Menstruelle',  '#E53935'],
@@ -208,6 +209,8 @@ function buildPredictionMap() {
   const map = {};
   const p = calState.prediction;
   if (!p) return map;
+  // Mode grossesse : aucune prédiction de règles / fertilité
+  if (getCycleMode() === 'pregnancy') return map;
 
   // Règles prévues : 5 jours à partir de nextPeriodDate
   const nextPeriod = new Date(p.nextPeriodDate);

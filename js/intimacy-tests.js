@@ -109,7 +109,8 @@ function computeKinkMatchRate(myRatings, partnerRatings) {
 
 function testKinkMatchRate() {
   describe('Kink Match Rate', () => {
-    // Cas 1 : 2 matchs sur 4 kinks distincts
+    // Cas 1 : 2 matchs sur 3 kinks distincts partagés
+    // (k3 est non partagé + desire 0 → exclu ; distincts = k1, k2, k4)
     const mine     = [
       { kink_id: 'k1', desire: 4, shared: true },
       { kink_id: 'k2', desire: 3, shared: true },
@@ -122,8 +123,8 @@ function testKinkMatchRate() {
     ];
     const r1 = computeKinkMatchRate(mine, theirs);
     assert('2 matchs détectés (k1, k2)', r1.matchCount === 2, `got ${r1.matchCount}`);
-    assert('Total 4 kinks distincts', r1.total === 4, `got ${r1.total}`);
-    assert('Taux = 50%', r1.rate === 50, `got ${r1.rate}`);
+    assert('Total 3 kinks distincts partagés', r1.total === 3, `got ${r1.total}`);
+    assert('Taux = 67%', r1.rate === 67, `got ${r1.rate}`);
     assert('k3 absent des matchs (non partagé)', !r1.matchIds.includes('k3'));
 
     // Cas 2 : aucun kink en commun

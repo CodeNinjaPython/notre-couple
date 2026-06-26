@@ -13,6 +13,7 @@ import {
 import { currentWeekDates, daysAgo, localDateStr } from './date-utils.js';
 import { exportPDF } from './pdf.js';
 import { generateInsights, computeLibidoAlignment, loadSessionsWithFeedback } from './insights.js';
+import { skeletonFill } from './skeleton.js';
 
 const MODE_DESCS = {
   rules:      'Comprendre vos rythmes communs — corrélations, synchronie et insights par phase.',
@@ -58,6 +59,14 @@ export async function initNous() {
 
   document.getElementById('today-date').textContent =
     new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // Skeletons pendant le chargement (90 jours de données + sessions)
+  skeletonFill([
+    { id: 'sync-score', height: 90 },
+    { id: 'nous-insights', height: 70, count: 3 },
+    { id: 'nous-libido-align', height: 90 },
+    { id: 'nous-week', type: 'lines', lines: 2 },
+  ]);
 
   // Charger données en parallèle (analytics centralisé)
   const { entries, events, cycles } = await loadAnalyticsData(me.couple_id);
