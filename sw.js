@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v16';
+const CACHE = 'notre-rythme-v17';
 const SHELL = [
   '/',
   '/index.html',
@@ -35,6 +35,10 @@ const SHELL = [
   '/js/daily-log-ui.js',
   '/js/quick-log-bar.js',
   '/js/types.js',
+  '/js/crypto-notes.js',
+  '/js/insights.js',
+  '/js/intimacy-heatmap.js',
+  '/js/session-bridge.js',
   '/manifest.json',
 ];
 

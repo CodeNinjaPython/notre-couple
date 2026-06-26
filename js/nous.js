@@ -12,6 +12,7 @@ import {
 } from './analytics.js';
 import { currentWeekDates, daysAgo, localDateStr } from './date-utils.js';
 import { exportPDF } from './pdf.js';
+import { generateInsights, computeLibidoAlignment, loadSessionsWithFeedback } from './insights.js';
 
 const MODE_DESCS = {
   rules:      'Comprendre vos rythmes communs — corrélations, synchronie et insights par phase.',
@@ -77,6 +78,11 @@ export async function initNous() {
   renderAnomalies(cycles);
   renderHistoryChart(document.getElementById('cycles-history-chart'), cycles);
   renderSettings(me, partner);
+
+  // Insights auto + alignement libido
+  const sessions = await loadSessionsWithFeedback(me.couple_id);
+  renderInsights({ entries, cycles, sessions, elleId, luiId });
+  renderLibidoAlignment(entries, elleId, luiId);
 
   // Accordéons de la vue Analyse
   initCollapsibles(document.getElementById('view'));
@@ -605,3 +611,70 @@ function initNotifSettings() {
 }
 
 export { getNotifSettings };
+
+// ── Insights auto-générés ─────────────────────────────────────────────────
+function renderInsights({ entries, cycles, sessions, elleId, luiId }) {
+  const wrap = document.getElementById('nous-insights');
+  if (!wrap) return;
+
+  const list = generateInsights({ sessions, entries, cycles, elleId, luiId });
+  if (!list.length) {
+    wrap.innerHTML = '<div class="msg info">Continue à journaliser pour voir tes insights personnalisés.</div>';
+    return;
+  }
+
+  const TYPE_BORDER = { positive: 'var(--elle)', info: 'var(--lui)', warning: 'var(--red)' };
+  wrap.innerHTML = list.map(ins => `
+    <div class="insight-card" style="border-left-color:${TYPE_BORDER[ins.type] || 'var(--faint)'}">
+      <div class="insight-header">
+        <span class="insight-icon" aria-hidden="true">${ins.icon}</span>
+        <strong class="insight-title">${ins.title}</strong>
+      </div>
+      <p class="insight-body">${ins.body}</p>
+    </div>`).join('');
+}
+
+// ── Alignement libido ─────────────────────────────────────────────────────
+function renderLibidoAlignment(entries, elleId, luiId) {
+  const wrap = document.getElementById('nous-libido-align');
+  if (!wrap) return;
+
+  const { score, label, trend, byDay } = computeLibidoAlignment(entries, elleId, luiId);
+  if (score === null) {
+    wrap.innerHTML = '<div class="msg info">Pas encore assez de données libido pour les deux partenaires.</div>';
+    return;
+  }
+
+  const trendIcon = trend === 'improving' ? '↑' : trend === 'declining' ? '↓' : '→';
+  const trendColor = trend === 'improving' ? 'var(--elle)' : trend === 'declining' ? 'var(--red)' : 'var(--faint)';
+
+  // Mini sparkline des 14 derniers jours
+  const recent = byDay.slice(-14);
+  const W = 240, H = 40;
+  const maxDiff = 4;
+  const pts = recent.map((d, i) => {
+    const x = (i / Math.max(recent.length - 1, 1)) * W;
+    const diff = Math.abs((d.elle ?? 0) - (d.lui ?? 0));
+    const y = H - (diff / maxDiff) * H;
+    return `${x},${y}`;
+  }).join(' ');
+
+  wrap.innerHTML = `
+    <div class="align-score-row">
+      <div class="align-circle" style="--score:${score}">
+        <span class="align-num">${score}</span>
+        <span class="align-unit">/100</span>
+      </div>
+      <div class="align-meta">
+        <div class="align-label">${label}</div>
+        <div class="align-trend" style="color:${trendColor}">${trendIcon} ${trend === 'improving' ? 'En amélioration' : trend === 'declining' ? 'En baisse' : 'Stable'}</div>
+      </div>
+    </div>
+    ${recent.length > 2 ? `
+    <div class="align-sparkline-wrap">
+      <div class="align-sparkline-label">Écart libido (14j) — bas = aligné</div>
+      <svg viewBox="0 0 ${W} ${H}" class="align-sparkline" aria-hidden="true">
+        <polyline points="${pts}" fill="none" stroke="var(--elle)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>` : ''}`;
+}

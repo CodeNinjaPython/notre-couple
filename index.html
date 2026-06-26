@@ -14,6 +14,37 @@
 </head>
 <body>
 
+  <!-- Sidebar — visible uniquement sur écrans ≥ 768px (desktop/tablette) -->
+  <aside id="sidebar" aria-label="Navigation" hidden>
+    <div class="sidebar-brand">
+      <span class="sidebar-logo" aria-hidden="true">NR</span>
+      <span class="sidebar-name">Notre rythme</span>
+    </div>
+    <nav class="sidebar-nav" aria-label="Navigation principale">
+      <button type="button" data-nav="today" class="sidebar-btn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Aujourd'hui
+      </button>
+      <button type="button" data-nav="calendar" class="sidebar-btn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>
+        Calendrier
+      </button>
+      <div class="sidebar-section-label">Intime</div>
+      <button type="button" data-nav="intime" class="sidebar-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Journal intime
+      </button>
+      <div class="sidebar-section-label">Analyse</div>
+      <button type="button" data-nav="nous" class="sidebar-btn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Corrélations
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="sidebar-version">v1.0</span>
+    </div>
+  </aside>
+
   <!-- Mount point -->
   <div id="view"></div>
 

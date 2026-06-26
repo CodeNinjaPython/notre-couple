@@ -5,6 +5,7 @@
  */
 import { supabase } from './supabase.js';
 import { localDateStr, diffDays, fmtDate } from './date-utils.js';
+import { renderIntimacyHeatmap } from './intimacy-heatmap.js';
 
 // ─── Erreur UI ─────────────────────────────────────────────────────────────
 
@@ -15,9 +16,15 @@ function showStatError(el, msg) {
 
 // ─── Heatmap mensuelle ─────────────────────────────────────────────────────
 
-export async function renderMonthlyHeatmap(coupleId) {
+export async function renderMonthlyHeatmap(coupleId, elleId) {
   const el = document.getElementById('intimacy-heatmap');
   if (!el) return;
+
+  // Utiliser le nouveau composant rich si elleId fourni
+  if (elleId) {
+    await renderIntimacyHeatmap(el, { coupleId, elleId });
+    return;
+  }
 
   try {
     const now      = new Date();
