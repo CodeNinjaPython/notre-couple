@@ -74,7 +74,7 @@ body { display: flex; justify-content: center; }
   width: 100%;
   max-width: 440px;
   min-height: 100vh;
-  padding: 0 20px calc(110px + env(safe-area-inset-bottom));
+  padding: 0 20px calc(178px + env(safe-area-inset-bottom));
 }
 
 /* Halo rose en haut */
@@ -1876,6 +1876,105 @@ body.intime-dark .card:hover {
   padding: 6px 13px; cursor: pointer; transition: all .2s;
   min-height: 44px; /* A11Y */
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   QUICK LOG BAR — Barre de saisie rapide persistante
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#quick-log-bar {
+  position: fixed;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  left: 50%; transform: translateX(-50%);
+  width: calc(100% - 28px); max-width: 420px;
+  z-index: 9;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--sh-md);
+  overflow: hidden;
+}
+
+.qlb-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.qlb-inner::-webkit-scrollbar { display: none; }
+
+/* Items composites (label + contrôle) */
+.qlb-item {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+  flex-shrink: 0;
+}
+.qlb-item-label {
+  font-size: 9px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--faint); white-space: nowrap;
+}
+
+/* Barre de dots libido */
+.qlb-dots {
+  display: flex; gap: 3px; align-items: center;
+}
+.qlb-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--surface2);
+  cursor: pointer; transition: all .18s; padding: 0;
+  flex-shrink: 0;
+}
+.qlb-dot.on {
+  background: var(--elle);
+  border-color: var(--elle);
+  box-shadow: 0 1px 6px rgba(232,67,117,.45);
+  transform: scale(1.15);
+}
+.qlb-dot:hover:not(.on) { border-color: var(--elle-mid); }
+
+/* Chips rapides */
+.qlb-chip {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 2px; padding: 5px 9px;
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 12px; cursor: pointer; flex-shrink: 0;
+  transition: all .18s; font-size: 16px; min-width: 44px; min-height: 44px;
+  justify-content: center;
+}
+.qlb-chip-label {
+  font-size: 8.5px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--muted); white-space: nowrap;
+}
+.qlb-chip.on {
+  background: var(--elle-dim);
+  border-color: var(--elle);
+  box-shadow: 0 2px 8px rgba(232,67,117,.22);
+}
+.qlb-chip.on .qlb-chip-label { color: var(--elle); }
+
+/* Chips petites (énergie) */
+.qlb-chip.qlb-sm { padding: 4px 6px; font-size: 14px; min-width: 34px; min-height: 34px; }
+
+/* Row inline pour l'énergie */
+.qlb-row { display: flex; gap: 3px; align-items: center; }
+
+/* ─── Scale buttons (libido / satisfaction in accordion) ──────────────── */
+.lca-scale-grid {
+  display: flex; flex-wrap: nowrap; gap: 6px;
+}
+.log-scale-btn {
+  flex: 1; min-width: 38px;
+  padding: 8px 4px;
+}
+.log-scale-btn .log-card-label {
+  font-family: "DM Mono", monospace;
+  font-size: 15px; font-weight: 700;
+  color: var(--text);
+}
+.log-scale-btn.active .log-card-label { color: var(--cat-color, var(--elle)); }
 
 /* ─── A11Y : tap targets minimum 44×44px ─────────────────────────────── */
 .chip, .mood-btn, .loc-btn, .act-tag-btn, .fb-sat-btn, .ft-sat-btn,

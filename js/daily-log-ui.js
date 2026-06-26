@@ -208,21 +208,70 @@ export const JOURNAL_CATEGORIES = [
   {
     id: 'sexualite', label: 'Sexualité', icon: '❤️', color: '#E84375',
     fields: [
-      { key: 'rapports', label: 'Activité', type: 'single',
+      { key: 'rapports', label: 'Activité principale', type: 'single',
         options: [
           o('avec_protection','Avec protection','🛡️'),
           o('sans_protection','Sans protection','💑'),
           o('retrait','Retrait','⬅️'),
           o('pas_sexe','Pas de sexe','—'),
         ]},
-      { key: 'libidoPratiques', label: 'Pratiques & Libido', type: 'multi',
+      { key: 'libidoPratiques', label: 'Pratiques', type: 'multi',
         options: [
-          o('oral','Sexe oral','💋'), o('touche_sensuel','Touché sensuel','🤲'),
-          o('want_cute_kiss','Want cute kiss','😘'),
+          o('oral','Sexe oral','💋'),
+          o('touche_sensuel','Touché sensuel','🤲'),
+          o('want_cute_kiss','Bisous tendres','😘'),
           o('masturbation','Masturbation','✨'),
-          o('libido_elevee','Libido élevée','📈'), o('libido_basse','Libido en baisse','📉'),
+          o('sexting','Sexting','📱'),
+          o('fantasmes','Fantasmes','💭'),
+          o('libido_elevee','Libido haute','📈'),
+          o('libido_basse','Libido basse','📉'),
         ]},
-      { key: 'orgasme', label: 'Orgasme', type: 'bool', icon: '⭐' },
+      { key: 'libidoScale', label: 'Ma libido (1-5)', type: 'scale', min: 1, max: 5 },
+      { key: 'libidoPartenaireScale', label: 'Libido partenaire (1-5)', type: 'scale', min: 1, max: 5 },
+      { key: 'orgasme', label: 'Orgasme (moi)', type: 'bool', icon: '⭐' },
+      { key: 'orgasmes.toi.count', label: 'Nombre d\'orgasmes (moi)', type: 'number',
+        unit: '', min: 0, max: 10, step: 1 },
+      { key: 'orgasmes.toi.types', label: 'Type (moi)', type: 'multi',
+        options: [
+          o('clitoridien','Clitoridien','🌸'), o('vaginal','Vaginal','💜'),
+          o('mixte','Mixte','💫'), o('multiple','Multiple','🌟'), o('anal','Anal','🔮'),
+        ]},
+      { key: 'orgasmes.partenaire.count', label: 'Nombre d\'orgasmes (partenaire)', type: 'number',
+        unit: '', min: 0, max: 10, step: 1 },
+      { key: 'orgasmes.partenaire.types', label: 'Type (partenaire)', type: 'multi',
+        options: [
+          o('prostatique','Prostatique','💙'), o('pénien','Pénien','💙'),
+          o('multiple','Multiple','🌟'), o('retardé','Retardé','⏳'),
+        ]},
+      { key: 'satisfactionSexuelle',   label: 'Ma satisfaction (1-10)', type: 'scale', min: 1, max: 10 },
+      { key: 'satisfactionPartenaire', label: 'Satisfaction partenaire (1-10)', type: 'scale', min: 1, max: 10 },
+      { key: 'sextoys', label: 'Sextoys', type: 'multi',
+        options: [
+          o('vibromasseur','Vibromasseur','🌙'), o('gode','Gode','💜'),
+          o('plug','Plug anal','💎'), o('anneau','Anneau pénien','💍'),
+          o('sextoy_couple','Sextoy couple','💑'),
+        ]},
+      { key: 'lubrifiant', label: 'Lubrifiant', type: 'bool', icon: '💧' },
+      { key: 'aftercare', label: 'Aftercare fait', type: 'bool', icon: '🤗' },
+      { key: 'aftercareNote', label: 'Note aftercare', type: 'text',
+        placeholder: 'Ce qui a aidé à se sentir bien après…', maxlength: 500 },
+      { key: 'kinksDate', label: 'Kinks pratiqués', type: 'tags',
+        placeholder: 'Ajouter un kink…' },
+    ],
+  },
+
+  // ── Facteurs couple ── Rose vif ─────────────────────────────────────────
+  {
+    id: 'couple', label: 'Facteurs couple', icon: '💑', color: '#E84375',
+    fields: [
+      { key: 'stressCouple', label: 'Ambiance du couple', type: 'single',
+        options: [
+          o('bonne_ambiance','Super bien','💑'),
+          o('aucun','Normal','😊'),
+          o('tension','Tensions','⚡'),
+          o('dispute','Dispute','🌩️'),
+          o('reconciliation','Réconciliation','🤝'),
+        ]},
     ],
   },
 
@@ -303,21 +352,20 @@ export const JOURNAL_CATEGORIES = [
 // 2. COMPOSANT LogCategoryAccordion
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** Lit une valeur éventuellement imbriquée (ex: 'grossesse.trimestre') */
+/** Lit une valeur imbriquée à profondeur arbitraire (ex: 'orgasmes.toi.count') */
 function getNestedValue(log, key) {
-  const [parent, child] = key.split('.');
-  return child ? (log[parent]?.[child] ?? null) : (log[key] ?? null);
+  return key.split('.').reduce((obj, k) => (obj != null ? (obj[k] ?? null) : null), log);
 }
 
-/** Écrit une valeur éventuellement imbriquée */
+/** Écrit une valeur imbriquée à profondeur arbitraire */
 function setNestedValue(log, key, value) {
-  const [parent, child] = key.split('.');
-  if (child) {
-    if (!log[parent] || typeof log[parent] !== 'object') log[parent] = {};
-    log[parent][child] = value;
-  } else {
-    log[key] = value;
-  }
+  const parts = key.split('.');
+  const last  = parts.pop();
+  const parent = parts.reduce((obj, k) => {
+    if (!obj[k] || typeof obj[k] !== 'object') obj[k] = {};
+    return obj[k];
+  }, log);
+  parent[last] = value;
 }
 
 /**
@@ -507,6 +555,27 @@ function _renderField(field, log, catColor) {
     </div>`;
   }
 
+  if (field.type === 'scale') {
+    const val  = getNestedValue(log, field.key);
+    const min  = field.min ?? 1;
+    const max  = field.max ?? 5;
+    const steps = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+    const cards = steps.map(n => {
+      const active = val === n;
+      return `<button type="button"
+        class="log-card log-scale-btn${active ? ' active' : ''}"
+        data-field="${field.key}" data-value="${n}" data-type="single"
+        aria-pressed="${active}" aria-label="${field.label} ${n}"
+        style="--cat-color:${catColor}">
+        <span class="log-card-label">${n}</span>
+      </button>`;
+    }).join('');
+    return `<div class="lca-field">
+      <div class="lca-field-label">${field.label}</div>
+      <div class="lca-grid lca-scale-grid">${cards}</div>
+    </div>`;
+  }
+
   if (field.type === 'bool') {
     const active = !!value;
     return `<div class="lca-field">
@@ -629,12 +698,20 @@ const _CAT_MAP = {
   'Émotion':'Émotions & SPM', 'Mental':'Émotions & SPM',
   'Énergie':'Énergie & Sommeil', 'Sommeil':'Énergie & Sommeil', 'Durée sommeil':'Énergie & Sommeil',
   'Douleur':'Douleurs',
-  'Fringale':'Digestion', 'Transit':'Digestion', 'Gastrique':'Digestion',
-  'Glaire':'État corporel', 'Peau':'État corporel', 'BBT':'État corporel', 'Poids':'État corporel',
-  'Exercice':'Vie quotidienne', 'Stress':'Vie quotidienne', 'Toxique':'Vie quotidienne',
-  'Sexualité':'Sexualité', 'Libido':'Sexualité', 'Orgasme':'Sexualité',
+  'Fringale':'Digestion', 'Transit':'Digestion',
+  'Glaire':'État corporel', 'Peau':'État corporel', 'Urine':'État corporel',
+  'BBT':'État corporel', 'Poids':'État corporel',
+  'Exercice':'Vie quotidienne', 'Méditation':'Vie quotidienne',
+  'Social':'Vie quotidienne', 'Loisir':'Vie quotidienne', 'Fête':'Vie quotidienne',
+  'Sexualité':'Sexualité', 'Pratique':'Sexualité',
+  'Libido toi':'Sexualité', 'Libido partenaire':'Sexualité',
+  'Orgasme':'Sexualité', 'Orgasmes toi':'Sexualité', 'Orgasmes partenaire':'Sexualité',
+  'Satisfaction toi':'Sexualité', 'Satisfaction partenaire':'Sexualité',
+  'Sextoy':'Sexualité', 'Lubrifiant':'Sexualité', 'Aftercare':'Sexualité', 'Kink':'Sexualité',
+  'Couple':'Facteurs couple',
   'Contraception':'Médical', 'OPK':'Médical', 'Fièvre':'Médical',
-  'Grossesse':'Grossesse',
-  'Note':'Note du jour',
+  'Grossesse':'Grossesse', 'Super-pouvoir':'Grossesse',
+  'Périménopause':'Périménopause',
+  'Note':'Note du jour', 'Tag':'Note du jour',
 };
 const _findCatForLabel = label => _CAT_MAP[label] || null;

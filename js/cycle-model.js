@@ -104,9 +104,27 @@ export class DailyLog {
     this.meditation        = null; // Int (minutes) ou null
 
     // ── SEXUALITÉ ─────────────────────────────────────────────────────────
-    this.rapports          = null; // avec_protection | sans_protection | retrait | pas_sexe
-    this.libidoPratiques   = [];   // oral | touche_sensuel | want_cute_kiss | masturbation | libido_elevee | libido_basse
-    this.orgasme           = null; // boolean
+    this.rapports               = null; // avec_protection | sans_protection | retrait | pas_sexe
+    this.libidoPratiques        = [];   // oral | touche_sensuel | want_cute_kiss | masturbation | sexting | fantasmes | libido_elevee | libido_basse
+    this.orgasme                = null; // boolean (raccourci rétrocompat)
+    // Sexualité enrichie couple
+    this.libidoScale            = null; // 1 | 2 | 3 | 4 | 5 (toi)
+    this.libidoPartenaireScale  = null; // 1 | 2 | 3 | 4 | 5
+    this.orgasmes               = {
+      toi:        { count: null, types: [] }, // clitoridien | vaginal | mixte | multiple | anal
+      partenaire: { count: null, types: [] },
+    };
+    this.satisfactionSexuelle   = null; // 1-10 (toi)
+    this.satisfactionPartenaire = null; // 1-10
+    this.sextoys                = [];   // vibromasseur | gode | plug | anneau | sextoy_couple
+    this.lubrifiant             = false;
+    this.positionsUtilisees     = [];   // ids depuis POSITIONS (intimacy-library.js)
+    this.kinksDate              = [];   // kink ids pratiqués ce jour
+    this.aftercare              = false;
+    this.aftercareNote          = null; // String
+
+    // ── FACTEURS COUPLE ───────────────────────────────────────────────────
+    this.stressCouple = null; // aucun | tension | dispute | reconciliation | bonne_ambiance
 
     // ── MÉDICAL & CONTRACEPTION ───────────────────────────────────────────
     // Enum strict pour contraceptifs actifs
@@ -184,11 +202,21 @@ export class DailyLog {
       'etatPeau','etatCheveux','urineSymptomes',
       'vieSociale','loisirs','fete','libidoPratiques',
       'contraceptionActifs','traitements','symptomsAutres','tags',
+      'sextoys','positionsUtilisees','kinksDate',
     ];
     arrays.forEach(k => { if (!Array.isArray(log[k])) log[k] = []; });
     if (typeof log.grossesse !== 'object' || !log.grossesse) {
       log.grossesse = new DailyLog().grossesse;
     }
+    if (typeof log.orgasmes !== 'object' || !log.orgasmes) {
+      log.orgasmes = new DailyLog().orgasmes;
+    }
+    ['toi', 'partenaire'].forEach(p => {
+      if (!log.orgasmes[p] || typeof log.orgasmes[p] !== 'object') {
+        log.orgasmes[p] = { count: null, types: [] };
+      }
+      if (!Array.isArray(log.orgasmes[p].types)) log.orgasmes[p].types = [];
+    });
     return log;
   }
 
@@ -197,60 +225,91 @@ export class DailyLog {
     const items = [];
     const add = (label, value) => items.push({ label, value });
 
+    // Flux
     if (this.fluxMenstruel && this.fluxMenstruel !== 'aucun')
       add('Flux', FLUX_LABELS[this.fluxMenstruel] || this.fluxMenstruel);
-    if (this.spotting)
-      add('Spotting', this.spotting);
-    if (this.textureFlux)
-      add('Texture', this.textureFlux);
-    if (this.protectionType)
-      add('Protection', this.protectionType);
+    if (this.spotting)     add('Spotting', this.spotting);
+    if (this.textureFlux)  add('Texture', this.textureFlux);
+    if (this.protectionType) add('Protection', this.protectionType);
 
-    [...this.emotionsPositives, ...this.emotionsNegatives].forEach(e => add('Émotion', e));
+    // Émotions & Cognition (champ unifié)
+    this.emotions.forEach(e     => add('Émotion', e));
     this.etatCognitif.forEach(e => add('Mental', e));
 
-    if (this.niveauEnergie)  add('Énergie', this.niveauEnergie);
-    if (this.qualiteSommeil) add('Sommeil', this.qualiteSommeil);
-    if (this.dureeSommeil)   add('Durée sommeil', `${this.dureeSommeil}h`);
+    // Énergie & Sommeil
+    if (this.niveauEnergie) add('Énergie', this.niveauEnergie);
+    if (this.dureeSommeil)  add('Durée sommeil', `${this.dureeSommeil}h`);
     this.symptomesSommeil.forEach(s => add('Sommeil', s));
 
+    // Douleurs
     this.douleursPelviennes.forEach(d => add('Douleur', d));
     this.douleursCorps.forEach(d      => add('Douleur', d));
 
-    this.fringales.forEach(f          => add('Fringale', f));
-    if (this.transit)                    add('Transit', this.transit);
-    this.symptomsGastriques.forEach(s => add('Gastrique', s));
+    // Digestion
+    this.fringales.forEach(f => add('Fringale', f));
+    if (this.transit)        add('Transit', this.transit);
 
-    if (this.glaireCervicale)         add('Glaire', this.glaireCervicale);
-    this.etatPeau.forEach(p           => add('Peau', p));
-    if (this.temperatureBasale)        add('BBT', `${this.temperatureBasale}°C`);
-    if (this.poids)                    add('Poids', `${this.poids}kg`);
+    // Corps
+    if (this.glaireCervicale) add('Glaire', this.glaireCervicale);
+    this.etatPeau.forEach(p  => add('Peau', p));
+    this.urineSymptomes.forEach(u => add('Urine', u));
+    if (this.temperatureBasale) add('BBT', `${this.temperatureBasale}°C`);
+    if (this.poids)             add('Poids', `${this.poids}kg`);
 
+    // Lifestyle
     if (this.exercice && this.exercice !== 'aucun') add('Exercice', this.exercice);
-    if (this.meditation)               add('', 'Méditation');
-    if (this.stressJournalier)         add('Stress', `${this.stressJournalier}/5`);
-    this.toxiques.forEach(t            => add('Toxique', t));
+    if (this.meditation) add('Méditation', `${this.meditation} min`);
+    this.vieSociale.forEach(v => add('Social', v));
+    this.loisirs.forEach(l    => add('Loisir', l));
+    this.fete.forEach(f       => add('Fête', f));
 
-    if (this.rapports)  add('Sexualité', this.rapports);
-    if (this.libido)    add('Libido', this.libido);
-    if (this.orgasme)   add('', 'Orgasme');
+    // Sexualité
+    if (this.rapports && this.rapports !== 'pas_sexe') add('Sexualité', this.rapports);
+    this.libidoPratiques.forEach(p => add('Pratique', p));
+    if (this.libidoScale)           add('Libido toi', `${this.libidoScale}/5`);
+    if (this.libidoPartenaireScale) add('Libido partenaire', `${this.libidoPartenaireScale}/5`);
+    if (this.orgasme)               add('Orgasme', '✓');
+    const oT = this.orgasmes?.toi?.count;
+    const oP = this.orgasmes?.partenaire?.count;
+    if (oT)  add('Orgasmes toi', String(oT));
+    if (oP)  add('Orgasmes partenaire', String(oP));
+    if (this.satisfactionSexuelle)   add('Satisfaction toi', `${this.satisfactionSexuelle}/10`);
+    if (this.satisfactionPartenaire) add('Satisfaction partenaire', `${this.satisfactionPartenaire}/10`);
+    this.sextoys.forEach(s => add('Sextoy', s));
+    if (this.lubrifiant)  add('Lubrifiant', '✓');
+    if (this.aftercare)   add('Aftercare', '✓');
+    this.kinksDate.forEach(k => add('Kink', k));
 
+    // Facteurs couple
+    if (this.stressCouple) add('Couple', this.stressCouple);
+
+    // Médical
     this.contraceptionActifs.forEach(c => add('Contraception', c));
-    if (this.testOvulation)  add('OPK', this.testOvulation);
-    if (this.fievre)         add('Fièvre', `${this.fievre}°C`);
+    if (this.testOvulation) add('OPK', this.testOvulation);
+    if (this.fievre)        add('Fièvre', `${this.fievre}°C`);
 
+    // Grossesse
     if (this.enceinte && this.grossesse?.trimestre)
       add('Grossesse', `T${this.grossesse.trimestre}`);
     (this.grossesse?.symptomsGrossesse || []).forEach(s => add('Grossesse', s));
-    (this.grossesse?.superPouvoirs || []).forEach(s     => add('', s));
+    (this.grossesse?.superPouvoirs    || []).forEach(s => add('Super-pouvoir', s));
 
+    // Périménopause
+    const bch = this.perimenopauses?.bouffeesChaleur;
+    if (bch && bch !== 'pas_aujourd_hui') add('Périménopause', bch);
+    if (this.perimenopauses?.secheresseVaginale) add('Périménopause', 'Sécheresse');
+
+    // Note
     if (this.noteDuJour) add('Note', this.noteDuJour);
+    this.tags.forEach(t => add('Tag', t));
+
     return items;
   }
 }
 
 const FLUX_LABELS = {
-  aucun:'Aucun', leger:'Léger', modere:'Modéré', abondant:'Abondant',
+  aucun:'Aucun', legeres:'Légères', modere:'Modérées',
+  abondant:'Abondantes', tres_abondant:'Très abondant',
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

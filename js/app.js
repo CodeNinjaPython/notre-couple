@@ -10,6 +10,7 @@ import { onboardingDone, initOnboarding, markOnboardingDone } from './onboarding
 import { initIntimacy } from './intimacy.js';
 import { initKinks } from './kinks.js';
 import { initQuickHide } from './pin-lock.js';
+import { initQuickLogBar } from './quick-log-bar.js';
 
 // Mode démo : indicateur sur le body
 if (IS_DEMO) document.body.classList.add('demo-mode');
@@ -175,6 +176,7 @@ async function routeAfterAuth() {
     navigate('pairing');
   } else {
     navigate('today');
+    initQuickLogBar();
     if (!IS_DEMO) setTimeout(() => maybeShowNotifBanner(), 2000);
   }
 }
