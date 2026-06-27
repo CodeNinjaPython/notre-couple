@@ -1,21 +1,34 @@
 import { supabase } from './supabase.js';
 
-export async function sendMagicLink(email) {
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin },
-  });
-  if (error) throw error;
+/**
+ * Connexion par mot de passe. Essaie de se connecter ; si le compte n'existe
+ * pas encore, le crée automatiquement (premier accès).
+ * @returns {'in'|'up'|'confirm'} — connecté / créé+connecté / créé mais e-mail à confirmer
+ */
+export async function signInOrSignUp(email, password) {
+  const inRes = await supabase.auth.signInWithPassword({ email, password });
+  if (!inRes.error) return 'in';
+
+  const msg = (inRes.error.message || '').toLowerCase();
+  // Identifiants invalides → soit le compte n'existe pas, soit mauvais mot de passe
+  if (msg.includes('invalid login credentials') || msg.includes('invalid')) {
+    const upRes = await supabase.auth.signUp({ email, password });
+    if (!upRes.error) {
+      return upRes.data?.session ? 'up' : 'confirm';
+    }
+    const upMsg = (upRes.error.message || '').toLowerCase();
+    if (upMsg.includes('already registered') || upMsg.includes('already been registered')) {
+      throw new Error('Ce compte existe déjà — mot de passe incorrect. (Compte sans mot de passe ? Vois "Mot de passe" dans Réglages depuis le web.)');
+    }
+    throw upRes.error;
+  }
+  throw inRes.error;
 }
 
-// Vérifie le code à 6 chiffres reçu par e-mail (login dans l'app, sans bascule Safari)
-// Essaie 'email' (utilisateur existant) puis 'signup' (nouveau compte, ex. la partenaire).
-export async function verifyEmailOtp(email, token) {
-  const t = String(token).trim();
-  const first = await supabase.auth.verifyOtp({ email, token: t, type: 'email' });
-  if (!first.error) return;
-  const second = await supabase.auth.verifyOtp({ email, token: t, type: 'signup' });
-  if (second.error) throw first.error; // remonte l'erreur la plus parlante
+/** Définit (ou change) le mot de passe de l'utilisateur connecté. */
+export async function setPassword(password) {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
 }
 
 export async function getUser() {

@@ -1,5 +1,5 @@
 import { supabase, IS_DEMO } from './supabase.js';
-import { sendMagicLink, verifyEmailOtp, onAuthChange } from './auth.js';
+import { signInOrSignUp, onAuthChange } from './auth.js';
 import { getMyMembership, createCouple, joinWithCode, renewPairingCode } from './pairing.js';
 import { navigate, registerView, initNavButtons } from './router.js';
 import { initToday } from './today.js';
@@ -51,73 +51,46 @@ registerView('onboarding', () => initOnboarding());
 
 // ── Auth view ──────────────────────────────────────────────────────────────
 function initAuthView() {
-  const form         = document.getElementById('auth-form');
-  const sent         = document.getElementById('auth-sent');
-  const emailIn      = document.getElementById('auth-email');
-  const submit       = document.getElementById('auth-submit');
-  const resend       = document.getElementById('auth-resend');
-  const emailDisplay = document.getElementById('auth-email-display');
-  const demoHint     = document.getElementById('auth-demo-hint');
-  const codeIn       = document.getElementById('auth-code');
-  const verifyBtn    = document.getElementById('auth-verify');
-
-  let pendingEmail = null;
+  const emailIn   = document.getElementById('auth-email');
+  const passIn    = document.getElementById('auth-password');
+  const submit    = document.getElementById('auth-submit');
+  const demoHint  = document.getElementById('auth-demo-hint');
 
   if (IS_DEMO) {
-    // Adapter l'UX : pas d'e-mail réel envoyé
     if (submit)   submit.textContent   = 'Entrer en démo →';
     if (emailIn)  emailIn.placeholder  = 'votre prénom (ou n\'importe quoi)';
+    if (passIn)   passIn.closest('.field')?.style && (passIn.closest('.field').style.display = 'none');
     if (demoHint) demoHint.style.display = 'block';
   }
 
-  async function sendLink() {
+  async function submitAuth() {
     const email = emailIn?.value?.trim();
-    if (!email) return;
-    if (submit) { submit.disabled = true; submit.textContent = IS_DEMO ? 'Connexion…' : 'Envoi…'; }
+    const pass  = passIn?.value ?? '';
+    if (!email) { showMsg('auth-error', 'Entre ton adresse e-mail.'); return; }
+
+    if (submit) { submit.disabled = true; submit.textContent = 'Connexion…'; }
     try {
-      await sendMagicLink(email);
       if (IS_DEMO) {
-        // Connexion immédiate — onAuthChange va se déclencher automatiquement
+        // Démo : connexion immédiate via le mock local-db (mot de passe ignoré)
+        await supabase.auth.signInWithOtp({ email });
         return;
       }
-      pendingEmail = email;
-      if (emailDisplay) emailDisplay.textContent = email;
-      if (form) form.style.display = 'none';
-      if (sent) sent.style.display = 'block';
-      codeIn?.focus();
-    } catch (e) {
-      showMsg('auth-error', e.message);
-    } finally {
-      if (submit) {
-        submit.disabled = false;
-        submit.textContent = IS_DEMO ? 'Entrer en démo →' : 'Recevoir le code';
+      if (pass.length < 6) { showMsg('auth-error', 'Mot de passe : 6 caractères minimum.'); return; }
+      const mode = await signInOrSignUp(email, pass);
+      if (mode === 'confirm') {
+        showMsg('auth-error', 'Compte créé, mais la confirmation par e-mail est activée. Désactive-la dans Supabase (Authentication → Sign In → Email → Confirm email), puis réessaie.');
       }
-    }
-  }
-
-  async function verifyCode() {
-    const code = codeIn?.value?.trim();
-    if (!pendingEmail) { showMsg('auth-error', 'Renvoie d\'abord un code.'); return; }
-    if (!code || code.length < 6) { showMsg('auth-error', 'Entre le code à 6 chiffres.'); return; }
-    if (verifyBtn) { verifyBtn.disabled = true; verifyBtn.textContent = 'Connexion…'; }
-    try {
-      await verifyEmailOtp(pendingEmail, code);
-      // Succès → onAuthChange déclenche le routage automatiquement
+      // 'in' / 'up' → onAuthChange route automatiquement
     } catch (e) {
-      showMsg('auth-error', `Code invalide ou expiré : ${e.message || e}`);
+      showMsg('auth-error', e.message || String(e));
     } finally {
-      if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = 'Se connecter'; }
+      if (submit) { submit.disabled = false; submit.textContent = IS_DEMO ? 'Entrer en démo →' : 'Se connecter / Créer le compte'; }
     }
   }
 
-  submit?.addEventListener('click', sendLink);
-  emailIn?.addEventListener('keydown', e => { if (e.key === 'Enter') sendLink(); });
-  verifyBtn?.addEventListener('click', verifyCode);
-  codeIn?.addEventListener('keydown', e => { if (e.key === 'Enter') verifyCode(); });
-  resend?.addEventListener('click', () => {
-    if (form) form.style.display = 'block';
-    if (sent) sent.style.display = 'none';
-  });
+  submit?.addEventListener('click', submitAuth);
+  emailIn?.addEventListener('keydown', e => { if (e.key === 'Enter') (IS_DEMO ? submitAuth() : passIn?.focus()); });
+  passIn?.addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
 }
 
 // ── Pairing view ───────────────────────────────────────────────────────────

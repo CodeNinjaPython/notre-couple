@@ -154,31 +154,23 @@
         <h2>Connexion</h2>
         <div id="auth-form">
           <div id="auth-demo-hint" class="auth-demo-hint">
-            Mode démo actif — aucun e-mail ne sera envoyé.<br>
+            Mode démo actif — aucun compte réel.<br>
             Entrez n'importe quoi et appuyez sur Entrée.
           </div>
           <p style="color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6">
-            Entrez votre adresse e-mail pour recevoir un code de connexion à 6 chiffres.
+            Connecte-toi avec ton e-mail et un mot de passe.<br>
+            <span style="color:var(--faint)">Premier accès : le compte se crée automatiquement.</span>
           </p>
           <div class="field">
             <label for="auth-email">Adresse e-mail</label>
             <input type="email" id="auth-email" autocomplete="email" placeholder="vous@exemple.com" inputmode="email">
           </div>
-          <button id="auth-submit" class="btn-primary">Recevoir le code</button>
-        </div>
-        <div id="auth-sent" style="display:none">
-          <p style="font-size:15px;line-height:1.7;color:var(--text)">
-            Code envoyé à <strong id="auth-email-display" style="color:var(--gold)"></strong>.<br>
-            Entre le code à 6 chiffres reçu par e-mail.
-          </p>
-          <div class="field" style="margin-top:16px">
-            <label for="auth-code">Code à 6 chiffres</label>
-            <input type="text" id="auth-code" inputmode="numeric" autocomplete="one-time-code"
-              maxlength="6" placeholder="123456"
-              style="letter-spacing:.3em;font-family:'DM Mono',monospace;font-size:22px;text-align:center">
+          <div class="field">
+            <label for="auth-password">Mot de passe</label>
+            <input type="password" id="auth-password" autocomplete="current-password"
+              placeholder="••••••••" minlength="6">
           </div>
-          <button id="auth-verify" class="btn-primary" style="margin-top:8px">Se connecter</button>
-          <button id="auth-resend" class="btn-secondary" style="margin-top:10px">Renvoyer un code</button>
+          <button id="auth-submit" class="btn-primary">Se connecter / Créer le compte</button>
         </div>
       </div>
 
@@ -683,6 +675,20 @@
             <span class="toggle-track"></span>
           </label>
         </div>
+      </div>
+
+      <!-- Sécurité : mot de passe -->
+      <div class="card">
+        <h2>Mot de passe</h2>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;line-height:1.6">
+          Définis ou change ton mot de passe (utile pour te connecter sur l'app installée).
+        </p>
+        <div class="field">
+          <input type="password" id="settings-password" autocomplete="new-password"
+            placeholder="Nouveau mot de passe (6 caractères min.)" minlength="6">
+        </div>
+        <button type="button" id="btn-set-password" class="btn-primary" style="margin-top:10px">Enregistrer le mot de passe</button>
+        <div id="settings-password-msg" style="font-size:13px;margin-top:8px"></div>
       </div>
 
       <!-- Mode du cycle -->

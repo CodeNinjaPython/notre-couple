@@ -421,6 +421,29 @@ function renderSettings(me, partner) {
     navigate('auth');
   });
 
+  // Définir / changer le mot de passe
+  const passInput = document.getElementById('settings-password');
+  const passBtn   = document.getElementById('btn-set-password');
+  const passMsg   = document.getElementById('settings-password-msg');
+  passBtn?.addEventListener('click', async () => {
+    const pwd = passInput?.value ?? '';
+    if (pwd.length < 6) {
+      if (passMsg) { passMsg.textContent = 'Mot de passe : 6 caractères minimum.'; passMsg.style.color = 'var(--red)'; }
+      return;
+    }
+    passBtn.disabled = true; passBtn.textContent = 'Enregistrement…';
+    try {
+      const { setPassword } = await import('./auth.js');
+      await setPassword(pwd);
+      if (passInput) passInput.value = '';
+      if (passMsg) { passMsg.textContent = 'Mot de passe enregistré ✓ Tu peux maintenant te connecter sur l\'app installée.'; passMsg.style.color = 'var(--elle)'; }
+    } catch (e) {
+      if (passMsg) { passMsg.textContent = `Échec : ${e.message || e}`; passMsg.style.color = 'var(--red)'; }
+    } finally {
+      passBtn.disabled = false; passBtn.textContent = 'Enregistrer le mot de passe';
+    }
+  });
+
   document.getElementById('btn-export-json')?.addEventListener('click', () => exportData('json'));
   document.getElementById('btn-export-csv')?.addEventListener('click',  () => exportData('csv'));
   document.getElementById('btn-export-pdf')?.addEventListener('click',  () => exportPDF(me?.couple_id, me, partner));
