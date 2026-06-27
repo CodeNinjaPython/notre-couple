@@ -15,6 +15,7 @@ import { cachedQuery, invalidateCache } from './query-cache.js';
 import { initCollapsibles } from './collapse.js';
 import { Cycle, predictNextPeriodAdvanced } from './cycle-model.js';
 import { renderCycleRing, renderRingLegend } from './ring-chart.js';
+import { toast as showToast, confirmDialog, friendlyError } from './ui-feedback.js';
 
 const PHASES_DATA = {
   Menstruelle: {
@@ -720,19 +721,7 @@ function renderPrediction() {
 }
 
 // --- Toast in-app ----------------------------------------------------------
-function showToast(msg) {
-  let t = document.getElementById('toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'toast';
-    t.className = 'toast';
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._hide);
-  t._hide = setTimeout(() => t.classList.remove('show'), 3200);
-}
+// showToast est fourni par ui-feedback.js (import en tête de fichier).
 
 // --- Events ----------------------------------------------------------------
 const REACTION_EMOJIS = ['❤️', '✨', '😊', '💪'];
@@ -792,9 +781,20 @@ async function renderEvents() {
   });
   wrap.querySelectorAll('.ev-delete-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Supprimer ce moment ?')) return;
-      await supabase.from('couple_events').delete().eq('id', btn.dataset.id);
-      await renderEvents();
+      const ok = await confirmDialog({
+        title: 'Supprimer ce moment ?',
+        message: 'Il disparaîtra de votre journal partagé.',
+        confirmLabel: 'Supprimer',
+        danger: true,
+      });
+      if (!ok) return;
+      try {
+        const { error } = await supabase.from('couple_events').delete().eq('id', btn.dataset.id);
+        if (error) throw error;
+        await renderEvents();
+      } catch (e) {
+        showToast(friendlyError(e), 'error');
+      }
     });
   });
 

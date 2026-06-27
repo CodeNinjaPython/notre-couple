@@ -602,6 +602,23 @@ input::placeholder { color: var(--faint); font-weight: 400; }
   box-shadow: var(--sh-md);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast--error { background: var(--red); }
+.toast--info  { background: var(--lui); }
+
+/* ─── Confirmation dialog (réutilise .sheet / .sheet-backdrop) ─────────── */
+.confirm-backdrop { z-index: 120; }
+.confirm-msg {
+  font-size: 14px; line-height: 1.6; color: var(--muted);
+  margin: -8px 0 22px; font-weight: 500;
+}
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-actions .btn-secondary,
+.confirm-actions .btn-primary { margin-top: 0; flex: 1; }
+.confirm-danger {
+  background: linear-gradient(135deg, #E53935 0%, #B71C1C 100%);
+  box-shadow: 0 4px 16px rgba(229,57,53,.30);
+}
+.confirm-danger:hover { box-shadow: 0 6px 20px rgba(229,57,53,.40); }
 
 /* ─── Demo badge ──────────────────────────────────────────────────────── */
 .demo-badge { display: none; }

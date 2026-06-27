@@ -151,7 +151,7 @@
 - [x] [V1] Navigation principale : Aujourd'hui / Calendrier / Nous
 - [ ] [V1] États de chargement (skeletons) ⚠️ *CSS présent, non branché sur les fetches*
 - [x] [V1] États vides sur chaque écran (avec invitation à agir)
-- [ ] [V1] États d'erreur (réseau, Supabase indisponible) ❌ *alert() bruts*
+- [x] [V1] États d'erreur (réseau, Supabase indisponible) — *filet routeur (`router.js`) + `friendlyError()` → toast erreur*
 - [x] [V1] Comportement hors-ligne (mode démo + cache SW)
 - [x] [V1] Confirmation des actions destructives (délier, supprimer, effacer)
 - [x] [V1] Responsive + safe-area iOS (encoche, barre du bas)
@@ -172,7 +172,7 @@
 
 - [x] [V1] Textes de chaque écran
 - [x] [V1] Messages d'état vide
-- [ ] [V1] Messages d'erreur dans la voix de l'app ❌ *`alert()` bruts, pas de composant d'erreur*
+- [x] [V1] Messages d'erreur dans la voix de l'app — *`js/ui-feedback.js` : `toast()` + `confirmDialog()` remplacent `alert()`/`confirm()` du noyau (intimité à suivre)*
 - [x] [V1] Les 4 conseils par phase (`PHASES_DATA` dans `today.js`)
 - [x] [V1] Le disclaimer (onboarding + footer + RGPD)
 - [ ] [V1] Le nom de l'app ❌ *placeholder « Notre rythme » — à trancher*

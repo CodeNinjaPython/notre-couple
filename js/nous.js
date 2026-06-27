@@ -14,6 +14,7 @@ import { currentWeekDates, daysAgo, localDateStr } from './date-utils.js';
 import { exportPDF } from './pdf.js';
 import { generateInsights, computeLibidoAlignment, loadSessionsWithFeedback } from './insights.js';
 import { skeletonFill } from './skeleton.js';
+import { toast, confirmDialog, friendlyError } from './ui-feedback.js';
 
 const MODE_DESCS = {
   rules:      'Comprendre vos rythmes communs — corrélations, synchronie et insights par phase.',
@@ -520,11 +521,16 @@ function renderSettings(me, partner) {
   if (resetBtn && IS_DEMO) {
     resetBtn.style.display = 'block';
     resetBtn.addEventListener('click', async () => {
-      if (!confirm('Réinitialiser toutes les données de démo ?')) return;
+      const ok = await confirmDialog({
+        title: 'Réinitialiser la démo ?',
+        message: 'Les données de démonstration seront régénérées depuis zéro.',
+        confirmLabel: 'Réinitialiser',
+      });
+      if (!ok) return;
       const { resetDemoData } = await import('./local-db.js');
       resetDemoData();
       window.location.reload();
-    }, { once: true });
+    });
   }
 }
 
@@ -584,11 +590,13 @@ function renderModeTabs() {
 // Supprimer toutes les données personnelles (RGPD §10)
 // ---------------------------------------------------------------------------
 async function deleteAllData(me) {
-  const confirmed = confirm(
-    'Supprimer TOUTES vos données personnelles ?\n\n' +
-    'Ceci effacera définitivement toutes vos saisies, cycles et historique. ' +
-    'Cette action est irréversible et ne peut pas être annulée.'
-  );
+  const confirmed = await confirmDialog({
+    title: 'Supprimer toutes vos données ?',
+    message: 'Ceci effacera définitivement toutes vos saisies, cycles et historique. '
+      + 'Cette action est irréversible et ne peut pas être annulée.',
+    confirmLabel: 'Tout supprimer',
+    danger: true,
+  });
   if (!confirmed) return;
 
   const btn = document.getElementById('btn-delete-data');
@@ -606,7 +614,7 @@ async function deleteAllData(me) {
     await signOut();
     window.location.reload();
   } catch (e) {
-    alert('Erreur : ' + e.message);
+    toast(friendlyError(e), 'error');
     if (btn) { btn.disabled = false; btn.textContent = 'Supprimer toutes mes données'; }
   }
 }
@@ -615,11 +623,13 @@ async function deleteAllData(me) {
 // Délier le compte (§10)
 // ---------------------------------------------------------------------------
 async function unlinkAccount(me) {
-  const confirmed = confirm(
-    'Voulez-vous vraiment vous délier du couple ?\n\n' +
-    'Vos données personnelles seront conservées mais votre partenaire ne pourra plus les voir. ' +
-    'Cette action est irréversible.'
-  );
+  const confirmed = await confirmDialog({
+    title: 'Vous délier du couple ?',
+    message: 'Vos données personnelles seront conservées mais votre partenaire ne pourra plus les voir. '
+      + 'Cette action est irréversible.',
+    confirmLabel: 'Se délier',
+    danger: true,
+  });
   if (!confirmed) return;
 
   const btn = document.getElementById('btn-unlink');
@@ -638,7 +648,7 @@ async function unlinkAccount(me) {
     await so();
     window.location.reload();
   } catch (e) {
-    alert('Erreur : ' + e.message);
+    toast(friendlyError(e), 'error');
     if (btn) { btn.disabled = false; btn.textContent = 'Se délier du couple'; }
   }
 }

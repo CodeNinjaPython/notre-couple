@@ -36,7 +36,14 @@ export function navigate(name, params = {}) {
     nav.classList.remove('visible');
   }
 
-  if (viewInits[name]) viewInits[name](params);
+  // Filet de sécurité : une init de vue qui jette (Supabase down, réseau coupé)
+  // ne doit pas laisser un écran à moitié rendu sans explication.
+  if (viewInits[name]) {
+    Promise.resolve(viewInits[name](params)).catch(err => {
+      console.error(`[router] échec de l'init de la vue "${name}"`, err);
+      import('./ui-feedback.js').then(m => m.toast(m.friendlyError(err), 'error'));
+    });
+  }
 
   window.location.hash = name;
 }
