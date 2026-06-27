@@ -2009,6 +2009,45 @@ nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
 .preg-rem  { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   BOUTON PROFIL (en-tête accueil) + VUE RÉGLAGES
+   ═══════════════════════════════════════════════════════════════════════ */
+
+header { position: relative; }
+
+.header-profile {
+  position: absolute; top: 48px; right: 0;
+  width: 42px; height: 42px; border-radius: 50%;
+  background: var(--surface); border: 1.5px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); cursor: pointer; transition: all .2s;
+  box-shadow: var(--sh-sm); z-index: 3;
+}
+.header-profile:hover  { border-color: var(--elle); color: var(--elle); transform: scale(1.05); }
+.header-profile:active { transform: scale(.95); }
+
+/* Vue Réglages dédiée */
+.settings-app { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
+.settings-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 52px 0 20px;
+}
+.settings-back {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: var(--surface); border: 1.5px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text); cursor: pointer; transition: all .2s;
+}
+.settings-back:hover { border-color: var(--elle); color: var(--elle); transform: translateX(-2px); }
+.settings-title {
+  font-size: 26px; font-weight: 800; letter-spacing: -.01em; margin: 0;
+  background: linear-gradient(135deg, #E84375 0%, #7C5CFC 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+/* Espacement vertical entre les cartes de réglages */
+.settings-app > .card,
+.settings-app > div[style*="margin-bottom"] { margin-bottom: 14px; }
+
+/* ═══════════════════════════════════════════════════════════════════════
    INSIGHTS AUTO-GÉNÉRÉS
    ═══════════════════════════════════════════════════════════════════════ */
 

@@ -99,6 +99,9 @@ export async function initToday() {
   const el = document.getElementById('today-date');
   if (el) el.textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
+  // Bouton profil (en-tête) → vue Réglages
+  document.getElementById('btn-profile')?.addEventListener('click', () => navigate('settings'));
+
   [state.me] = await Promise.all([getMyMembership()]);
   if (state.me) {
     state.coupleId = state.me.couple_id;

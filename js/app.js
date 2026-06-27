@@ -4,7 +4,7 @@ import { getMyMembership, createCouple, joinWithCode, renewPairingCode } from '.
 import { navigate, registerView, initNavButtons } from './router.js';
 import { initToday } from './today.js';
 import { initCalendar } from './calendar.js';
-import { initNous } from './nous.js';
+import { initNous, initSettings } from './nous.js';
 import { requestPermission, getPermission, declineNotifications } from './notifications.js';
 import { onboardingDone, initOnboarding, markOnboardingDone } from './onboarding.js';
 import { initIntimacy } from './intimacy.js';
@@ -40,6 +40,7 @@ if ('serviceWorker' in navigator && !IS_DEMO) {
 registerView('today',      () => initToday());
 registerView('calendar',   () => initCalendar());
 registerView('nous',       () => initNous());
+registerView('settings',   () => initSettings());
 registerView('intime',     () => { initIntimacy(); initKinks(); });
 // Tests accessibles depuis la console du navigateur en dev
 if (window.location.search.includes('run-tests')) {

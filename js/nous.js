@@ -86,7 +86,6 @@ export async function initNous() {
   renderConflictHeatmap(events, cycles);
   renderAnomalies(cycles);
   renderHistoryChart(document.getElementById('cycles-history-chart'), cycles);
-  renderSettings(me, partner);
 
   // Insights auto + alignement libido
   const sessions = await loadSessionsWithFeedback(me.couple_id);
@@ -372,6 +371,15 @@ function renderAnomalies(cycles) {
 // ---------------------------------------------------------------------------
 // Réglages
 // ---------------------------------------------------------------------------
+// Vue dédiée Réglages & Profil (accès via le bouton profil en haut à droite)
+export async function initSettings() {
+  const me = await getMyMembership();
+  if (!me) { navigate('auth'); return; }
+  const partner = await getPartnerMembership(me.couple_id);
+  document.getElementById('btn-settings-back')?.addEventListener('click', () => navigate('today'));
+  renderSettings(me, partner);
+}
+
 function renderSettings(me, partner) {
   const nameEl     = document.getElementById('settings-name-val');
   const nameInput  = document.getElementById('settings-name-input');

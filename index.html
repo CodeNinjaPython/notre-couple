@@ -290,6 +290,9 @@
 
       <!-- En-tête -->
       <header>
+        <button type="button" id="btn-profile" class="header-profile" aria-label="Réglages et profil">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+        </button>
         <div class="eyebrow" id="eyebrow">—</div>
         <div class="phase" id="phase-name">Notre rythme</div>
         <div class="date" id="today-date"></div>
@@ -638,141 +641,6 @@
         </div>
       </div>
 
-      <!-- Réglages (collapsible, fermé) -->
-      <div class="card collapsible-section" data-default-open="false">
-        <button type="button" class="collapsible-header" aria-expanded="false">
-          <h2>Réglages &amp; Profil</h2>
-          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="collapsible-body">
-      <!-- Profil -->
-      <div style="margin-bottom:4px">
-        <h2>Mon profil</h2>
-
-        <div class="settings-row">
-          <span class="settings-label">Prénom</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span id="settings-name-val" style="font-size:14px;font-weight:600"></span>
-            <input type="text" id="settings-name-input"
-              style="display:none;width:130px;font-size:14px;padding:6px 10px"
-              autocomplete="given-name">
-            <button type="button" id="btn-settings-edit" class="btn-icon" aria-label="Modifier">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
-            <button type="button" id="btn-settings-save" class="btn-icon" style="display:none;color:var(--elle)" aria-label="Enregistrer">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Je suis celle qui suit son cycle</div>
-            <div class="toggle-sub">Définit qui est "Elle" dans les graphiques</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="settings-tracks">
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Sécurité : mot de passe -->
-      <div class="card">
-        <h2>Mot de passe</h2>
-        <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;line-height:1.6">
-          Définis ou change ton mot de passe (utile pour te connecter sur l'app installée).
-        </p>
-        <div class="field">
-          <input type="password" id="settings-password" autocomplete="new-password"
-            placeholder="Nouveau mot de passe (6 caractères min.)" minlength="6">
-        </div>
-        <button type="button" id="btn-set-password" class="btn-primary" style="margin-top:10px">Enregistrer le mot de passe</button>
-        <div id="settings-password-msg" style="font-size:13px;margin-top:8px"></div>
-      </div>
-
-      <!-- Mode du cycle -->
-      <div class="card">
-        <h2>Objectif du suivi</h2>
-        <div class="mode-tabs" id="mode-tabs">
-          <button type="button" class="mode-tab active" data-mode="rules">🌀 Rythmes</button>
-          <button type="button" class="mode-tab" data-mode="conception">🌱 Conception</button>
-          <button type="button" class="mode-tab" data-mode="pregnancy">🤰 Grossesse</button>
-        </div>
-        <p id="mode-desc" style="font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6"></p>
-      </div>
-
-      <!-- Export & données -->
-      <div class="card">
-        <h2>Mes données</h2>
-        <div class="settings-actions">
-          <button type="button" id="btn-install"      class="btn-secondary" style="display:none">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px"><path d="M12 3v13M5 10l7 7 7-7"/><path d="M3 21h18"/></svg>
-            Installer l'app (écran d'accueil)
-          </button>
-          <button type="button" id="btn-export-pdf"   class="btn-secondary">Exporter en PDF (bilan mensuel)</button>
-          <button type="button" id="btn-export-json"  class="btn-secondary">Exporter en JSON</button>
-          <button type="button" id="btn-export-csv"   class="btn-secondary">Exporter en CSV</button>
-          <button type="button" id="btn-delete-data"  class="btn-secondary btn-danger">Supprimer toutes mes données</button>
-          <button type="button" id="btn-reset-demo"   class="btn-secondary" style="display:none">Réinitialiser les données de démo</button>
-        </div>
-      </div>
-
-      <!-- Compte -->
-      <div class="card">
-        <h2>Compte</h2>
-        <div class="settings-actions">
-          <button type="button" id="btn-unlink"       class="btn-secondary btn-danger">Se délier du couple</button>
-          <button type="button" id="btn-nous-signout" class="btn-secondary">Se déconnecter</button>
-        </div>
-      </div>
-
-      <!-- Paramètres notifications -->
-      <div class="card">
-        <h2>Rappels</h2>
-        <div class="toggle-row">
-          <div><div class="toggle-label">Rappel quotidien de saisie</div></div>
-          <label class="toggle"><input type="checkbox" id="notif-toggle-daily"><span class="toggle-track"></span></label>
-        </div>
-        <div class="toggle-row">
-          <div><div class="toggle-label">Alerte règles imminentes</div></div>
-          <label class="toggle"><input type="checkbox" id="notif-toggle-rules"><span class="toggle-track"></span></label>
-        </div>
-        <div class="toggle-row">
-          <div><div class="toggle-label">Fenêtre fertile (mode conception)</div></div>
-          <label class="toggle"><input type="checkbox" id="notif-toggle-fertile"><span class="toggle-track"></span></label>
-        </div>
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Libidos alignées ❤️</div>
-            <div class="toggle-sub">Notification douce quand vos deux libidos sont ≥ 4</div>
-          </div>
-          <label class="toggle"><input type="checkbox" id="notif-toggle-libido-aligned"><span class="toggle-track"></span></label>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">Heure du rappel quotidien</span>
-          <select id="notif-hour" class="hour-select">
-            <option value="18">18h00</option>
-            <option value="19">19h00</option>
-            <option value="20" selected>20h00</option>
-            <option value="21">21h00</option>
-            <option value="22">22h00</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- RGPD -->
-      <div class="card" style="margin-top:12px">
-        <h2>Confidentialité</h2>
-        <div class="rgpd-block">
-          <p>Vos données sont stockées uniquement dans votre espace Supabase personnel. Aucun partage avec des tiers, aucun analytics intrusif.</p>
-          <p>Conformément au RGPD, vous pouvez exporter ou supprimer toutes vos données à tout moment via les boutons ci-dessus.</p>
-          <p>Cette application <strong>n'est pas un dispositif médical</strong> et ne remplace pas l'avis d'un professionnel de santé.</p>
-        </div>
-      </div>
-
-        </div><!-- /collapsible-body Réglages -->
-      </div><!-- /collapsible-section Réglages -->
 
       <p class="disclaimer">
         Ce n'est pas un outil contraceptif.<br>
@@ -1212,6 +1080,148 @@
         <button type="button" id="btn-feedback-save" class="btn-primary">Enregistrer</button>
         <button type="button" id="btn-feedback-skip" class="btn-secondary" style="margin-top:10px">Passer</button>
       </div>
+    </div>
+  </template>
+
+
+  <!-- ================================================================
+       TEMPLATE : SETTINGS (Réglages & Profil — accès via le bouton profil)
+       ================================================================ -->
+  <template id="tpl-settings">
+    <div class="app settings-app">
+      <header class="settings-header">
+        <button type="button" id="btn-settings-back" class="settings-back" aria-label="Retour à l'accueil">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h1 class="settings-title">Réglages &amp; Profil</h1>
+      </header>
+
+      <!-- Profil -->
+      <div style="margin-bottom:4px">
+        <h2>Mon profil</h2>
+
+        <div class="settings-row">
+          <span class="settings-label">Prénom</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="settings-name-val" style="font-size:14px;font-weight:600"></span>
+            <input type="text" id="settings-name-input"
+              style="display:none;width:130px;font-size:14px;padding:6px 10px"
+              autocomplete="given-name">
+            <button type="button" id="btn-settings-edit" class="btn-icon" aria-label="Modifier">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button type="button" id="btn-settings-save" class="btn-icon" style="display:none;color:var(--elle)" aria-label="Enregistrer">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Je suis celle qui suit son cycle</div>
+            <div class="toggle-sub">Définit qui est "Elle" dans les graphiques</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="settings-tracks">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Sécurité : mot de passe -->
+      <div class="card">
+        <h2>Mot de passe</h2>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;line-height:1.6">
+          Définis ou change ton mot de passe (utile pour te connecter sur l'app installée).
+        </p>
+        <div class="field">
+          <input type="password" id="settings-password" autocomplete="new-password"
+            placeholder="Nouveau mot de passe (6 caractères min.)" minlength="6">
+        </div>
+        <button type="button" id="btn-set-password" class="btn-primary" style="margin-top:10px">Enregistrer le mot de passe</button>
+        <div id="settings-password-msg" style="font-size:13px;margin-top:8px"></div>
+      </div>
+
+      <!-- Mode du cycle -->
+      <div class="card">
+        <h2>Objectif du suivi</h2>
+        <div class="mode-tabs" id="mode-tabs">
+          <button type="button" class="mode-tab active" data-mode="rules">🌀 Rythmes</button>
+          <button type="button" class="mode-tab" data-mode="conception">🌱 Conception</button>
+          <button type="button" class="mode-tab" data-mode="pregnancy">🤰 Grossesse</button>
+        </div>
+        <p id="mode-desc" style="font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6"></p>
+      </div>
+
+      <!-- Export & données -->
+      <div class="card">
+        <h2>Mes données</h2>
+        <div class="settings-actions">
+          <button type="button" id="btn-install"      class="btn-secondary" style="display:none">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:6px"><path d="M12 3v13M5 10l7 7 7-7"/><path d="M3 21h18"/></svg>
+            Installer l'app (écran d'accueil)
+          </button>
+          <button type="button" id="btn-export-pdf"   class="btn-secondary">Exporter en PDF (bilan mensuel)</button>
+          <button type="button" id="btn-export-json"  class="btn-secondary">Exporter en JSON</button>
+          <button type="button" id="btn-export-csv"   class="btn-secondary">Exporter en CSV</button>
+          <button type="button" id="btn-delete-data"  class="btn-secondary btn-danger">Supprimer toutes mes données</button>
+          <button type="button" id="btn-reset-demo"   class="btn-secondary" style="display:none">Réinitialiser les données de démo</button>
+        </div>
+      </div>
+
+      <!-- Compte -->
+      <div class="card">
+        <h2>Compte</h2>
+        <div class="settings-actions">
+          <button type="button" id="btn-unlink"       class="btn-secondary btn-danger">Se délier du couple</button>
+          <button type="button" id="btn-nous-signout" class="btn-secondary">Se déconnecter</button>
+        </div>
+      </div>
+
+      <!-- Paramètres notifications -->
+      <div class="card">
+        <h2>Rappels</h2>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Rappel quotidien de saisie</div></div>
+          <label class="toggle"><input type="checkbox" id="notif-toggle-daily"><span class="toggle-track"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Alerte règles imminentes</div></div>
+          <label class="toggle"><input type="checkbox" id="notif-toggle-rules"><span class="toggle-track"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">Fenêtre fertile (mode conception)</div></div>
+          <label class="toggle"><input type="checkbox" id="notif-toggle-fertile"><span class="toggle-track"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Libidos alignées ❤️</div>
+            <div class="toggle-sub">Notification douce quand vos deux libidos sont ≥ 4</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="notif-toggle-libido-aligned"><span class="toggle-track"></span></label>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">Heure du rappel quotidien</span>
+          <select id="notif-hour" class="hour-select">
+            <option value="18">18h00</option>
+            <option value="19">19h00</option>
+            <option value="20" selected>20h00</option>
+            <option value="21">21h00</option>
+            <option value="22">22h00</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- RGPD -->
+      <div class="card" style="margin-top:12px">
+        <h2>Confidentialité</h2>
+        <div class="rgpd-block">
+          <p>Vos données sont stockées uniquement dans votre espace Supabase personnel. Aucun partage avec des tiers, aucun analytics intrusif.</p>
+          <p>Conformément au RGPD, vous pouvez exporter ou supprimer toutes vos données à tout moment via les boutons ci-dessus.</p>
+          <p>Cette application <strong>n'est pas un dispositif médical</strong> et ne remplace pas l'avis d'un professionnel de santé.</p>
+        </div>
+      </div>
+
     </div>
   </template>
 
