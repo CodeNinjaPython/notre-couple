@@ -308,9 +308,10 @@ export async function importClueData(records, userId, coupleId, onProgress = () 
   onProgress(`Cycles : ${cycles.length} détectés…`);
   const { data: existing } = await supabase.from('cycles').select('period_start').eq('user_id', userId);
   const known = new Set((existing || []).map(c => c.period_start));
+  // NB : la table cycles n'a pas de colonne couple_id (cycle = données perso)
   const newCycles = cycles
     .filter(c => !known.has(c.period_start))
-    .map(c => ({ user_id: userId, couple_id: coupleId, period_start: c.period_start, period_end: c.period_end }));
+    .map(c => ({ user_id: userId, period_start: c.period_start, period_end: c.period_end }));
   if (newCycles.length) {
     const { error } = await supabase.from('cycles').insert(newCycles);
     if (error) throw new Error(`Cycles : ${error.message}`);
