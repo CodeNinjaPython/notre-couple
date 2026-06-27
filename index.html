@@ -158,20 +158,27 @@
             Entrez n'importe quoi et appuyez sur Entrée.
           </div>
           <p style="color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6">
-            Entrez votre adresse e-mail pour recevoir un lien de connexion magique.
+            Entrez votre adresse e-mail pour recevoir un code de connexion à 6 chiffres.
           </p>
           <div class="field">
             <label for="auth-email">Adresse e-mail</label>
             <input type="email" id="auth-email" autocomplete="email" placeholder="vous@exemple.com" inputmode="email">
           </div>
-          <button id="auth-submit" class="btn-primary">Envoyer le lien</button>
+          <button id="auth-submit" class="btn-primary">Recevoir le code</button>
         </div>
         <div id="auth-sent" style="display:none">
           <p style="font-size:15px;line-height:1.7;color:var(--text)">
-            Lien envoyé à <strong id="auth-email-display" style="color:var(--gold)"></strong>.<br>
-            Vérifiez votre boîte mail et cliquez sur le lien.
+            Code envoyé à <strong id="auth-email-display" style="color:var(--gold)"></strong>.<br>
+            Entre le code à 6 chiffres reçu par e-mail.
           </p>
-          <button id="auth-resend" class="btn-secondary" style="margin-top:20px">Renvoyer le lien</button>
+          <div class="field" style="margin-top:16px">
+            <label for="auth-code">Code à 6 chiffres</label>
+            <input type="text" id="auth-code" inputmode="numeric" autocomplete="one-time-code"
+              maxlength="6" placeholder="123456"
+              style="letter-spacing:.3em;font-family:'DM Mono',monospace;font-size:22px;text-align:center">
+          </div>
+          <button id="auth-verify" class="btn-primary" style="margin-top:8px">Se connecter</button>
+          <button id="auth-resend" class="btn-secondary" style="margin-top:10px">Renvoyer un code</button>
         </div>
       </div>
 

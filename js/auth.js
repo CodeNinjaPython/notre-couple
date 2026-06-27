@@ -8,6 +8,16 @@ export async function sendMagicLink(email) {
   if (error) throw error;
 }
 
+// Vérifie le code à 6 chiffres reçu par e-mail (login dans l'app, sans bascule Safari)
+export async function verifyEmailOtp(email, token) {
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token: String(token).trim(),
+    type: 'email',
+  });
+  if (error) throw error;
+}
+
 export async function getUser() {
   const { data: { user } } = await supabase.auth.getUser();
   return user;

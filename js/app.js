@@ -1,5 +1,5 @@
 import { supabase, IS_DEMO } from './supabase.js';
-import { sendMagicLink, onAuthChange } from './auth.js';
+import { sendMagicLink, verifyEmailOtp, onAuthChange } from './auth.js';
 import { getMyMembership, createCouple, joinWithCode, renewPairingCode } from './pairing.js';
 import { navigate, registerView, initNavButtons } from './router.js';
 import { initToday } from './today.js';
@@ -58,6 +58,10 @@ function initAuthView() {
   const resend       = document.getElementById('auth-resend');
   const emailDisplay = document.getElementById('auth-email-display');
   const demoHint     = document.getElementById('auth-demo-hint');
+  const codeIn       = document.getElementById('auth-code');
+  const verifyBtn    = document.getElementById('auth-verify');
+
+  let pendingEmail = null;
 
   if (IS_DEMO) {
     // Adapter l'UX : pas d'e-mail réel envoyé
@@ -76,21 +80,40 @@ function initAuthView() {
         // Connexion immédiate — onAuthChange va se déclencher automatiquement
         return;
       }
+      pendingEmail = email;
       if (emailDisplay) emailDisplay.textContent = email;
       if (form) form.style.display = 'none';
       if (sent) sent.style.display = 'block';
+      codeIn?.focus();
     } catch (e) {
       showMsg('auth-error', e.message);
     } finally {
       if (submit) {
         submit.disabled = false;
-        submit.textContent = IS_DEMO ? 'Entrer en démo →' : 'Envoyer le lien';
+        submit.textContent = IS_DEMO ? 'Entrer en démo →' : 'Recevoir le code';
       }
+    }
+  }
+
+  async function verifyCode() {
+    const code = codeIn?.value?.trim();
+    if (!pendingEmail) { showMsg('auth-error', 'Renvoie d\'abord un code.'); return; }
+    if (!code || code.length < 6) { showMsg('auth-error', 'Entre le code à 6 chiffres.'); return; }
+    if (verifyBtn) { verifyBtn.disabled = true; verifyBtn.textContent = 'Connexion…'; }
+    try {
+      await verifyEmailOtp(pendingEmail, code);
+      // Succès → onAuthChange déclenche le routage automatiquement
+    } catch (e) {
+      showMsg('auth-error', `Code invalide ou expiré : ${e.message || e}`);
+    } finally {
+      if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = 'Se connecter'; }
     }
   }
 
   submit?.addEventListener('click', sendLink);
   emailIn?.addEventListener('keydown', e => { if (e.key === 'Enter') sendLink(); });
+  verifyBtn?.addEventListener('click', verifyCode);
+  codeIn?.addEventListener('keydown', e => { if (e.key === 'Enter') verifyCode(); });
   resend?.addEventListener('click', () => {
     if (form) form.style.display = 'block';
     if (sent) sent.style.display = 'none';
