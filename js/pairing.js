@@ -31,6 +31,7 @@ export async function getPartnerMembership(coupleId) {
 
 export async function createCouple(displayName, tracksCycle) {
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Session expirée — reconnecte-toi par e-mail.');
 
   const { data: couple, error: coupleErr } = await supabase
     .from('couples')
@@ -62,6 +63,7 @@ export async function generatePairingCode(coupleId) {
 
 export async function joinWithCode(code, displayName, tracksCycle) {
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Session expirée — reconnecte-toi par e-mail.');
 
   const { data: pairingCode, error: codeErr } = await supabase
     .from('pairing_codes')

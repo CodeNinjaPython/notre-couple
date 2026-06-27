@@ -120,7 +120,7 @@ function initPairingView() {
   document.getElementById('btn-create-submit')?.addEventListener('click', async () => {
     const name       = document.getElementById('create-name')?.value?.trim();
     const tracksCycle = document.getElementById('create-tracks')?.checked ?? false;
-    if (!name) return;
+    if (!name) { showMsg('create-error', 'Entre ton prénom pour continuer.'); return; }
     const btn = document.getElementById('btn-create-submit');
     btn.disabled = true; btn.textContent = 'Création…';
     try {
@@ -128,7 +128,9 @@ function initPairingView() {
       document.getElementById('generated-code').textContent = code;
       createSection.style.display = 'none';
       codeSection.style.display = 'block';
-    } catch (e) { showMsg('create-error', e.message); }
+    } catch (e) {
+      showMsg('create-error', `Échec de création : ${e.message || e}`);
+    }
     finally { btn.disabled = false; btn.textContent = 'Créer notre espace'; }
   });
 
@@ -235,13 +237,29 @@ onAuthChange(async (event, session) => {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function showMsg(id, text) {
+  // Toujours tracer dans la console (visible en devtools même si l'UI échoue)
+  console.error('[App]', id, '→', text);
+
   let el = document.getElementById(id);
   if (!el) {
     el = document.createElement('div');
     el.id = id;
     el.className = 'msg error';
-    document.querySelector(`#${id.replace('-error', '')} button`)
-      ?.insertAdjacentElement('afterend', el);
+    el.style.marginTop = '12px';
+
+    const base = id.replace('-error', '');
+    // Plusieurs stratégies d'ancrage, de la plus précise à la plus large
+    const anchor =
+      document.querySelector(`#${base} button`) ||
+      document.querySelector(`#pairing-${base} .card`) ||
+      document.querySelector(`#pairing-${base}`) ||
+      document.querySelector('#view .app') ||
+      document.querySelector('#view');
+
+    if (!anchor) { alert(text); return; }       // dernier recours : jamais silencieux
+    if (anchor.matches('.card, .app, #view')) anchor.appendChild(el);
+    else anchor.insertAdjacentElement('afterend', el);
   }
   el.textContent = text;
+  el.style.display = 'block';
 }
