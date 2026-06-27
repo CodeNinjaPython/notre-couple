@@ -6,4 +6,6 @@ node_modules/
 # Données personnelles de santé — NE JAMAIS committer (repo public)
 measurements.json
 *clue*.json
+*clue*.sql
+import_clue.sql
 *-export.json
