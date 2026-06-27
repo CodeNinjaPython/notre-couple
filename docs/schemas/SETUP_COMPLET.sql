@@ -173,7 +173,7 @@ create policy "members: voir mon couple"
 alter table tracking_categories enable row level security;
 create policy "categories: lecture authentifiée"
   on tracking_categories for select
-  using (auth.role() = 'authenticated');
+  using (auth.uid() is not null);
 
 
 -- =============================================================
@@ -200,7 +200,7 @@ alter table couples enable row level security;
 
 create policy "couples: créer"
   on couples for insert
-  with check (auth.role() = 'authenticated');
+  with check (auth.uid() is not null);
 
 create policy "couples: voir le mien"
   on couples for select
@@ -230,13 +230,13 @@ create policy "codes: créer pour mon couple"
 -- Lire : membre du couple OU utilisateur authentifié (pour valider lors du join)
 create policy "codes: lire pour validation"
   on pairing_codes for select
-  using (auth.role() = 'authenticated');
+  using (auth.uid() is not null);
 
 -- Marquer comme utilisé (toute personne authentifiée qui a le code)
 create policy "codes: marquer utilisé"
   on pairing_codes for update
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
+  using (auth.uid() is not null)
+  with check (auth.uid() is not null);
 
 -- -------------------------------------------------------------
 -- couple_members : UPDATE (modifier son propre profil)
@@ -491,7 +491,7 @@ create policy "feedback: lire le partagé du partenaire"
 -- kinks — table de référence, lecture pour tous les authentifiés
 alter table kinks enable row level security;
 create policy "kinks: lecture authentifiée"
-  on kinks for select using (auth.role() = 'authenticated');
+  on kinks for select using (auth.uid() is not null);
 
 -- kink_ratings — lire son propre + shared du partenaire
 alter table kink_ratings enable row level security;

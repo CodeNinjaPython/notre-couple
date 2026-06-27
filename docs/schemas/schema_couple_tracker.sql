@@ -160,4 +160,4 @@ create policy "members: voir mon couple"
 alter table tracking_categories enable row level security;
 create policy "categories: lecture authentifiée"
   on tracking_categories for select
-  using (auth.role() = 'authenticated');
+  using (auth.uid() is not null);

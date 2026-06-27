@@ -205,7 +205,7 @@ create policy "feedback: lire le partagé du partenaire"
 -- kinks — table de référence, lecture pour tous les authentifiés
 alter table kinks enable row level security;
 create policy "kinks: lecture authentifiée"
-  on kinks for select using (auth.role() = 'authenticated');
+  on kinks for select using (auth.uid() is not null);
 
 -- kink_ratings — lire son propre + shared du partenaire
 alter table kink_ratings enable row level security;
