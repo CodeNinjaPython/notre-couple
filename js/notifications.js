@@ -49,7 +49,7 @@ export async function maybeRemindToLog() {
     .from('log_entries').select('id').eq('log_date', today).limit(1);
 
   if (!data?.length) {
-    showNotification('Notre rythme', 'N\'oublie pas de saisir ta journée.', 'rappel-daily');
+    showNotification('Notre cycle', 'N\'oublie pas de saisir ta journée.', 'rappel-daily');
   }
 }
 
@@ -76,7 +76,7 @@ export function checkRulesImminentes(prediction) {
     const msg = daysUntil === 0
       ? 'Les règles sont prévues aujourd\'hui.'
       : `Les règles sont prévues dans ${daysUntil} jour${daysUntil > 1 ? 's' : ''}.`;
-    showNotification('Notre rythme · Rappel cycle', msg, 'regles-imminentes');
+    showNotification('Notre cycle · Rappel cycle', msg, 'regles-imminentes');
   }
 }
 
@@ -89,14 +89,14 @@ export function checkFertileWindow(prediction) {
     (new Date(prediction.fertileStart) - new Date()) / 864e5
   );
   if (daysUntilFertile === 2) {
-    showNotification('Notre rythme · Conception', 'La fenêtre fertile commence dans 2 jours.', 'fertile');
+    showNotification('Notre cycle · Conception', 'La fenêtre fertile commence dans 2 jours.', 'fertile');
   }
 }
 
 // Alerte partenaire — partenaire a commencé ses règles
 export function notifyPartnerPeriodStart(partnerName) {
   if (Notification.permission !== 'granted') return;
-  showNotification('Notre rythme', `${partnerName} vient de noter le début de ses règles.`, 'partner-rules');
+  showNotification('Notre cycle', `${partnerName} vient de noter le début de ses règles.`, 'partner-rules');
 }
 
 // §4 — Notification "Vos libidos sont alignées aujourd'hui"
@@ -123,7 +123,7 @@ export async function notifyLibidosAligned() {
   const vals = data.map(e => Number(e.value?.v ?? e.value));
   if (vals.length >= 2 && vals.every(v => v >= 4)) {
     showNotification(
-      'Notre rythme ❤️',
+      'Notre cycle ❤️',
       'Vos libidos sont alignées aujourd\'hui.',
       'libido-aligned'
     );

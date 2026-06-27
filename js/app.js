@@ -159,9 +159,9 @@ function initPairingView() {
   document.getElementById('btn-share-code')?.addEventListener('click', async () => {
     const code = document.getElementById('generated-code')?.textContent?.trim();
     if (!code || code === '------') return;
-    const text = `Rejoins moi sur Notre rythme. Ton code d'invitation : ${code}`;
+    const text = `Rejoins moi sur Notre cycle. Ton code d'invitation : ${code}`;
     if (navigator.share) {
-      await navigator.share({ title: 'Notre rythme', text }).catch(() => {});
+      await navigator.share({ title: 'Notre cycle', text }).catch(() => {});
     } else {
       await navigator.clipboard.writeText(text).catch(() => {});
       const btn = document.getElementById('btn-share-code');

@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#F6F5FF">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Notre rythme">
-  <title>Notre rythme</title>
+  <meta name="apple-mobile-web-app-title" content="Notre cycle">
+  <title>Notre cycle</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="/css/app.css">
@@ -66,7 +66,7 @@
       <!-- Étape 1 : Bienvenue -->
       <div class="onboard-step active" data-step="1">
         <div class="onboard-hero">🌸</div>
-        <h1 class="onboard-title">Notre rythme</h1>
+        <h1 class="onboard-title">Notre cycle</h1>
         <p class="onboard-desc">
           Suivez votre cycle ensemble, en couple.<br>
           Symétrique, privé, sans algorithmes.
@@ -146,7 +146,7 @@
     <div class="app">
       <header>
         <div class="eyebrow">Bienvenue</div>
-        <div class="phase">Notre rythme</div>
+        <div class="phase">Notre cycle</div>
         <div class="date" id="today-date"></div>
       </header>
 
@@ -294,7 +294,7 @@
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
         </button>
         <div class="eyebrow" id="eyebrow">—</div>
-        <div class="phase" id="phase-name">Notre rythme</div>
+        <div class="phase" id="phase-name">Notre cycle</div>
         <div class="date" id="today-date"></div>
         <span class="demo-badge">Mode démo · données locales</span>
         <span id="streak-badge" class="streak-badge" style="display:none"></span>
@@ -308,6 +308,15 @@
 
       <!-- Repère de grossesse (mode pregnancy uniquement) -->
       <div id="preg-milestone" class="card preg-milestone" style="display:none" aria-live="polite"></div>
+
+      <!-- Suivi en solo : invitation à relier le partenaire (si pas encore lié) -->
+      <div id="solo-banner" class="card solo-banner" style="display:none">
+        <div class="solo-banner-text">
+          <strong>Vous suivez en solo pour l'instant.</strong>
+          <span>Reliez votre partenaire pour révéler vos corrélations et votre double rythme.</span>
+        </div>
+        <button type="button" id="btn-invite-partner" class="btn-primary">Inviter mon partenaire</button>
+      </div>
 
       <!-- Contrôle cycle (uniquement pour elle) -->
       <div id="cycle-controls" style="margin-top:12px;display:none">

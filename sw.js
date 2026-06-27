@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v32';
+const CACHE = 'notre-rythme-v33';
 const SHELL = [
   '/',
   '/index.html',
@@ -69,7 +69,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('push', e => {
   const data = e.data?.json() ?? {};
   e.waitUntil(
-    self.registration.showNotification(data.title || 'Notre rythme', {
+    self.registration.showNotification(data.title || 'Notre cycle', {
       body:  data.body  || '',
       icon:  '/icons/icon-192.png',
       badge: '/icons/icon-192.png',

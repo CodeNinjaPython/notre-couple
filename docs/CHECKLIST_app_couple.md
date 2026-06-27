@@ -11,10 +11,10 @@
 - [x] [V1] Copier le code en un tap
 - [x] [V1] Rejoindre via code (2e utilisateur)
 - [x] [V1] État « en attente du partenaire »
-- [ ] [V1] État « lié » une fois les deux comptes connectés ⚠️ *pas de confirmation visuelle que le 2e a rejoint*
+- [x] [V1] État « lié » une fois les deux comptes connectés — *toast « 💜 X a rejoint votre espace » à la première détection (today.js, flag `nc-partner-seen`)*
 - [x] [V1] Marquer le code `used = true` après appairage
 - [x] [V1] Re-générer un code expiré
-- [ ] [V1] Mode solo si le partenaire n'a pas (encore) rejoint ⚠️ *fonctionne mais sans message explicite*
+- [x] [V1] Mode solo si le partenaire n'a pas (encore) rejoint — *bandeau « Vous suivez en solo » + bouton « Inviter mon partenaire » (régénère un code + partage) sur Today*
 - [x] [V1] Délier les comptes
 - [ ] [+] Partage du code par QR code
 
@@ -130,7 +130,7 @@
 ## 14. PWA
 
 - [x] [V1] `manifest.json` (nom, `display: standalone`, `theme-color`, orientation)
-- [ ] [V1] Jeu d'icônes complet ❌ *`icons/generate.html` présent, PNG non générés*
+- [x] [V1] Jeu d'icônes complet — *icon-192, icon-512 (maskable), apple-touch-icon 180 générés et liés (head + manifest)*
 - [x] [V1] Service worker (cache du shell, v6)
 - [x] [V1] Installable + invite d'installation (beforeinstallprompt)
 - [x] [V1] Lecture hors-ligne basique (mode démo localStorage + cache SW)
@@ -175,7 +175,7 @@
 - [x] [V1] Messages d'erreur dans la voix de l'app — *`js/ui-feedback.js` : `toast()` + `confirmDialog()` remplacent `alert()`/`confirm()` du noyau (intimité à suivre)*
 - [x] [V1] Les 4 conseils par phase (`PHASES_DATA` dans `today.js`)
 - [x] [V1] Le disclaimer (onboarding + footer + RGPD)
-- [ ] [V1] Le nom de l'app ❌ *placeholder « Notre rythme » — à trancher*
+- [x] [V1] Le nom de l'app — *« Notre cycle » (tranché ; appliqué manifest, title, notifications, PDF, partage)*
 
 ---
 

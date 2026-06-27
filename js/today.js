@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { getMyMembership, getPartnerMembership } from './pairing.js';
+import { getMyMembership, getPartnerMembership, renewPairingCode } from './pairing.js';
 import { signOut } from './auth.js';
 import { navigate } from './router.js';
 import {
@@ -139,6 +139,7 @@ export async function initToday() {
   await loadEntriesForDate(state.logDate);
 
   renderHeader();
+  renderPartnerStatus();
   await renderStreak();
   renderRingChart();     // ← anneau SVG interactif
   renderCycleControls();
@@ -160,7 +161,7 @@ export async function initToday() {
     subscribeToEvents(state.coupleId, () => renderEvents());
     subscribeToPartnerLogs(state.coupleId, () => {
       showToast('Ton partenaire vient de saisir sa journée.');
-      showNotification('Notre rythme', 'Ton partenaire a saisi sa journée.');
+      showNotification('Notre cycle', 'Ton partenaire a saisi sa journée.');
     });
   }
 
@@ -356,6 +357,51 @@ function renderRingChart() {
   renderRingLegend(legend);
 }
 
+// --- État d'appairage : confirmation « lié » + bandeau solo ----------------
+const PARTNER_SEEN_KEY = 'nc-partner-seen';
+
+function renderPartnerStatus() {
+  // Confirmation une seule fois quand le partenaire vient de rejoindre.
+  if (state.partner) {
+    if (!localStorage.getItem(PARTNER_SEEN_KEY)) {
+      localStorage.setItem(PARTNER_SEEN_KEY, '1');
+      showToast(`💜 ${state.partner.display_name} a rejoint votre espace`);
+    }
+  } else {
+    // Re-célébrer si le couple est délié puis relié plus tard.
+    localStorage.removeItem(PARTNER_SEEN_KEY);
+  }
+
+  const banner = document.getElementById('solo-banner');
+  if (!banner) return;
+  // Bandeau solo : couple existant, mais partenaire pas encore lié.
+  if (!state.coupleId || state.partner) { banner.style.display = 'none'; return; }
+  banner.style.display = 'flex';
+
+  document.getElementById('btn-invite-partner')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-invite-partner');
+    if (btn) { btn.disabled = true; btn.textContent = 'Génération…'; }
+    try {
+      const code = await renewPairingCode(state.coupleId);
+      const share = await confirmDialog({
+        title: 'Code d\'invitation',
+        message: `Transmettez ce code à votre partenaire (valable 24 h) : ${code}`,
+        confirmLabel: 'Partager',
+        cancelLabel: 'Fermer',
+      });
+      if (share) {
+        const text = `Rejoins-moi sur Notre cycle. Ton code d'invitation : ${code}`;
+        if (navigator.share) await navigator.share({ title: 'Notre cycle', text }).catch(() => {});
+        else { await navigator.clipboard.writeText(text).catch(() => {}); showToast('Code copié ✓'); }
+      }
+    } catch (e) {
+      showToast(friendlyError(e), 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Inviter mon partenaire'; }
+    }
+  });
+}
+
 // --- Header ----------------------------------------------------------------
 function renderHeader() {
   const eyebrow   = document.getElementById('eyebrow');
@@ -394,7 +440,7 @@ function renderHeader() {
     if (phaseName) phaseName.textContent = state.phaseName;
   } else {
     if (eyebrow)   eyebrow.textContent   = 'Pas de cycle en cours';
-    if (phaseName) phaseName.textContent = 'Notre rythme';
+    if (phaseName) phaseName.textContent = 'Notre cycle';
   }
 }
 

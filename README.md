@@ -1,4 +1,4 @@
-# Notre rythme
+# Notre cycle
 
 PWA privée de suivi de cycle en couple. Suivi symétrique : les deux partenaires saisissent leurs données, l'app fait émerger les corrélations entre leurs deux rythmes.
 

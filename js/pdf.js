@@ -38,7 +38,7 @@ export async function exportPDF(coupleId, me, partner) {
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Notre rythme — Bilan ${fmtDate(since, { month: 'long', year: 'numeric' })}</title>
+<title>Notre cycle — Bilan ${fmtDate(since, { month: 'long', year: 'numeric' })}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: "Helvetica Neue", Arial, sans-serif; color: #1A1830; font-size: 12px; padding: 24px; }
@@ -58,7 +58,7 @@ export async function exportPDF(coupleId, me, partner) {
 </style>
 </head>
 <body>
-<h1>Notre rythme</h1>
+<h1>Notre cycle</h1>
 <p class="subtitle">Bilan · 30 derniers jours · Généré le ${fmtDate(today, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
 
 <h2>Cycles récents</h2>
@@ -99,7 +99,7 @@ ${events.length ? events.map(ev => `
 </div>`).join('') : '<p style="color:#A8A7C8">Aucun moment noté ce mois.</p>'}
 
 <p class="disclaimer">
-  Document généré par Notre rythme · Usage personnel uniquement · Ce document n'est pas un document médical.
+  Document généré par Notre cycle · Usage personnel uniquement · Ce document n'est pas un document médical.
   Les données appartiennent à l'utilisateur et n'ont été partagées avec aucun tiers.
 </p>
 </body>

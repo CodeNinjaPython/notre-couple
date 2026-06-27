@@ -2068,6 +2068,15 @@ nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
   font-family: "DM Mono", monospace; letter-spacing: .01em;
 }
 
+.solo-banner {
+  flex-direction: column; gap: 14px;
+  border: 1.5px solid var(--lui-mid); background: var(--lui-light);
+}
+.solo-banner-text { display: flex; flex-direction: column; gap: 5px; }
+.solo-banner-text strong { font-size: 15px; font-weight: 800; color: var(--text); }
+.solo-banner-text span { font-size: 13px; line-height: 1.55; color: var(--muted); font-weight: 500; }
+.solo-banner .btn-primary { margin-top: 0; }
+
 /* ═══════════════════════════════════════════════════════════════════════
    BOUTON PROFIL (en-tête accueil) + VUE RÉGLAGES
    ═══════════════════════════════════════════════════════════════════════ */
