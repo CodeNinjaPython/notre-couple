@@ -25,14 +25,14 @@ const PAIN_PELV   = { period_cramps: 'crampes', ovulation_pain: 'ovulation' };
 const PAIN_CORPS  = {
   lower_back: 'lombaires', headache: 'tete', breast_tenderness: 'seins_sensibles',
   leg: 'jambes_lourdes', migraine: 'migraine', joint: 'articulaires',
-  migraine_with_aura: 'migraine',
+  migraine_with_aura: 'migraine_aura',
 };
 
 const FEELINGS = {
   irritable: 'irritable', sad: 'triste', mood_swings: 'sautes_humeur',
   not_in_control: 'pas_controle', sensitive: 'sensible', happy: 'heureuse',
   excited: 'heureuse', anxious: 'anxieuse', angry: 'en_colere', fine: 'calme',
-  grateful: 'confiante', confident: 'confiante', insecure: 'anxieuse',
+  grateful: 'reconnaissante', confident: 'confiante', insecure: 'anxieuse',
   indifferent: 'rien',
 };
 const MIND = {

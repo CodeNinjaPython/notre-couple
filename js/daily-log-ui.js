@@ -67,7 +67,8 @@ export const JOURNAL_CATEGORIES = [
           o('en_colere','En colère','😠'), o('sensible','Sensible','🥹'),
           o('anxieuse','Anxieuse','😰'), o('irritable','Irritable','😤'),
           o('stressee','Stressée','😫'), o('calme','Calme','😌'),
-          o('confiante','Confiante','💪'), o('sautes_humeur',"Sautes d'humeur",'🎭'),
+          o('confiante','Confiante','💪'), o('reconnaissante','Reconnaissante','🙏'),
+          o('sautes_humeur',"Sautes d'humeur",'🎭'),
           o('pas_controle','Pas en contrôle','😵'),
         ]},
       { key: 'etatCognitif', label: 'État cognitif', type: 'multi',
@@ -115,6 +116,7 @@ export const JOURNAL_CATEGORIES = [
         options: [
           o('seins_sensibles','Seins sensibles','🌡️'), o('seins_douloureux','Seins douloureux','💠'),
           o('lombaires','Lombaires','🦴'), o('migraine','Migraine','💥'),
+          o('migraine_aura','Migraine avec aura','✨'),
           o('tete','Mal de tête','🤕'), o('articulaires','Articulaires','🦿'),
           o('jambes_lourdes','Jambes lourdes','🦵'),
         ]},
