@@ -81,7 +81,7 @@
 - [x] [V1] Humeur de lui en miroir de celle d'elle
 - [x] [V1] État « pas assez de données » (avant 2–3 cycles)
 - [x] [V1] Affichage lisible : barre Pearson + label de force
-- [ ] [V1] Recalcul à chaque nouvelle saisie ⚠️ *seulement au chargement de Nous*
+- [x] [V1] Recalcul à chaque nouvelle saisie — *Analyse recalcule en direct via realtime (log_entries + couple_events), débouncé 400 ms ; `refreshAnalytics()` extrait dans nous.js*
 - [x] [V1] Section détaillée dans « Nous »
 
 ## 9. Conseils par phase (côté lui)
@@ -149,7 +149,7 @@
 ## 16. États & UX transverses
 
 - [x] [V1] Navigation principale : Aujourd'hui / Calendrier / Nous
-- [ ] [V1] États de chargement (skeletons) ⚠️ *CSS présent, non branché sur les fetches*
+- [x] [V1] États de chargement (skeletons) — *branchés sur Today (anneau), Calendrier (grille), Analyse (cartes via skeletonFill), sessions intimes*
 - [x] [V1] États vides sur chaque écran (avec invitation à agir)
 - [x] [V1] États d'erreur (réseau, Supabase indisponible) — *filet routeur (`router.js`) + `friendlyError()` → toast erreur*
 - [x] [V1] Comportement hors-ligne (mode démo + cache SW)

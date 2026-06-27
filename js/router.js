@@ -14,8 +14,8 @@ export function navigate(name, params = {}) {
 
   if (!tpl || !container) return;
 
-  // Nettoyer les subscriptions realtime quand on quitte Today
-  if (currentView === 'today' && name !== 'today') {
+  // Nettoyer les subscriptions realtime quand on quitte Today ou Analyse
+  if ((currentView === 'today' || currentView === 'nous') && name !== currentView) {
     import('./realtime.js').then(m => m.unsubscribeAll());
   }
   // Enlever le dark mode intime quand on quitte la vue intime

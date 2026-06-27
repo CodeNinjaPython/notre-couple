@@ -28,6 +28,8 @@ let calState = {
 };
 
 export async function initCalendar() {
+  renderCalendarSkeleton();   // placeholder pendant le chargement des données
+
   calState.me = await getMyMembership();
   calState.cycles = await getCycleHistory(12);
   calState.prediction = predictNextPeriod(calState.cycles);
@@ -97,6 +99,16 @@ function renderCalendar() {
   renderMonthGrid();
   renderPredictionPanel();
   renderCycleHistory();
+}
+
+// Skeleton de la grille (en-têtes réels + cellules grisées) pendant le fetch.
+function renderCalendarSkeleton() {
+  const grid = document.getElementById('cal-grid');
+  if (!grid || grid.querySelector('.cal-cell')) return;
+  const headers = DAY_FR.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+  const cells = Array.from({ length: 35 }, () =>
+    '<div class="cal-cell skeleton" style="border:none"></div>').join('');
+  grid.innerHTML = headers + cells;
 }
 
 function renderMonthGrid() {

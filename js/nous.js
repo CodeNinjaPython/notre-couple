@@ -15,6 +15,7 @@ import { exportPDF } from './pdf.js';
 import { generateInsights, computeLibidoAlignment, loadSessionsWithFeedback } from './insights.js';
 import { skeletonFill } from './skeleton.js';
 import { toast, confirmDialog, friendlyError } from './ui-feedback.js';
+import { subscribeToEvents, subscribeToPartnerLogs } from './realtime.js';
 
 const MODE_DESCS = {
   rules:      'Comprendre vos rythmes communs — corrélations, synchronie et insights par phase.',
@@ -53,10 +54,14 @@ function strength(r) {
 // ---------------------------------------------------------------------------
 // Initialisation principale
 // ---------------------------------------------------------------------------
+// Contexte courant de la vue Analyse, pour le recalcul live (realtime).
+let nousCtx = null;
+
 export async function initNous() {
   const me = await getMyMembership();
   if (!me) { navigate('auth'); return; }
   const partner = await getPartnerMembership(me.couple_id);
+  nousCtx = { me, partner };
 
   document.getElementById('today-date').textContent =
     new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -69,7 +74,27 @@ export async function initNous() {
     { id: 'nous-week', type: 'lines', lines: 2 },
   ]);
 
-  // Charger données en parallèle (analytics centralisé)
+  await refreshAnalytics();
+
+  // Accordéons de la vue Analyse (une fois, après le premier rendu)
+  initCollapsibles(document.getElementById('view'));
+
+  // Recalcul en direct à chaque nouvelle saisie (soi ou partenaire) — débouncé.
+  let pending;
+  const onChange = () => {
+    clearTimeout(pending);
+    pending = setTimeout(() => { refreshAnalytics(); }, 400);
+  };
+  subscribeToEvents(me.couple_id, onChange);
+  subscribeToPartnerLogs(me.couple_id, onChange);
+}
+
+// Charge les données et (re)rend toutes les cartes analytiques.
+// Appelée à l'init puis à chaque saisie détectée en temps réel.
+async function refreshAnalytics() {
+  if (!nousCtx) return;
+  const { me, partner } = nousCtx;
+
   const { entries, events, cycles } = await loadAnalyticsData(me.couple_id);
 
   // Identifier elle/lui
@@ -92,9 +117,6 @@ export async function initNous() {
   const sessions = await loadSessionsWithFeedback(me.couple_id);
   renderInsights({ entries, cycles, sessions, elleId, luiId });
   renderLibidoAlignment(entries, elleId, luiId);
-
-  // Accordéons de la vue Analyse
-  initCollapsibles(document.getElementById('view'));
 }
 
 // ---------------------------------------------------------------------------
