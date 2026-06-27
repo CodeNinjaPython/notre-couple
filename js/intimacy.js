@@ -21,6 +21,7 @@ import { hasPIN, isLocked, showLockScreen, initQuickHide, initPINSettings } from
 import { notifyLibidosAligned } from './notifications.js';
 import { cachedQuery, invalidateCache } from './query-cache.js';
 import { initCollapsibles } from './collapse.js';
+import { toast, confirmDialog, formDialog, friendlyError } from './ui-feedback.js';
 
 export let st = { me: null, partner: null, coupleId: null };
 
@@ -335,14 +336,22 @@ async function renderFirstTimes() {
 
 function initFirstTimeAdd() {
   document.getElementById('btn-add-first')?.addEventListener('click', async () => {
-    const description = prompt('Votre première fois :\n(ex. "Voyage en amoureux à Paris")');
-    if (!description) return;
-    const date = prompt('Date (YYYY-MM-DD) :') || localDateStr();
-    const note = prompt('Note (optionnel) :') || null;
+    const res = await formDialog({
+      title: 'Une première fois',
+      fields: [
+        { name: 'description', label: 'Votre première fois', placeholder: 'ex. Voyage en amoureux à Paris', required: true },
+        { name: 'date', label: 'Date', type: 'date', value: localDateStr() },
+        { name: 'note', label: 'Note (optionnel)', type: 'textarea' },
+      ],
+    });
+    if (!res) return;
     try {
-      await supabase.from('first_times').insert({ couple_id: st.coupleId, created_by: st.me?.user_id, description, date, note });
+      await supabase.from('first_times').insert({
+        couple_id: st.coupleId, created_by: st.me?.user_id,
+        description: res.description, date: res.date || localDateStr(), note: res.note || null,
+      });
       await renderFirstTimes();
-    } catch (e) { alert('Impossible d\'enregistrer. Vérifiez votre connexion.'); }
+    } catch (e) { toast(friendlyError(e), 'error'); }
   });
 }
 
@@ -369,11 +378,16 @@ async function renderSafewords() {
     const addBtn = '<button type="button" id="btn-add-safeword" class="btn-inline">+ Ajouter</button>';
     el.innerHTML = (data?.length ? data.map(sw => `<div class="safeword-chip"><strong>${sw.word}</strong>${sw.meaning ? ` — ${sw.meaning}` : ''}</div>`).join('') : '<p class="intime-empty">Aucun safeword enregistré.</p>') + addBtn;
     document.getElementById('btn-add-safeword')?.addEventListener('click', async () => {
-      const word    = prompt('Safeword :');
-      const meaning = word ? prompt('Signification (ex. "stop immédiat") :') : null;
-      if (!word) return;
-      try { await supabase.from('safewords').insert({ couple_id: st.coupleId, word, meaning }); await renderSafewords(); }
-      catch (e) { alert('Impossible d\'enregistrer.'); }
+      const res = await formDialog({
+        title: 'Ajouter un safeword',
+        fields: [
+          { name: 'word', label: 'Safeword', required: true },
+          { name: 'meaning', label: 'Signification', placeholder: 'ex. stop immédiat' },
+        ],
+      });
+      if (!res) return;
+      try { await supabase.from('safewords').insert({ couple_id: st.coupleId, word: res.word, meaning: res.meaning || null }); await renderSafewords(); }
+      catch (e) { toast(friendlyError(e), 'error'); }
     });
   } catch (e) { el.innerHTML = '<div class="msg error">Impossible de charger les safewords.</div>'; }
 }
@@ -404,18 +418,28 @@ async function renderLastHealthEntry() {
 
 function initHealthAdd() {
   document.getElementById('btn-add-health')?.addEventListener('click', async () => {
-    const types = { '1':'contraception', '2':'test_ist', '3':'vaccination', '4':'symptom' };
-    const choice = prompt('Type :\n1. Contraception\n2. Test IST\n3. Vaccination\n4. Symptôme');
-    const type = types[choice];
-    if (!type) return;
-    const label  = prompt('Détail :');
-    if (!label) return;
-    const note   = prompt('Note (optionnel) :') || null;
-    const shared = confirm('Partager avec votre partenaire ?');
+    const res = await formDialog({
+      title: 'Entrée santé',
+      fields: [
+        { name: 'type', label: 'Type', type: 'select', options: [
+          { value: 'contraception', label: 'Contraception' },
+          { value: 'test_ist', label: 'Test IST' },
+          { value: 'vaccination', label: 'Vaccination' },
+          { value: 'symptom', label: 'Symptôme' },
+        ] },
+        { name: 'label', label: 'Détail', required: true },
+        { name: 'note', label: 'Note (optionnel)', type: 'textarea' },
+        { name: 'shared', label: 'Partager avec mon partenaire', type: 'checkbox' },
+      ],
+    });
+    if (!res) return;
     try {
-      await supabase.from('sexual_health').insert({ user_id: st.me?.user_id, entry_date: localDateStr(), type, label, note, shared });
+      await supabase.from('sexual_health').insert({
+        user_id: st.me?.user_id, entry_date: localDateStr(),
+        type: res.type, label: res.label, note: res.note || null, shared: res.shared,
+      });
       await renderLastHealthEntry();
-    } catch (e) { alert('Impossible d\'enregistrer. Vérifiez votre connexion.'); }
+    } catch (e) { toast(friendlyError(e), 'error'); }
   });
 }
 
@@ -441,10 +465,13 @@ async function renderChallenges() {
       );
     }
     document.getElementById('btn-add-challenge')?.addEventListener('click', async () => {
-      const title = prompt('Défi du mois :');
-      if (!title) return;
-      try { await supabase.from('challenges').insert({ couple_id: st.coupleId, title, created_by: st.me?.user_id }); await renderChallenges(); }
-      catch (e) { alert('Impossible d\'enregistrer.'); }
+      const res = await formDialog({
+        title: 'Proposer un défi',
+        fields: [{ name: 'title', label: 'Défi du mois', required: true }],
+      });
+      if (!res) return;
+      try { await supabase.from('challenges').insert({ couple_id: st.coupleId, title: res.title, created_by: st.me?.user_id }); await renderChallenges(); }
+      catch (e) { toast(friendlyError(e), 'error'); }
     });
   } catch (e) { el.innerHTML = '<div class="msg error">Impossible de charger les défis. Vérifiez votre connexion.</div>'; }
 }

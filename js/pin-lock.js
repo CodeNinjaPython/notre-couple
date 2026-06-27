@@ -4,6 +4,8 @@
  * Le PIN n'est JAMAIS stocké en clair — uniquement le hash.
  */
 
+import { confirmDialog, formDialog } from './ui-feedback.js';
+
 const PIN_KEY   = 'nc-pin-hash';
 const PIN_SALT  = 'nc-couple-privacy-2024';
 const LOCK_KEY  = 'nc-intime-locked';
@@ -206,21 +208,33 @@ export function initPINSettings() {
   updatePINUI();
 
   btnSet?.addEventListener('click', async () => {
-    const pin = prompt('Choisissez un code PIN à 4 chiffres :');
-    if (!pin || !/^\d{4}$/.test(pin)) {
-      alert('Le PIN doit comporter exactement 4 chiffres.');
-      return;
-    }
-    const confirm = prompt('Confirmez le code PIN :');
-    if (pin !== confirm) { alert('Les codes ne correspondent pas.'); return; }
-    await setupPIN(pin);
+    const res = await formDialog({
+      title: hasPIN() ? 'Modifier le PIN' : 'Définir un PIN',
+      message: 'Un code à 4 chiffres protège l\'espace intime.',
+      fields: [
+        { name: 'pin', label: 'Code à 4 chiffres', type: 'tel', inputmode: 'numeric', maxlength: 4 },
+        { name: 'confirm', label: 'Confirmez le code', type: 'tel', inputmode: 'numeric', maxlength: 4 },
+      ],
+      validate: (v) => {
+        if (!/^\d{4}$/.test(v.pin)) return 'Le PIN doit comporter exactement 4 chiffres.';
+        if (v.pin !== v.confirm) return 'Les deux codes ne correspondent pas.';
+        return null;
+      },
+    });
+    if (!res) return;
+    await setupPIN(res.pin);
     updatePINUI();
   });
 
-  btnDel?.addEventListener('click', () => {
-    if (confirm('Supprimer le PIN ? L\'espace intime ne sera plus protégé.')) {
-      removePIN();
-      updatePINUI();
-    }
+  btnDel?.addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: 'Supprimer le PIN ?',
+      message: 'L\'espace intime ne sera plus protégé par un code.',
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
+    removePIN();
+    updatePINUI();
   });
 }

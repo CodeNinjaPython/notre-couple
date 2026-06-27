@@ -87,6 +87,135 @@ export function confirmDialog({
   });
 }
 
+// --- Formulaire / saisie ---------------------------------------------------
+
+/**
+ * Bottom sheet de saisie (remplace les `prompt()` natifs). Gère plusieurs
+ * champs typés et résout avec un objet { name: value } ou null si annulé.
+ *
+ * @param {object} opts
+ * @param {string} opts.title
+ * @param {string} [opts.message]
+ * @param {Array}  opts.fields   Liste de champs :
+ *   { name, label, type='text'|'textarea'|'date'|'number'|'tel'|'select'|'checkbox',
+ *     placeholder, options:[{value,label}], value, required, inputmode, maxlength }
+ * @param {string} [opts.confirmLabel='Enregistrer']
+ * @param {string} [opts.cancelLabel='Annuler']
+ * @param {(values:object)=>?string} [opts.validate] Renvoie un message d'erreur ou null.
+ * @returns {Promise<object|null>}
+ */
+export function formDialog({
+  title,
+  message = '',
+  fields = [],
+  confirmLabel = 'Enregistrer',
+  cancelLabel = 'Annuler',
+  validate,
+} = {}) {
+  return new Promise((resolve) => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'sheet-backdrop confirm-backdrop';
+    backdrop.innerHTML = `
+      <div class="sheet confirm-sheet form-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">${escapeHtml(title)}</div>
+        ${message ? `<p class="confirm-msg">${escapeHtml(message)}</p>` : ''}
+        <form class="form-dialog-body">
+          ${fields.map(renderField).join('')}
+          <p class="form-error" hidden></p>
+          <div class="confirm-actions">
+            <button type="button" class="btn-secondary form-cancel">${escapeHtml(cancelLabel)}</button>
+            <button type="submit" class="btn-primary form-ok">${escapeHtml(confirmLabel)}</button>
+          </div>
+        </form>
+      </div>`;
+    document.body.appendChild(backdrop);
+
+    const form    = backdrop.querySelector('.form-dialog-body');
+    const errEl   = backdrop.querySelector('.form-error');
+    let settled = false;
+
+    const close = (result) => {
+      if (settled) return;
+      settled = true;
+      backdrop.classList.remove('open');
+      document.removeEventListener('keydown', onKey);
+      setTimeout(() => backdrop.remove(), 300);
+      resolve(result);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(null); };
+
+    const collect = () => {
+      const values = {};
+      for (const f of fields) {
+        const node = form.querySelector(`[data-name="${f.name}"]`);
+        if (!node) continue;
+        values[f.name] = f.type === 'checkbox' ? node.checked : node.value.trim();
+      }
+      return values;
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const values = collect();
+      for (const f of fields) {
+        if (f.required && !values[f.name]) {
+          showFieldError(`« ${f.label} » est requis.`);
+          form.querySelector(`[data-name="${f.name}"]`)?.focus();
+          return;
+        }
+      }
+      const msg = validate ? validate(values) : null;
+      if (msg) { showFieldError(msg); return; }
+      close(values);
+    });
+    backdrop.querySelector('.form-cancel').addEventListener('click', () => close(null));
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(null); });
+    document.addEventListener('keydown', onKey);
+
+    function showFieldError(text) {
+      errEl.textContent = text;
+      errEl.hidden = false;
+    }
+
+    requestAnimationFrame(() => {
+      backdrop.classList.add('open');
+      form.querySelector('[data-name]')?.focus();
+    });
+  });
+}
+
+function renderField(f) {
+  const id = `fd-${f.name}`;
+  const common = `id="${id}" data-name="${escapeHtml(f.name)}"`
+    + (f.placeholder ? ` placeholder="${escapeHtml(f.placeholder)}"` : '')
+    + (f.inputmode ? ` inputmode="${escapeHtml(f.inputmode)}"` : '')
+    + (f.maxlength ? ` maxlength="${f.maxlength}"` : '');
+  const val = f.value != null ? escapeHtml(String(f.value)) : '';
+
+  if (f.type === 'checkbox') {
+    return `<label class="form-check">
+      <input type="checkbox" ${common} ${f.value ? 'checked' : ''}>
+      <span>${escapeHtml(f.label)}</span>
+    </label>`;
+  }
+  let control;
+  if (f.type === 'textarea') {
+    control = `<textarea ${common} rows="3">${val}</textarea>`;
+  } else if (f.type === 'select') {
+    control = `<select ${common}>${(f.options || []).map(o =>
+      `<option value="${escapeHtml(o.value)}"${String(o.value) === String(f.value) ? ' selected' : ''}>${escapeHtml(o.label)}</option>`
+    ).join('')}</select>`;
+  } else {
+    const t = f.type === 'date' || f.type === 'number' || f.type === 'tel' ? f.type : 'text';
+    control = `<input type="${t}" ${common} value="${val}">`;
+  }
+  return `<div class="field">
+    <label for="${id}">${escapeHtml(f.label)}</label>
+    ${control}
+  </div>`;
+}
+
 // --- Erreurs ---------------------------------------------------------------
 
 /**

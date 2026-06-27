@@ -9,6 +9,7 @@
  */
 import { supabase } from './supabase.js';
 import { getIntimacyState, initKinkSliderGradients } from './intimacy.js';
+import { toast, formDialog, friendlyError } from './ui-feedback.js';
 
 const CATEGORIES = {
   atmosphere:    '✨ Atmosphère',
@@ -194,15 +195,20 @@ async function renderWishlist(st) {
 
 function initAddWish(st) {
   document.getElementById('btn-add-wish')?.addEventListener('click', async () => {
-    const content = prompt('Votre fantasme ou idée :');
-    if (!content) return;
-    await supabase.from('fantasies').insert({
-      couple_id: st.coupleId,
-      created_by: st.me?.user_id,
-      content,
-      shared: true,
+    const res = await formDialog({
+      title: 'Ajouter à la wish-list',
+      fields: [{ name: 'content', label: 'Votre fantasme ou idée', type: 'textarea', required: true }],
     });
-    await renderWishlist(st);
+    if (!res) return;
+    try {
+      await supabase.from('fantasies').insert({
+        couple_id: st.coupleId,
+        created_by: st.me?.user_id,
+        content: res.content,
+        shared: true,
+      });
+      await renderWishlist(st);
+    } catch (e) { toast(friendlyError(e), 'error'); }
   });
 }
 
@@ -325,16 +331,25 @@ async function renderMyLimits(st) {
 
 function initAddLimit(st) {
   document.getElementById('btn-add-limit')?.addEventListener('click', async () => {
-    const practice = prompt('Pratique ou situation :');
-    if (!practice) return;
-    const levelNum = prompt('Niveau :\n1. OK — j\'aime / OK\n2. Soft limit — à négocier\n3. Hard limit — jamais');
-    const level = levelNum === '1' ? 'ok' : levelNum === '2' ? 'soft' : 'hard';
-    const note = prompt('Note (optionnel) :') || null;
-
-    await supabase.from('consent_limits').upsert(
-      { user_id: st.me?.user_id, practice, level, note },
-      { onConflict: 'user_id,practice' }
-    );
-    await renderMyLimits(st);
+    const res = await formDialog({
+      title: 'Ajouter une limite',
+      fields: [
+        { name: 'practice', label: 'Pratique ou situation', required: true },
+        { name: 'level', label: 'Niveau', type: 'select', options: [
+          { value: 'ok', label: "OK — j'aime / OK" },
+          { value: 'soft', label: 'Soft limit — à négocier' },
+          { value: 'hard', label: 'Hard limit — jamais' },
+        ] },
+        { name: 'note', label: 'Note (optionnel)', type: 'textarea' },
+      ],
+    });
+    if (!res) return;
+    try {
+      await supabase.from('consent_limits').upsert(
+        { user_id: st.me?.user_id, practice: res.practice, level: res.level, note: res.note || null },
+        { onConflict: 'user_id,practice' }
+      );
+      await renderMyLimits(st);
+    } catch (e) { toast(friendlyError(e), 'error'); }
   });
 }

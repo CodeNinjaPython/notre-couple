@@ -620,6 +620,38 @@ input::placeholder { color: var(--faint); font-weight: 400; }
 }
 .confirm-danger:hover { box-shadow: 0 6px 20px rgba(229,57,53,.40); }
 
+/* Saisie dans la modale (formDialog) */
+.form-sheet .field:last-of-type { margin-bottom: 14px; }
+.form-sheet input[type="date"],
+.form-sheet input[type="number"],
+.form-sheet input[type="tel"],
+.form-sheet textarea,
+.form-sheet select {
+  width: 100%;
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 13px; color: var(--text);
+  font-family: "DM Sans"; font-size: 15px; font-weight: 500;
+  padding: 14px 16px; outline: none; transition: border-color .2s, box-shadow .2s;
+  -webkit-appearance: none;
+}
+.form-sheet textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+.form-sheet input:focus,
+.form-sheet textarea:focus,
+.form-sheet select:focus {
+  border-color: var(--elle); box-shadow: 0 0 0 3px var(--elle-dim);
+}
+.form-check {
+  display: flex; align-items: center; gap: 11px;
+  font-size: 14px; font-weight: 600; color: var(--text);
+  margin-bottom: 18px; cursor: pointer;
+}
+.form-check input { width: 20px; height: 20px; accent-color: var(--elle); flex-shrink: 0; }
+.form-error {
+  font-size: 13px; font-weight: 600; color: var(--red);
+  background: var(--red-light); border-radius: 11px;
+  padding: 10px 13px; margin: 0 0 14px;
+}
+
 /* ─── Demo badge ──────────────────────────────────────────────────────── */
 .demo-badge { display: none; }
 body.demo-mode .demo-badge {
