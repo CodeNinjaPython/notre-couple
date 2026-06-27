@@ -89,7 +89,7 @@ create table log_entries (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid references auth.users(id) on delete cascade,
   log_date     date not null,
-  category_id  text references tracking_categories(id),
+  category_id  text,   -- FK retirée : les category_id (journal, bbt, note…) sont gérés côté code
   value        jsonb not null,
   shared       boolean default true,
   created_at   timestamptz default now(),
