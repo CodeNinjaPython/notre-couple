@@ -9,13 +9,13 @@ export async function sendMagicLink(email) {
 }
 
 // Vérifie le code à 6 chiffres reçu par e-mail (login dans l'app, sans bascule Safari)
+// Essaie 'email' (utilisateur existant) puis 'signup' (nouveau compte, ex. la partenaire).
 export async function verifyEmailOtp(email, token) {
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token: String(token).trim(),
-    type: 'email',
-  });
-  if (error) throw error;
+  const t = String(token).trim();
+  const first = await supabase.auth.verifyOtp({ email, token: t, type: 'email' });
+  if (!first.error) return;
+  const second = await supabase.auth.verifyOtp({ email, token: t, type: 'signup' });
+  if (second.error) throw first.error; // remonte l'erreur la plus parlante
 }
 
 export async function getUser() {
