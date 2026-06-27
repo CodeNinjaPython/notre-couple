@@ -7,7 +7,7 @@ import {
   predictNextPeriod, getEnergyByCycleDay, getPartnerEnergyByCycleDay, interpolate,
 } from './cycles.js';
 import { subscribeToEvents, subscribeToPartnerLogs } from './realtime.js';
-import { maybeRemindToLog, checkPartnerLoggedToday, showNotification, checkRulesImminentes } from './notifications.js';
+import { maybeRemindToLog, checkPartnerLoggedToday, showNotification, checkRulesImminentes, checkFertileWindow } from './notifications.js';
 import { localDateStr, daysAgo, fmtDate, diffDays } from './date-utils.js';
 import { computeStreak } from './analytics.js';
 import { getCycleMode } from './onboarding.js';
@@ -16,6 +16,7 @@ import { initCollapsibles } from './collapse.js';
 import { Cycle, predictNextPeriodAdvanced } from './cycle-model.js';
 import { renderCycleRing, renderRingLegend } from './ring-chart.js';
 import { toast as showToast, confirmDialog, friendlyError } from './ui-feedback.js';
+import { getPregnancyMilestone } from './pregnancy-milestones.js';
 
 const PHASES_DATA = {
   Menstruelle: {
@@ -165,7 +166,11 @@ export async function initToday() {
 
   // Rappel quotidien + alerte règles imminentes
   maybeRemindToLog();
-  if (state.prediction) checkRulesImminentes(state.prediction);
+  if (state.prediction) {
+    checkRulesImminentes(state.prediction);
+    // En mode conception : alerte à l'approche de la fenêtre fertile.
+    if (getCycleMode() === 'conception') checkFertileWindow(state.prediction);
+  }
 
   // Toast si partenaire a déjà saisi aujourd'hui
   if (state.partner) {
@@ -272,6 +277,41 @@ function renderPregnancyProgress(container) {
     </div>`;
 }
 
+// --- Repère de grossesse semaine par semaine -------------------------------
+function pregnancyWeeks() {
+  const dpa = localStorage.getItem('nc-dpa-date');
+  if (!dpa) return null;
+  const daysToDue = diffDays(dpa, localDateStr());
+  return Math.max(0, Math.floor((280 - daysToDue) / 7));
+}
+
+function renderPregnancyMilestone() {
+  const card = document.getElementById('preg-milestone');
+  if (!card) return;
+  const weeks = pregnancyWeeks();
+  if (getCycleMode() !== 'pregnancy' || weeks == null) {
+    card.style.display = 'none';
+    card.innerHTML = '';
+    return;
+  }
+  const m = getPregnancyMilestone(weeks);
+  const appt = m.nextAppointment
+    ? `<div class="preg-appt">📅 ${m.nextAppointment.label} ${
+        m.nextAppointment.inWeeks <= 0 ? '· cette semaine'
+        : `· dans ~${m.nextAppointment.inWeeks} sem.`}</div>`
+    : '';
+  card.innerHTML = `
+    <div class="preg-ms-head">
+      <span class="preg-ms-fruit" aria-hidden="true">🍃</span>
+      <div>
+        <h2>Semaine ${m.week} · grand comme ${m.fruit}</h2>
+        <p class="preg-ms-note">${m.note}</p>
+      </div>
+    </div>
+    ${appt}`;
+  card.style.display = 'block';
+}
+
 // --- Anneau SVG du cycle ---------------------------------------------------
 function renderRingChart() {
   const ring   = document.getElementById('cycle-ring');
@@ -282,8 +322,11 @@ function renderRingChart() {
   if (getCycleMode() === 'pregnancy') {
     renderPregnancyProgress(ring);
     if (legend) legend.innerHTML = '';
+    renderPregnancyMilestone();
     return;
   }
+
+  renderPregnancyMilestone(); // masque la carte hors mode grossesse
 
   const cycleObj = state.currentCycle
     ? new Cycle(state.currentCycle)

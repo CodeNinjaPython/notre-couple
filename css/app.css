@@ -2057,6 +2057,17 @@ nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
 .preg-sub  { font-size: 14px; font-weight: 700; color: var(--text); }
 .preg-rem  { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; }
 
+.preg-milestone { border: 1.5px solid var(--elle-mid); background: var(--elle-light); }
+.preg-ms-head { display: flex; align-items: flex-start; gap: 12px; }
+.preg-ms-fruit { font-size: 26px; line-height: 1.1; flex-shrink: 0; }
+.preg-milestone h2 { font-size: 16px; font-weight: 800; color: var(--text); margin: 0 0 5px; }
+.preg-ms-note { font-size: 13px; line-height: 1.55; color: var(--muted); font-weight: 500; margin: 0; }
+.preg-appt {
+  margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line);
+  font-size: 12.5px; font-weight: 600; color: var(--elle);
+  font-family: "DM Mono", monospace; letter-spacing: .01em;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    BOUTON PROFIL (en-tête accueil) + VUE RÉGLAGES
    ═══════════════════════════════════════════════════════════════════════ */

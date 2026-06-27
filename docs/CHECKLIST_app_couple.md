@@ -114,8 +114,8 @@
 ## 12. Modes du cycle
 
 - [x] [V1] Mode règles (par défaut)
-- [ ] [V1] Mode conception ⚠️ *UI ok (tab), comportement calendrier non modifié*
-- [ ] [V1] Mode grossesse ⚠️ *compteur semaines dans header, milestones non implémentés*
+- [x] [V1] Mode conception — *fenêtre fertile au calendrier + statut fertilité dans le header + alerte fenêtre fertile branchée*
+- [x] [V1] Mode grossesse — *compteur semaines + anneau de progression + repère semaine par semaine (`pregnancy-milestones.js`) : taille comparée, note, prochain rendez-vous clé*
 - [x] [V1] Bascule de mode dans les réglages
 
 ## 13. Notifications / rappels
@@ -123,7 +123,7 @@
 - [x] [V1] Demande de permission
 - [x] [V1] Rappel quotidien de saisie (heure réglable dans Nous)
 - [x] [V1] Alerte « règles imminentes » (≤ 2 jours)
-- [ ] [+] Alerte fenêtre fertile (mode conception) ⚠️ *code écrit, non déclenché*
+- [x] [+] Alerte fenêtre fertile (mode conception) — *`checkFertileWindow` appelé depuis today.js en mode conception (toggle dans Nous)*
 - [x] [V1] Réglages : activer/désactiver chaque rappel (UI dans Nous)
 - [ ] [V1] Implémentation Web Push VAPID ❌ *local SW uniquement (iOS 16.4+ requis pour vrai push)*
 
