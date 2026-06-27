@@ -371,6 +371,40 @@ function renderAnomalies(cycles) {
 // ---------------------------------------------------------------------------
 // Réglages
 // ---------------------------------------------------------------------------
+// Import d'un export Clue (measurements.json) — transformation côté client
+function initClueImport(me) {
+  const fileInput = document.getElementById('clue-file');
+  const btn       = document.getElementById('btn-clue-import');
+  const status    = document.getElementById('clue-import-status');
+  if (!btn) return;
+
+  const say = (txt, color = 'var(--muted)') => { if (status) { status.textContent = txt; status.style.color = color; } };
+
+  btn.addEventListener('click', async () => {
+    const file = fileInput?.files?.[0];
+    if (!file) { say('Choisis d\'abord ton fichier measurements.json.', 'var(--red)'); return; }
+
+    btn.disabled = true; btn.textContent = 'Import en cours…';
+    try {
+      const text = await file.text();
+      let records;
+      try { records = JSON.parse(text); }
+      catch { throw new Error('Fichier illisible — ce n\'est pas un JSON valide.'); }
+      if (!Array.isArray(records)) throw new Error('Format inattendu — attendu : l\'export "measurements.json" de Clue.');
+
+      const { importClueData } = await import('./clue-import.js');
+      const res = await importClueData(records, me.user_id, me.couple_id, txt => say(txt));
+
+      say(`✓ Import terminé : ${res.cyclesInserted} cycle(s) ajouté(s), ${res.daysLogged} jour(s) de journal (${res.dateRange?.[0]} → ${res.dateRange?.[1]}). Recharge l'app pour voir les prédictions mises à jour.`, 'var(--elle)');
+      if (fileInput) fileInput.value = '';
+    } catch (e) {
+      say(`Échec : ${e.message || e}`, 'var(--red)');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Importer le fichier Clue';
+    }
+  });
+}
+
 // Vue dédiée Réglages & Profil (accès via le bouton profil en haut à droite)
 export async function initSettings() {
   const me = await getMyMembership();
@@ -457,6 +491,7 @@ function renderSettings(me, partner) {
   document.getElementById('btn-export-pdf')?.addEventListener('click',  () => exportPDF(me?.couple_id, me, partner));
   document.getElementById('btn-delete-data')?.addEventListener('click', () => deleteAllData(me));
   document.getElementById('btn-unlink')?.addEventListener('click', () => unlinkAccount(me));
+  initClueImport(me);
   initNotifSettings();
 
   // Mode cycle tabs

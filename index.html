@@ -1169,6 +1169,19 @@
         </div>
       </div>
 
+      <!-- Import Clue -->
+      <div class="card">
+        <h2>Importer depuis Clue</h2>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;line-height:1.6">
+          Importe ton historique Clue (fichier <strong>measurements.json</strong> de l'export Clue).
+          Les cycles et symptômes sont ajoutés à ton journal. Tes données restent privées (rien n'est partagé).
+        </p>
+        <input type="file" id="clue-file" accept=".json,application/json"
+          style="display:block;width:100%;font-size:13px;margin-bottom:10px">
+        <button type="button" id="btn-clue-import" class="btn-primary">Importer le fichier Clue</button>
+        <div id="clue-import-status" style="font-size:13px;margin-top:10px;line-height:1.5"></div>
+      </div>
+
       <!-- Compte -->
       <div class="card">
         <h2>Compte</h2>

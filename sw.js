@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v27';
+const CACHE = 'notre-rythme-v28';
 const SHELL = [
   '/',
   '/index.html',
@@ -40,6 +40,7 @@ const SHELL = [
   '/js/intimacy-heatmap.js',
   '/js/session-bridge.js',
   '/js/skeleton.js',
+  '/js/clue-import.js',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
