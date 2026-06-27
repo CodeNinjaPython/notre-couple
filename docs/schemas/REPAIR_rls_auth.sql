@@ -1,39 +1,53 @@
 -- =============================================================
---  REPAIR — Corrige "new row violates row-level security policy"
---  Remplace auth.role() = 'authenticated'  →  auth.uid() is not null
---  (auth.role() n'est pas fiable avec les clés sb_publishable_).
---
+--  REPAIR v2 — Débloque la création d'espace couple
+--  Stratégie : ajoute des policies PERMISSIVES à noms ASCII.
+--  Les policies permissives se cumulent en OR → ceci autorise les
+--  opérations même si d'anciennes policies (auth.role(), accents) traînent.
+--  Sans danger pour les données. Idempotent (drop if exists + create).
 --  À exécuter dans Supabase > SQL Editor > New query > Run.
---  Sans danger : ne touche pas aux tables ni aux données. Idempotent.
 -- =============================================================
 
--- couples : autoriser la création par tout utilisateur connecté
-drop policy if exists "couples: créer" on couples;
-create policy "couples: créer"
+-- ── couples : créer + relire la ligne juste insérée ──────────────────────
+drop policy if exists "couples_insert_authed" on couples;
+create policy "couples_insert_authed"
   on couples for insert
   with check (auth.uid() is not null);
 
--- pairing_codes : lecture pour valider un code lors du join
-drop policy if exists "codes: lire pour validation" on pairing_codes;
-create policy "codes: lire pour validation"
+drop policy if exists "couples_select_authed" on couples;
+create policy "couples_select_authed"
+  on couples for select
+  using (auth.uid() is not null);   -- couples ne contient que id+date, aucune donnée sensible
+
+-- ── couple_members : s'ajouter soi-même ──────────────────────────────────
+drop policy if exists "members_insert_self" on couple_members;
+create policy "members_insert_self"
+  on couple_members for insert
+  with check (auth.uid() = user_id);
+
+-- ── pairing_codes : créer / lire / marquer utilisé ───────────────────────
+drop policy if exists "codes_insert_authed" on pairing_codes;
+create policy "codes_insert_authed"
+  on pairing_codes for insert
+  with check (auth.uid() is not null);
+
+drop policy if exists "codes_select_authed" on pairing_codes;
+create policy "codes_select_authed"
   on pairing_codes for select
   using (auth.uid() is not null);
 
--- pairing_codes : marquer un code comme utilisé
-drop policy if exists "codes: marquer utilisé" on pairing_codes;
-create policy "codes: marquer utilisé"
+drop policy if exists "codes_update_authed" on pairing_codes;
+create policy "codes_update_authed"
   on pairing_codes for update
   using (auth.uid() is not null)
   with check (auth.uid() is not null);
 
--- tracking_categories : lecture des catégories (référence)
-drop policy if exists "categories: lecture authentifiée" on tracking_categories;
-create policy "categories: lecture authentifiée"
+-- ── tables de référence : lecture ────────────────────────────────────────
+drop policy if exists "categories_select_authed" on tracking_categories;
+create policy "categories_select_authed"
   on tracking_categories for select
   using (auth.uid() is not null);
 
--- kinks : lecture du catalogue (référence)
-drop policy if exists "kinks: lecture authentifiée" on kinks;
-create policy "kinks: lecture authentifiée"
+drop policy if exists "kinks_select_authed" on kinks;
+create policy "kinks_select_authed"
   on kinks for select
   using (auth.uid() is not null);

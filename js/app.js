@@ -129,7 +129,12 @@ function initPairingView() {
       createSection.style.display = 'none';
       codeSection.style.display = 'block';
     } catch (e) {
-      showMsg('create-error', `Échec de création : ${e.message || e}`);
+      let diag = '';
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        diag = ` · [session ${session ? 'oui' : 'NON'} · token ${session?.access_token ? 'oui' : 'NON'} · uid ${session?.user?.id ? session.user.id.slice(0, 8) : 'NULL'}]`;
+      } catch (_) {}
+      showMsg('create-error', `Échec : ${e.message || e}${diag}`);
     }
     finally { btn.disabled = false; btn.textContent = 'Créer notre espace'; }
   });

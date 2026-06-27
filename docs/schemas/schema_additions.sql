@@ -22,12 +22,8 @@ create policy "couples: créer"
 
 create policy "couples: voir le mien"
   on couples for select
-  using (
-    exists (
-      select 1 from couple_members
-      where couple_id = couples.id and user_id = auth.uid()
-    )
-  );
+  using (auth.uid() is not null);   -- couples = id+date seulement, pas de donnée sensible ;
+                                    -- permissif pour autoriser la relecture juste après insert
 
 -- -------------------------------------------------------------
 -- pairing_codes : activer RLS + politiques
