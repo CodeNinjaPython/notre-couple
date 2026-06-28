@@ -179,7 +179,7 @@ const ratingState = {};
 function renderPositionPicker() {
   const grid = document.getElementById('position-picker-grid');
   if (!grid) return;
-  grid.innerHTML = POSITIONS.slice(0, 12).map(p =>
+  grid.innerHTML = POSITIONS.map(p =>
     `<button type="button" class="pos-pick-btn" data-id="${p.id}"
       aria-label="${p.label}" title="${p.label}">
       <div class="pos-pick-svg">${p.svg}</div>
