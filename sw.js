@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v38';
+const CACHE = 'notre-rythme-v39';
 const SHELL = [
   '/',
   '/index.html',
@@ -44,6 +44,7 @@ const SHELL = [
   '/js/ui-feedback.js',
   '/js/pregnancy-milestones.js',
   '/js/lovelust-import.js',
+  '/js/intimacy-calendar.js',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

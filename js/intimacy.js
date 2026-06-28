@@ -11,6 +11,7 @@ import { supabase } from './supabase.js';
 import { getMyMembership, getPartnerMembership } from './pairing.js';
 import { localDateStr, fmtDate, diffDays } from './date-utils.js';
 import { renderRecentSessions, openFullSessionSheet, openFastTrack, initSessionSheetListeners } from './intimacy-sessions.js';
+import { initIntimacyCalendar } from './intimacy-calendar.js';
 import {
   renderDesireWindow, renderSouvenirDuJour, renderDebriefPostDispute,
   renderEquitePlaisir, renderMonthlyHeatmap, renderSatisfactionCurve,
@@ -77,6 +78,13 @@ export async function initIntimacy() {
 
   // §4 — notification libidos alignées (si opt-in)
   notifyLibidosAligned();
+
+  // Calendrier intime (suivi mensuel de la sexualité)
+  initIntimacyCalendar(st.coupleId, (date) => {
+    openFullSessionSheet(st);
+    const dateEl = document.getElementById('session-date-input');
+    if (dateEl) dateEl.value = date;
+  });
 
   // Bibliothèque
   renderLibrarySection();

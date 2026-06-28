@@ -719,6 +719,25 @@ body.demo-mode .demo-badge {
 .cal-dot.flow   { background: var(--red); }
 .cal-dot.mood   { background: var(--elle); }
 .cal-dot.energy { background: var(--lui); }
+
+/* ─── Calendrier intime (détail jour) ─────────────────────────────────── */
+.cal-cell--sel { border-color: var(--violet); box-shadow: 0 0 0 2px var(--violet-dim, rgba(124,92,252,.25)); }
+.intime-cal-day-title {
+  font-size: 14px; font-weight: 800; color: var(--text);
+  text-transform: capitalize; margin-bottom: 10px;
+}
+.intime-cal-session {
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 14px; padding: 12px 14px; margin-bottom: 10px;
+}
+.intime-cal-session-meta { font-size: 13px; font-weight: 700; color: var(--elle); }
+.intime-cal-session-note { font-size: 13px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+.intime-cal-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.intime-tag {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 100px; padding: 3px 9px;
+}
 .cal-legend {
   display: flex; gap: 14px; flex-wrap: wrap;
   font-size: 11px; color: var(--faint);
