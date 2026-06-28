@@ -759,6 +759,20 @@ body.demo-mode .demo-badge {
   border-radius: 100px; padding: 5px 11px; cursor: pointer; transition: all .15s;
 }
 .pos-rate-flag.on { color: var(--red); border-color: var(--red); background: var(--red-light); }
+
+/* ─── Bilan des positions (insights) ──────────────────────────────────── */
+.pi-block { margin-bottom: 16px; }
+.pi-block:last-child { margin-bottom: 0; }
+.pi-title { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 9px; }
+.pi-row { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.pi-row:last-child { border-bottom: none; }
+.pi-rank { font-family: "DM Mono", monospace; font-weight: 700; color: var(--faint); width: 16px; }
+.pi-name { flex: 1; font-weight: 600; color: var(--text); }
+.pi-score { font-family: "DM Mono", monospace; font-weight: 700; color: var(--elle); }
+.pi-sub { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; }
+.pi-flags { font-size: 11px; color: var(--red); font-weight: 600; }
+.pi-phase-row { font-size: 12.5px; color: var(--muted); line-height: 1.6; padding: 4px 0; }
+.pi-phase-row strong { color: var(--text); }
 .cal-legend {
   display: flex; gap: 14px; flex-wrap: wrap;
   font-size: 11px; color: var(--faint);
@@ -1900,6 +1914,7 @@ body.intime-dark .card:hover {
 }
 .suggestion-pos-svg { width: 48px; height: 48px; }
 .suggestion-pos span { font-size: 10px; color: var(--muted); font-weight: 600; text-align: center; }
+.suggestion-pos .suggestion-reason { font-size: 9px; color: var(--elle); font-weight: 700; line-height: 1.3; }
 .suggestion-idea {
   font-size: 13px; color: var(--text); padding: 8px 0;
   border-bottom: 1px solid var(--line); line-height: 1.5;

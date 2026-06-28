@@ -12,6 +12,8 @@ import { getMyMembership, getPartnerMembership } from './pairing.js';
 import { localDateStr, fmtDate, diffDays } from './date-utils.js';
 import { renderRecentSessions, openFullSessionSheet, openFastTrack, initSessionSheetListeners } from './intimacy-sessions.js';
 import { initIntimacyCalendar } from './intimacy-calendar.js';
+import { loadRatingData, rankSuggestions } from './position-suggestions.js';
+import { renderPositionInsights } from './position-insights.js';
 import {
   renderDesireWindow, renderSouvenirDuJour, renderDebriefPostDispute,
   renderEquitePlaisir, renderMonthlyHeatmap, renderSatisfactionCurve,
@@ -85,6 +87,9 @@ export async function initIntimacy() {
     const dateEl = document.getElementById('session-date-input');
     if (dateEl) dateEl.value = date;
   });
+
+  // Bilan des positions (favorites / sensibles / par phase — Phase 3)
+  renderPositionInsights('position-insights', st.coupleId);
 
   // Bibliothèque
   renderLibrarySection();
@@ -343,18 +348,22 @@ async function renderSuggestions() {
       else phase = 'luteale';
     }
 
-    const luiMood    = Number(moodRes.data?.value?.v ?? moodRes.data?.value ?? 3);
-    const positions  = getSuggestions(phase, luiMood);
     const dateIdeas  = getDateNightIdeas(phase);
     const phaseLabel = PHASES_LABELS[phase]?.label || phase;
 
+    // Suggestions enrichies : notes du couple + douleurs + anti-routine (Phase 2).
+    const { agg, recentPain } = await loadRatingData(st.coupleId);
+    const painfulDay = phase === 'menstruelle' || recentPain;
+    const positions = rankSuggestions({ phase, painfulDay, agg, today, limit: 4 });
+
     el.innerHTML = `
-      <div class="suggestion-phase">Phase ${phaseLabel}</div>
-      <div class="suggestion-label">Positions idéales</div>
+      <div class="suggestion-phase">Phase ${phaseLabel}${painfulDay ? ' · jour sensible 🌸' : ''}</div>
+      <div class="suggestion-label">Suggérées pour vous</div>
       <div class="suggestion-positions">
         ${positions.map(p => `<div class="suggestion-pos">
           <div class="suggestion-pos-svg">${p.svg}</div>
           <span>${p.label}</span>
+          <span class="suggestion-reason">${p.reason}</span>
         </div>`).join('')}
       </div>
       <div class="suggestion-label" style="margin-top:14px">Idées Date Night</div>
