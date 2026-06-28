@@ -405,25 +405,33 @@ function initClueImport(me) {
 
   btn.addEventListener('click', async () => {
     const file = fileInput?.files?.[0];
-    if (!file) { say('Choisis d\'abord ton fichier measurements.json.', 'var(--red)'); return; }
+    if (!file) { say('Choisis d\'abord ton fichier d\'export (Clue ou LoveLust).', 'var(--red)'); return; }
 
     btn.disabled = true; btn.textContent = 'Import en cours…';
     try {
       const text = await file.text();
-      let records;
-      try { records = JSON.parse(text); }
+      let data;
+      try { data = JSON.parse(text); }
       catch { throw new Error('Fichier illisible — ce n\'est pas un JSON valide.'); }
-      if (!Array.isArray(records)) throw new Error('Format inattendu — attendu : l\'export "measurements.json" de Clue.');
 
-      const { importClueData } = await import('./clue-import.js');
-      const res = await importClueData(records, me.user_id, me.couple_id, txt => say(txt));
-
-      say(`✓ Import terminé : ${res.cyclesInserted} cycle(s) ajouté(s), ${res.daysLogged} jour(s) de journal (${res.dateRange?.[0]} → ${res.dateRange?.[1]}). Recharge l'app pour voir les prédictions mises à jour.`, 'var(--elle)');
+      // Auto-détection du format : tableau → Clue ; objet avec « activity » → LoveLust.
+      if (Array.isArray(data)) {
+        const { importClueData } = await import('./clue-import.js');
+        const res = await importClueData(data, me.user_id, me.couple_id, txt => say(txt));
+        say(`✓ Import Clue terminé : ${res.cyclesInserted} cycle(s), ${res.daysLogged} jour(s) de journal (${res.dateRange?.[0]} → ${res.dateRange?.[1]}). Recharge l'app.`, 'var(--elle)');
+      } else if (data && Array.isArray(data.activity)) {
+        const { importLovelustData } = await import('./lovelust-import.js');
+        const res = await importLovelustData(data, me.user_id, me.couple_id, txt => say(txt));
+        const pn = res.partnerName ? ` · partenaire : ${res.partnerName}` : '';
+        say(`✓ Import LoveLust terminé : ${res.activities} activité(s) → ${res.daysLogged} jour(s) (${res.dateRange?.[0]} → ${res.dateRange?.[1]})${pn}. Recharge l'app.`, 'var(--elle)');
+      } else {
+        throw new Error('Format inattendu — attendu : export Clue (measurements.json) ou LoveLust.');
+      }
       if (fileInput) fileInput.value = '';
     } catch (e) {
       say(`Échec : ${e.message || e}`, 'var(--red)');
     } finally {
-      btn.disabled = false; btn.textContent = 'Importer le fichier Clue';
+      btn.disabled = false; btn.textContent = 'Importer le fichier';
     }
   });
 }
