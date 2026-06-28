@@ -12,6 +12,7 @@ const MONTH_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
 const DAY_FR = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 const cal = { year: 0, month: 0, byDate: {}, coupleId: null, onAddMoment: null, selected: null };
+let listenerBound = false;
 
 export async function initIntimacyCalendar(coupleId, onAddMoment) {
   const grid = document.getElementById('intime-cal-grid');
@@ -25,6 +26,22 @@ export async function initIntimacyCalendar(coupleId, onAddMoment) {
   await loadSessions();
   renderGrid();
   bindNav();
+
+  // Rechargement auto après une sauvegarde de session (lié une seule fois).
+  if (!listenerBound) {
+    listenerBound = true;
+    document.addEventListener('nc:session-saved', () => {
+      if (document.getElementById('intime-cal-grid')) refreshIntimacyCalendar();
+    });
+  }
+}
+
+// Recharge les sessions et re-rend la grille (+ le détail ouvert le cas échéant).
+export async function refreshIntimacyCalendar() {
+  if (!cal.coupleId || !document.getElementById('intime-cal-grid')) return;
+  await loadSessions();
+  renderGrid();
+  if (cal.selected) showDay(cal.selected);
 }
 
 async function loadSessions() {

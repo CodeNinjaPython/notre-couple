@@ -29,6 +29,11 @@ function showError(id, msg) {
 
 // ─── Rendu sessions récentes ───────────────────────────────────────────────
 
+// Émis après toute sauvegarde de session/feedback → le calendrier intime se recharge.
+function notifySessionSaved() {
+  document.dispatchEvent(new CustomEvent('nc:session-saved'));
+}
+
 export async function renderRecentSessions(st) {
   const wrap = document.getElementById('recent-sessions');
   if (!wrap) return;
@@ -229,6 +234,7 @@ async function saveFullSession(st) {
 
     closeSessionSheet();
     await renderRecentSessions(st);
+    notifySessionSaved();
 
     // Ouvrir le feedback post-séance, pré-rempli avec l'orgasme déclaré
     if (session?.id) {
@@ -307,6 +313,7 @@ async function saveFastTrack(st) {
 
     closeFastTrack();
     await renderRecentSessions(st);
+    notifySessionSaved();
 
   } catch (e) {
     showError('ft-error', 'Connexion perdue. Réessayez dans un moment.');
@@ -380,6 +387,7 @@ async function saveFeedback(st) {
 
     // Liaison vers le journal du jour (DailyLog) avec les valeurs finales
     await syncSessionToDailyLog(sessionDate, st.me?.user_id, { satisfaction: sat, orgasms });
+    notifySessionSaved();
 
     closeFeedbackSheet();
 
