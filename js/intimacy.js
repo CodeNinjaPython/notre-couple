@@ -16,7 +16,8 @@ import {
   renderEquitePlaisir, renderMonthlyHeatmap, renderSatisfactionCurve,
   renderOrgasmByPhase, renderHealthAlerts,
 } from './intimacy-stats.js';
-import { renderLibrary, getSuggestions, getDateNightIdeas, PHASES_LABELS } from './intimacy-library.js';
+import { renderLibrary, getSuggestions, getDateNightIdeas, PHASES_LABELS, POSITIONS } from './intimacy-library.js';
+import { DailyLog } from './cycle-model.js';
 import { hasPIN, isLocked, showLockScreen, initQuickHide, initPINSettings } from './pin-lock.js';
 import { notifyLibidosAligned } from './notifications.js';
 import { cachedQuery, invalidateCache } from './query-cache.js';
@@ -199,6 +200,20 @@ async function renderLibrarySection() {
   const grid = document.getElementById('library-grid');
   if (!grid) return;
 
+  // Taper une position l'ajoute à la saisie du jour (délégation, liée une fois).
+  if (!grid._posLoggerBound) {
+    grid._posLoggerBound = true;
+    grid.addEventListener('click', (e) => {
+      const card = e.target.closest('.pos-card');
+      if (card?.dataset.id) logPositionToday(card.dataset.id, card);
+    });
+    grid.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const card = e.target.closest('.pos-card');
+      if (card?.dataset.id) { e.preventDefault(); logPositionToday(card.dataset.id, card); }
+    });
+  }
+
   // Détecter la phase courante pour pré-filtrer
   let currentPhase = null;
   try {
@@ -252,6 +267,35 @@ async function renderLibrarySection() {
       renderLibrary(grid, collectFilters(activePhase || undefined));
     });
   });
+}
+
+// Ajoute une position de la bibliothèque à la saisie du jour (positionsPersonnalisees).
+async function logPositionToday(posId, card) {
+  const pos = POSITIONS.find(p => p.id === posId);
+  if (!pos || !st.me) return;
+  const today = localDateStr();
+  try {
+    const { data } = await supabase.from('log_entries')
+      .select('*').eq('user_id', st.me.user_id).eq('log_date', today).eq('category_id', 'journal').maybeSingle();
+    const log = data ? DailyLog.fromDB(data) : new DailyLog({ date: today, userId: st.me.user_id });
+    if (!Array.isArray(log.positionsPersonnalisees)) log.positionsPersonnalisees = [];
+
+    if (log.positionsPersonnalisees.includes(pos.label)) {
+      toast(`« ${pos.label} » déjà notée aujourd'hui`, 'info');
+      return;
+    }
+    log.positionsPersonnalisees.push(pos.label);
+    const { error } = await supabase.from('log_entries').upsert(
+      { ...log.toDBEntry(), user_id: st.me.user_id },
+      { onConflict: 'user_id,log_date,category_id' }
+    );
+    if (error) throw error;
+    invalidateCache('log_entries');
+    card?.classList.add('pos-card--logged');
+    toast(`« ${pos.label} » ajoutée à aujourd'hui ✓`);
+  } catch (e) {
+    toast(friendlyError(e), 'error');
+  }
 }
 
 function collectFilters(phase) {

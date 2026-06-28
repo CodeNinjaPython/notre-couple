@@ -1824,6 +1824,8 @@ body.intime-dark .card:hover {
 .pos-card:first-child { border-top: none; }
 .pos-card:hover, .pos-card:focus { background: var(--surface2); outline: none; }
 .pos-card:focus-visible { outline: 2.5px solid var(--elle); outline-offset: 2px; }
+.pos-card--logged { background: var(--elle-light); }
+.pos-card--logged .pos-label::after { content: " ✓"; color: var(--elle); font-weight: 800; }
 .pos-svg  { width: 60px; height: 60px; flex-shrink: 0; }
 .pos-info { flex: 1; min-width: 0; }
 .pos-label { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }

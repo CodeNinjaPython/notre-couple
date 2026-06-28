@@ -41,27 +41,11 @@ export async function initCalendar() {
   renderCalendar();
   bindNav();
 
-  // Saisie DailyLog — accordéon complet
+  // Saisie DailyLog : ne s'affiche qu'au clic d'un jour (la saisie « live »
+  // reste sur l'onglet Aujourd'hui). Invite par défaut.
   const dlWrap = document.getElementById('daily-log-form');
-  if (dlWrap && calState.me) {
-    const today = localDateStr();
-    const { data: existing } = await supabase.from('log_entries')
-      .select('*').eq('log_date', today).eq('category_id', 'journal').maybeSingle();
-    const log = existing ? DailyLog.fromDB(existing) : new DailyLog({ date: today, userId: calState.me.user_id });
-
-    renderLogCategoryAccordion(dlWrap, log, async (updatedLog) => {
-      await supabase.from('log_entries').upsert(
-        { ...updatedLog.toDBEntry(), user_id: calState.me.user_id },
-        { onConflict: 'user_id,log_date,category_id' }
-      );
-      // Toast
-      let toast = document.getElementById('toast');
-      if (!toast) { toast = document.createElement('div'); toast.id = 'toast'; toast.className = 'toast'; document.body.appendChild(toast); }
-      toast.textContent = 'Enregistré ✓';
-      toast.classList.add('show');
-      clearTimeout(toast._t);
-      toast._t = setTimeout(() => toast.classList.remove('show'), 2500);
-    });
+  if (dlWrap) {
+    dlWrap.innerHTML = '<p class="intime-empty">Sélectionne un jour ci-dessus pour le consulter ou le modifier.</p>';
   }
 
   // Symptômes détaillés (Clue)
@@ -192,7 +176,7 @@ function renderMonthGrid() {
 
   // Tap on a day → show detail
   grid.querySelectorAll('.cal-cell[data-date]').forEach(cell => {
-    cell.addEventListener('click', () => showDayDetail(cell.dataset.date));
+    cell.addEventListener('click', () => { showDayDetail(cell.dataset.date); mountDayForm(cell.dataset.date); });
   });
 }
 
@@ -285,6 +269,36 @@ function renderCycleHistory() {
       <span class="history-len">${duration} j règles</span>
     </div>`;
   }).join('');
+}
+
+// Monte le formulaire DailyLog éditable pour le jour sélectionné.
+async function mountDayForm(dateStr) {
+  const dlWrap = document.getElementById('daily-log-form');
+  const title  = document.getElementById('daily-log-title');
+  if (!dlWrap || !calState.me) return;
+
+  if (title) {
+    title.textContent = dateStr === localDateStr()
+      ? 'Modifier aujourd\'hui'
+      : `Modifier · ${new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+  }
+
+  const { data: existing } = await supabase.from('log_entries')
+    .select('*').eq('user_id', calState.me.user_id).eq('log_date', dateStr).eq('category_id', 'journal').maybeSingle();
+  const log = existing ? DailyLog.fromDB(existing) : new DailyLog({ date: dateStr, userId: calState.me.user_id });
+
+  renderLogCategoryAccordion(dlWrap, log, async (updatedLog) => {
+    await supabase.from('log_entries').upsert(
+      { ...updatedLog.toDBEntry(), user_id: calState.me.user_id },
+      { onConflict: 'user_id,log_date,category_id' }
+    );
+    let toast = document.getElementById('toast');
+    if (!toast) { toast = document.createElement('div'); toast.id = 'toast'; toast.className = 'toast'; document.body.appendChild(toast); }
+    toast.textContent = 'Enregistré ✓';
+    toast.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove('show'), 2500);
+  });
 }
 
 async function showDayDetail(dateStr) {
