@@ -125,6 +125,11 @@ export function openFullSessionSheet(st) {
 
   document.querySelectorAll('.mood-btn, .loc-btn, .act-tag-btn, .prelim-chip').forEach(b => b.classList.remove('sel'));
 
+  // Réinitialiser la notation des positions
+  Object.keys(ratingState).forEach(k => delete ratingState[k]);
+  const ratingsWrap = document.getElementById('position-ratings');
+  if (ratingsWrap) ratingsWrap.innerHTML = '';
+
   ['session-duration', 'session-prelim-duration', 'session-note-input'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -168,6 +173,9 @@ export function closeSessionSheet() {
   if (sheet) { sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
 }
 
+// État de notation des positions de la session en cours (position_id → {score, pain, too_deep}).
+const ratingState = {};
+
 function renderPositionPicker() {
   const grid = document.getElementById('position-picker-grid');
   if (!grid) return;
@@ -180,7 +188,47 @@ function renderPositionPicker() {
   ).join('');
 
   grid.querySelectorAll('.pos-pick-btn').forEach(btn => {
-    btn.addEventListener('click', () => btn.classList.toggle('sel'));
+    btn.addEventListener('click', () => { btn.classList.toggle('sel'); syncRatingRows(); });
+  });
+}
+
+// Affiche une ligne de notation (/10 + douleur + trop profond) par position sélectionnée.
+function syncRatingRows() {
+  const wrap = document.getElementById('position-ratings');
+  if (!wrap) return;
+  const selected = [...document.querySelectorAll('.pos-pick-btn.sel')].map(b => b.dataset.id);
+  Object.keys(ratingState).forEach(id => { if (!selected.includes(id)) delete ratingState[id]; });
+
+  wrap.innerHTML = selected.map(id => {
+    const pos = POSITIONS.find(p => p.id === id);
+    const r = ratingState[id] || (ratingState[id] = { score: 0, pain: false, too_deep: false });
+    return `<div class="pos-rate-row" data-id="${id}">
+      <div class="pos-rate-name">${pos?.label || id}</div>
+      <div class="pos-rate-controls">
+        <input type="range" class="pos-rate-score" min="0" max="10" value="${r.score}" aria-label="Note sur 10 — ${pos?.label || id}">
+        <span class="pos-rate-val">${r.score ? r.score + '/10' : '—'}</span>
+        <button type="button" class="pos-rate-flag ${r.pain ? 'on' : ''}" data-flag="pain" aria-pressed="${r.pain}">Douleur</button>
+        <button type="button" class="pos-rate-flag ${r.too_deep ? 'on' : ''}" data-flag="too_deep" aria-pressed="${r.too_deep}">Trop profond</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.pos-rate-row').forEach(row => {
+    const id = row.dataset.id;
+    const range = row.querySelector('.pos-rate-score');
+    const val = row.querySelector('.pos-rate-val');
+    range.addEventListener('input', () => {
+      ratingState[id].score = parseInt(range.value);
+      val.textContent = ratingState[id].score ? ratingState[id].score + '/10' : '—';
+    });
+    row.querySelectorAll('.pos-rate-flag').forEach(b => {
+      b.addEventListener('click', () => {
+        const f = b.dataset.flag;
+        ratingState[id][f] = !ratingState[id][f];
+        b.classList.toggle('on', ratingState[id][f]);
+        b.setAttribute('aria-pressed', String(ratingState[id][f]));
+      });
+    });
   });
 }
 
@@ -230,6 +278,23 @@ async function saveFullSession(st) {
         session_id: session.id,
         tags: positionIds,
       });
+    }
+
+    // Notes de position (Phase 1) — best-effort : n'échoue pas la session si la
+    // table position_ratings n'existe pas encore (schéma à exécuter).
+    if (session?.id) {
+      const ratings = positionIds
+        .map(id => ({ id, ...(ratingState[id] || {}) }))
+        .filter(r => r.score > 0 || r.pain || r.too_deep)
+        .map(r => ({
+          couple_id: st.coupleId, created_by: st.me?.user_id, session_id: session.id,
+          position_id: r.id, score: r.score > 0 ? r.score : null,
+          pain: !!r.pain, too_deep: !!r.too_deep, rated_on: date,
+        }));
+      if (ratings.length) {
+        try { await supabase.from('position_ratings').insert(ratings); }
+        catch (e) { console.warn('position_ratings:', e?.message || e); }
+      }
     }
 
     closeSessionSheet();

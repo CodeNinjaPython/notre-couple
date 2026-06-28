@@ -738,6 +738,27 @@ body.demo-mode .demo-badge {
   background: var(--surface); border: 1px solid var(--line);
   border-radius: 100px; padding: 3px 9px;
 }
+
+/* ─── Notation des positions dans le sheet de session ─────────────────── */
+.pos-rate-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.pos-rate-list:empty { margin-top: 0; }
+.pos-rate-row {
+  background: var(--surface2); border: 1.5px solid var(--line);
+  border-radius: 13px; padding: 10px 12px;
+}
+.pos-rate-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.pos-rate-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pos-rate-score { flex: 1; min-width: 100px; accent-color: var(--elle); }
+.pos-rate-val {
+  font-family: "DM Mono", monospace; font-size: 12px; font-weight: 700;
+  color: var(--elle); min-width: 34px; text-align: right;
+}
+.pos-rate-flag {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: 100px; padding: 5px 11px; cursor: pointer; transition: all .15s;
+}
+.pos-rate-flag.on { color: var(--red); border-color: var(--red); background: var(--red-light); }
 .cal-legend {
   display: flex; gap: 14px; flex-wrap: wrap;
   font-size: 11px; color: var(--faint);
