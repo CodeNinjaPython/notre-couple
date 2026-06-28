@@ -411,8 +411,10 @@ function renderHeader() {
   if (mode === 'pregnancy') {
     const dpa = localStorage.getItem('nc-dpa-date');
     if (dpa) {
-      const weeks = Math.floor(diffDays(localDateStr(), dpa) / 7);
-      const days  = diffDays(localDateStr(), dpa) % 7;
+      // Semaines de grossesse écoulées (cohérent avec l'anneau et la carte repère).
+      const elapsed = Math.max(0, 280 - diffDays(dpa, localDateStr()));
+      const weeks = Math.floor(elapsed / 7);
+      const days  = elapsed % 7;
       if (eyebrow)   eyebrow.textContent   = `Semaine ${weeks} · Grossesse`;
       if (phaseName) phaseName.textContent = `S${weeks}+${days}`;
     } else {
