@@ -423,7 +423,8 @@ function initClueImport(me) {
         const { importLovelustData } = await import('./lovelust-import.js');
         const res = await importLovelustData(data, me.user_id, me.couple_id, txt => say(txt));
         const pn = res.partnerName ? ` · partenaire : ${res.partnerName}` : '';
-        say(`✓ Import LoveLust terminé : ${res.activities} activité(s) → ${res.daysLogged} jour(s) (${res.dateRange?.[0]} → ${res.dateRange?.[1]})${pn}. Recharge l'app.`, 'var(--elle)');
+        const ses = res.sessionsAdded ? ` · ${res.sessionsAdded} session(s) intime(s)` : '';
+        say(`✓ Import LoveLust terminé : ${res.activities} activité(s) → ${res.daysLogged} jour(s)${ses} (${res.dateRange?.[0]} → ${res.dateRange?.[1]})${pn}. Recharge l'app.`, 'var(--elle)');
       } else {
         throw new Error('Format inattendu — attendu : export Clue (measurements.json) ou LoveLust.');
       }

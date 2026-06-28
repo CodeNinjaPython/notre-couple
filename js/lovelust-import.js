@@ -23,6 +23,49 @@ const PRACTICE = {
   MASTURBATION: 'masturbation',
 };
 const MOOD = { HORNY: 'libido_elevee' };
+const INIT_FR = { ME: 'moi', BOTH: 'nous deux', PARTNER: 'partenaire' };
+
+/**
+ * Construit les lignes pour les tables intimité (onglet Intime) depuis les
+ * activités LoveLust : intimate_sessions + session_feedback (LUI) + session_activities (tags).
+ * Réutilise l'id LoveLust comme id de session (dédup naturelle).
+ */
+export function buildSessions(activities, userId, coupleId) {
+  const sessions = [], feedback = [], tagRows = [];
+  for (const a of activities) {
+    const solo = a.type === 'MASTURBATION';
+
+    const noteParts = [];
+    if (a.notes && a.notes.trim()) noteParts.push(a.notes.trim());
+    if (!solo && a.partnerOrgasms > 0) noteParts.push(`Orgasmes partenaire : ${a.partnerOrgasms}`);
+    if (a.initiator && INIT_FR[a.initiator]) noteParts.push(`Initié par : ${INIT_FR[a.initiator]}`);
+    if (a.ejaculation && a.ejaculation.trim()) noteParts.push(`Éjaculation : ${a.ejaculation.toLowerCase()}`);
+
+    sessions.push({
+      id: a.id, couple_id: coupleId, created_by: userId,
+      session_date: localDate(a.date),
+      duration_min: a.duration > 0 ? a.duration : null,
+      location: (a.location && a.location.trim()) || null,
+      note: noteParts.length ? noteParts.join(' · ') : null,
+    });
+
+    feedback.push({
+      session_id: a.id, user_id: userId,
+      orgasms: a.orgasms || 0,
+      satisfaction: a.rating > 0 ? Math.max(1, Math.min(10, Math.round(a.rating * 2))) : null,
+      shared: !solo,
+    });
+
+    const tags = new Set();
+    for (const k of ['sexualPositions', 'practices', 'receivedPractices', 'places', 'moods', 'protectionMethods']) {
+      (a[k] || []).forEach(v => v && tags.add(v.toLowerCase()));
+    }
+    if (solo) tags.add('solo');
+    if (a.watchedPorn) tags.add('porn');
+    if (tags.size) tagRows.push({ session_id: a.id, tags: [...tags] });
+  }
+  return { sessions, feedback, tagRows };
+}
 
 /** Map<date, DailyLog> depuis les activités LoveLust (champs « sexualité » seulement). */
 export function mapLovelustToDailyLogs(activities, userId = null) {
@@ -155,9 +198,34 @@ export async function importLovelustData(json, userId, coupleId, onProgress = ()
   }
 
   invalidateCache('log_entries');
+
+  // ── Sessions intimes (onglet Intime) — best-effort, dédup par id ──────────
+  let sessionsAdded = 0;
+  try {
+    const acts = json.activity || [];
+    const ids = acts.map(a => a.id).filter(Boolean);
+    const { data: existS } = await supabase.from('intimate_sessions').select('id').in('id', ids);
+    const known = new Set((existS || []).map(r => r.id));
+    const fresh = acts.filter(a => a.id && a.date && !known.has(a.id));
+    if (fresh.length) {
+      onProgress(`Sessions intimes : ${fresh.length}…`);
+      const { sessions, feedback, tagRows } = buildSessions(fresh, userId, coupleId);
+      let { error } = await supabase.from('intimate_sessions').insert(sessions);
+      if (error) throw error;
+      if (feedback.length) { ({ error } = await supabase.from('session_feedback').insert(feedback)); if (error) throw error; }
+      if (tagRows.length)  { ({ error } = await supabase.from('session_activities').insert(tagRows)); if (error) throw error; }
+      sessionsAdded = fresh.length;
+      invalidateCache('intimate_sessions');
+    }
+  } catch (e) {
+    // Le journal est déjà importé : on n'échoue pas tout pour les sessions.
+    console.warn('[lovelust] sessions intimes non importées :', e?.message || e);
+  }
+
   return {
     activities: (json.activity || []).length,
     daysLogged: rows.length,
+    sessionsAdded,
     dateRange: [rows[0].log_date, rows[rows.length - 1].log_date],
     partnerName: partnerName || null,
   };
