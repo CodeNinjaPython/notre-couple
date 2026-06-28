@@ -25,6 +25,37 @@ const PRACTICE = {
 const MOOD = { HORNY: 'libido_elevee' };
 const INIT_FR = { ME: 'moi', BOTH: 'nous deux', PARTNER: 'partenaire' };
 
+// Vocabulaire LoveLust (codes anglais) → libellés français pour les tags.
+// L'app est 100 % FR ; tout code inconnu retombe en minuscule brute.
+const FR = {
+  // positions
+  MISSIONARY: 'missionnaire', COWGIRL: 'cowgirl', REVERSE_COWGIRL: 'reverse cowgirl',
+  DOGGY_STYLE: 'levrette', SPOONING: 'cuillère', FACE_SITTING: 'face-sitting', STANDING: 'debout',
+  // pratiques
+  VAGINAL: 'vaginal', MASTURBATION: 'masturbation', CREAMPIE: 'creampie', HANDJOB: 'masturbation manuelle',
+  FINGERING: 'doigtage', BLOWJOB: 'fellation', CUNNILINGUS: 'cunnilingus', ANAL: 'anal', BDSM: 'bdsm',
+  ORAL: 'oral', TOY: 'jouet',
+  // lieux
+  BEDROOM: 'chambre', BATHROOM: 'salle de bain', BED: 'lit', COUCH: 'canapé', SHOWER: 'douche',
+  CAR: 'voiture', OTHER: 'autre',
+  // sentiments
+  SAD: 'triste', ADVENTUROUS: 'aventureux', SURPRISED: 'surpris', FRUSTRATED: 'frustré',
+  AFFECTIONATE: 'affectueux', ANXIOUS: 'anxieux', GUILTY: 'coupable', DISCONNECTED: 'déconnecté',
+  EXCITED: 'excité', HAPPY: 'heureux', IRRITABLE: 'irritable', REGRETFUL: 'plein de regret',
+  SATISFIED: 'satisfait', USED: 'utilisé', HORNY: 'excité',
+  // protection
+  CONDOM: 'préservatif', OUTERCOURSE: 'sans pénétration', WITHDRAWAL: 'retrait', PILL: 'pilule',
+  IUD: 'diu', PREP: 'prep', INTERNAL_CONDOM: 'préservatif interne', VAGINAL_RING: 'anneau vaginal',
+};
+const frTag = (code) => FR[code] || String(code).toLowerCase();
+
+// Lieu d'éjaculation (note de session) en français.
+const EJAC_FR = {
+  VAGINA: 'dans le vagin', MOUTH: 'dans la bouche', BUTTOCKS: 'sur les fesses', ANUS: "dans l'anus",
+  BACK: 'sur le dos', CHEST: 'sur la poitrine', FACE: 'sur le visage', STOMACH: 'sur le ventre',
+  HANDS: 'sur les mains', FEET: 'sur les pieds', NONE: "pas d'éjaculation", REFUSED: 'refusé',
+};
+
 /**
  * Construit les lignes pour les tables intimité (onglet Intime) depuis les
  * activités LoveLust : intimate_sessions + session_feedback (LUI) + session_activities (tags).
@@ -39,7 +70,7 @@ export function buildSessions(activities, userId, coupleId) {
     if (a.notes && a.notes.trim()) noteParts.push(a.notes.trim());
     if (!solo && a.partnerOrgasms > 0) noteParts.push(`Orgasmes partenaire : ${a.partnerOrgasms}`);
     if (a.initiator && INIT_FR[a.initiator]) noteParts.push(`Initié par : ${INIT_FR[a.initiator]}`);
-    if (a.ejaculation && a.ejaculation.trim()) noteParts.push(`Éjaculation : ${a.ejaculation.toLowerCase()}`);
+    if (a.ejaculation && a.ejaculation.trim()) noteParts.push(`Éjaculation : ${EJAC_FR[a.ejaculation] || a.ejaculation.toLowerCase()}`);
 
     sessions.push({
       id: a.id, couple_id: coupleId, created_by: userId,
@@ -58,10 +89,10 @@ export function buildSessions(activities, userId, coupleId) {
 
     const tags = new Set();
     for (const k of ['sexualPositions', 'practices', 'receivedPractices', 'places', 'moods', 'protectionMethods']) {
-      (a[k] || []).forEach(v => v && tags.add(v.toLowerCase()));
+      (a[k] || []).forEach(v => v && tags.add(frTag(v)));
     }
     if (solo) tags.add('solo');
-    if (a.watchedPorn) tags.add('porn');
+    if (a.watchedPorn) tags.add('porno');
     if (tags.size) tagRows.push({ session_id: a.id, tags: [...tags] });
   }
   return { sessions, feedback, tagRows };
@@ -86,11 +117,12 @@ export function mapLovelustToDailyLogs(activities, userId = null) {
 
     for (const p of [...(a.practices || []), ...(a.receivedPractices || [])]) {
       if (PRACTICE[p]) uniq(L.libidoPratiques, PRACTICE[p]);
-      else if (p !== 'VAGINAL') uniq(L.tags, p.toLowerCase());
+      else if (p === 'TOY') uniq(L.sextoys, 'sextoy_couple');
+      else if (p !== 'VAGINAL') uniq(L.tags, frTag(p));
     }
     for (const m of (a.moods || [])) {
       if (MOOD[m]) uniq(L.libidoPratiques, MOOD[m]);
-      else uniq(L.tags, m.toLowerCase());
+      else uniq(L.tags, frTag(m));
     }
     if (a.watchedPorn) uniq(L.libidoPratiques, 'fantasmes');
 
