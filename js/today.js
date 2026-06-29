@@ -82,6 +82,9 @@ const EVENT_TYPES = {
   conflict:   { icon: '💬', label: 'Tension' },
   date_night: { icon: '🌙', label: 'Soirée' },
   other:      { icon: '✨', label: 'Moment' },
+  reconfort:  { icon: '💛', label: 'Besoin de douceur' },
+  presence:   { icon: '🫂', label: 'Besoin de présence' },
+  espace:     { icon: '🌿', label: 'Besoin d\'espace' },
 };
 const CYCLE_LEN = 28;
 
@@ -139,6 +142,8 @@ export async function initToday() {
   await loadEntriesForDate(state.logDate);
 
   renderHeader();
+  renderMeteoMemo();
+  initNeedButtons();
   renderPartnerStatus();
   await renderStreak();
   renderRingChart();     // ← anneau SVG interactif
@@ -400,6 +405,63 @@ function renderPartnerStatus() {
       if (btn) { btn.disabled = false; btn.textContent = 'Inviter mon partenaire'; }
     }
   });
+}
+
+// #6 — SOS réconfort : signaler un besoin (douceur / présence / espace) en 1 tap.
+function initNeedButtons() {
+  const card = document.getElementById('sos-card');
+  if (!card) return;
+  if (!state.coupleId || !state.partner) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  card.querySelectorAll('.sos-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const type = btn.dataset.need;
+      btn.disabled = true;
+      try {
+        const { error } = await supabase.from('couple_events').insert({
+          couple_id: state.coupleId, created_by: state.me?.user_id,
+          event_date: localDateStr(), event_type: type, note: null,
+        });
+        if (error) throw error;
+        showToast(`${EVENT_TYPES[type]?.icon || '💛'} Signal envoyé à ${state.partner.display_name || 'ton partenaire'}`);
+        await renderEvents();
+      } catch (e) {
+        showToast(friendlyError(e), 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    };
+  });
+}
+
+// #5 — Météo-mémo : état d'elle, glanceable pour le partenaire.
+const PHASE_METEO = {
+  Menstruelle:  { emoji: '🌧️', etat: 'Énergie basse · besoin de cocooning' },
+  Folliculaire: { emoji: '🌤️', etat: 'Énergie en montée' },
+  Ovulation:    { emoji: '☀️', etat: 'Pleine vitalité' },
+  Lutéale:      { emoji: '🌥️', etat: 'Sensibilité accrue · douceur bienvenue' },
+};
+function renderMeteoMemo() {
+  const card = document.getElementById('meteo-memo');
+  if (!card) return;
+  // Visible seulement pour le partenaire (celui qui ne suit pas le cycle), avec un cycle en cours.
+  if (!state.me || state.me.tracks_cycle || !state.partner || !state.phaseName || !PHASE_METEO[state.phaseName]) {
+    card.style.display = 'none';
+    return;
+  }
+  const m = PHASE_METEO[state.phaseName];
+  const tip = PHASES_DATA[state.phaseName]?.tip || '';
+  const name = state.partner.display_name || 'Elle';
+  card.innerHTML = `
+    <div class="meteo-head">
+      <span class="meteo-emoji" aria-hidden="true">${m.emoji}</span>
+      <div>
+        <div class="meteo-title">Météo de ${name}</div>
+        <div class="meteo-etat">${state.phaseName} · ${m.etat}</div>
+      </div>
+    </div>
+    <p class="meteo-tip">${tip}</p>`;
+  card.style.display = 'block';
 }
 
 // --- Header ----------------------------------------------------------------
