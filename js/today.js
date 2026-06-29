@@ -424,6 +424,10 @@ function initNeedButtons() {
         });
         if (error) throw error;
         showToast(`${EVENT_TYPES[type]?.icon || '💛'} Signal envoyé à ${state.partner.display_name || 'ton partenaire'}`);
+        // Push au partenaire (#12, best-effort si abonné).
+        import('./push.js').then(({ sendPushToPartner }) =>
+          sendPushToPartner(state.partner.user_id, 'Notre cycle',
+            `${EVENT_TYPES[type]?.icon || '💛'} ${state.partner.display_name ? '' : ''}${EVENT_TYPES[type]?.label || 'Un besoin'} de ${state.me?.display_name || 'ton partenaire'}`));
         await renderEvents();
       } catch (e) {
         showToast(friendlyError(e), 'error');

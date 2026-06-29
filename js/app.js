@@ -211,6 +211,10 @@ async function routeAfterAuth() {
         navigate('today');
       }
     if (!IS_DEMO) setTimeout(() => maybeShowNotifBanner(), 2000);
+    // Abonnement Web Push si la permission est déjà accordée (#12).
+    if (!IS_DEMO && getPermission() === 'granted') {
+      import('./push.js').then(({ subscribeToPush }) => subscribeToPush(membership.couple_id, membership.user_id));
+    }
   }
 }
 
@@ -229,7 +233,13 @@ function maybeShowNotifBanner() {
   if (!banner) return;
   banner.style.display = 'flex';
   document.getElementById('btn-notif-yes')?.addEventListener('click', async () => {
-    banner.style.display = 'none'; await requestPermission();
+    banner.style.display = 'none';
+    await requestPermission();
+    // S'abonner au Web Push une fois la permission accordée (#12).
+    try {
+      const m = await getMyMembership();
+      if (m) { const { subscribeToPush } = await import('./push.js'); subscribeToPush(m.couple_id, m.user_id); }
+    } catch (_) {}
   }, { once: true });
   document.getElementById('btn-notif-no')?.addEventListener('click', () => {
     banner.style.display = 'none'; declineNotifications();
