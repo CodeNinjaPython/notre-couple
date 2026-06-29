@@ -462,6 +462,16 @@ function renderMeteoMemo() {
     </div>
     <p class="meteo-tip">${tip}</p>`;
   card.style.display = 'block';
+
+  // #8 — notification douce du conseil de phase pour le partenaire (1×/jour, si opt-in).
+  try {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && tip) {
+      if (localStorage.getItem('nc-phase-tip-last') !== localDateStr()) {
+        localStorage.setItem('nc-phase-tip-last', localDateStr());
+        showNotification('Notre cycle', tip, 'phase-tip');
+      }
+    }
+  } catch (_) { /* notifications indisponibles */ }
 }
 
 // --- Header ----------------------------------------------------------------
@@ -868,9 +878,11 @@ function renderPrediction() {
   document.getElementById('pred-next').textContent =
     daysUntil > 0 ? `dans ${daysUntil} jour${daysUntil > 1 ? 's' : ''}` :
     daysUntil === 0 ? "aujourd'hui" : `il y a ${-daysUntil} j`;
-  document.getElementById('pred-next-date').textContent = fmt(nextDate);
+  const margin = p.stdDev >= 1 ? ` ± ${p.stdDev} j` : '';
+  document.getElementById('pred-next-date').textContent = fmt(nextDate) + margin;
   document.getElementById('pred-ovulation').textContent = fmt(oDate);
-  document.getElementById('pred-avg').textContent = `${p.avgCycleLength} j`;
+  document.getElementById('pred-avg').textContent =
+    `${p.avgCycleLength} j${p.cyclesUsed >= 4 ? (p.regular ? ' · régulier' : ' · irrégulier') : ''}`;
 }
 
 // --- Toast in-app ----------------------------------------------------------

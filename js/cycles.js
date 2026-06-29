@@ -58,7 +58,13 @@ export function predictNextPeriod(cycles) {
   }
   if (!lengths.length) return null;
 
-  const avg       = Math.round(lengths.reduce((a, b) => a + b, 0) / lengths.length);
+  const avgExact  = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+  const avg       = Math.round(avgExact);
+  // Régularité : écart-type des longueurs de cycle → intervalle de confiance.
+  const variance  = lengths.reduce((s, l) => s + (l - avgExact) ** 2, 0) / lengths.length;
+  const stdDev    = Math.round(Math.sqrt(variance));
+  const regular   = lengths.length >= 3 && stdDev <= 2;
+
   const lastStart = new Date(completed[0].period_start + 'T12:00:00');
   const nextPeriod  = new Date(lastStart.getTime() + avg         * 864e5);
   const ovulation   = new Date(nextPeriod.getTime()  - 14        * 864e5);
@@ -69,6 +75,8 @@ export function predictNextPeriod(cycles) {
     ovulationDate:   localDateStr(ovulation),
     fertileStart:    localDateStr(fertileStart),
     avgCycleLength:  avg,
+    stdDev,
+    regular,
     cyclesUsed:      completed.length,
   };
 }
