@@ -10,6 +10,12 @@ export async function signInOrSignUp(email, password) {
   if (!inRes.error) return 'in';
 
   const msg = (inRes.error.message || '').toLowerCase();
+  // E-mail non confirmé : le compte existe mais Supabase exige une confirmation.
+  // Symptôme typique « je n'arrive à me connecter qu'une fois » : la session du
+  // signup marche une fois, puis la reconnexion échoue tant que ce n'est pas levé.
+  if (msg.includes('not confirmed') || msg.includes('email not confirmed') || msg.includes('confirm')) {
+    throw new Error('Ton e-mail n\'est pas confirmé. Désactive « Confirm email » dans Supabase (Authentication → Sign In → Email), ou clique le lien de confirmation reçu, puis reconnecte-toi.');
+  }
   // Identifiants invalides → soit le compte n'existe pas, soit mauvais mot de passe
   if (msg.includes('invalid login credentials') || msg.includes('invalid')) {
     const upRes = await supabase.auth.signUp({ email, password });

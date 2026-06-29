@@ -1414,10 +1414,17 @@
         </div>
       </div>
 
-      <!-- Sécurité : mot de passe -->
+      <!-- Sécurité : e-mail & mot de passe -->
       <div class="card">
-        <h2>Mot de passe</h2>
-        <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;line-height:1.6">
+        <h2>E-mail &amp; mot de passe</h2>
+        <div class="field" style="margin-top:6px">
+          <label for="settings-email">Adresse e-mail</label>
+          <input type="email" id="settings-email" autocomplete="email" placeholder="ton@email.fr">
+        </div>
+        <button type="button" id="btn-set-email" class="btn-secondary" style="margin-top:8px">Changer l'e-mail</button>
+        <div id="settings-email-msg" style="font-size:13px;margin-top:8px"></div>
+
+        <p style="font-size:13px;color:var(--muted);margin:18px 0 12px;line-height:1.6">
           Définis ou change ton mot de passe (utile pour te connecter sur l'app installée).
         </p>
         <div class="field">

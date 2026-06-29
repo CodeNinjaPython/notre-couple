@@ -143,6 +143,25 @@ function initProfileView() {
   });
 }
 
+// La date de règles saisie à l'onboarding est mémorisée en localStorage (la
+// membership n'existe pas encore à ce moment). Une fois le couple créé/rejoint,
+// on crée le 1er cycle pour ELLE si aucun n'existe.
+async function persistOnboardingCycle() {
+  try {
+    const me = await getMyMembership();
+    if (!me?.tracks_cycle) return;                 // seulement ELLE a un cycle
+    const date = localStorage.getItem('nc-last-period');
+    if (!date) return;
+    const { getCurrentCycle } = await import('./cycles.js');
+    if (await getCurrentCycle()) return;           // déjà un cycle en cours
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from('cycles')
+      .insert({ user_id: user.id, period_start: date, period_end: null });
+    if (!error) localStorage.removeItem('nc-last-period');
+  } catch (e) { console.warn('persistOnboardingCycle:', e.message); }
+}
+
 // ── Pairing view ───────────────────────────────────────────────────────────
 function initPairingView() {
   const choice        = document.getElementById('pairing-choice');
@@ -182,6 +201,7 @@ function initPairingView() {
     btn.disabled = true; btn.textContent = 'Création…';
     try {
       const { code } = await createCouple(name, tracksCycle);
+      await persistOnboardingCycle();
       document.getElementById('generated-code').textContent = code;
       createSection.style.display = 'none';
       codeSection.style.display = 'block';
@@ -239,6 +259,7 @@ function initPairingView() {
     btn.disabled = true; btn.textContent = 'Vérification…';
     try {
       await joinWithCode(code, name, tracksCycle);
+      await persistOnboardingCycle();
       navigate('today');
     } catch (e) { showMsg('join-error', e.message); }
     finally { btn.disabled = false; btn.textContent = 'Rejoindre'; }

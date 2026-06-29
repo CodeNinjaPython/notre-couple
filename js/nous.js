@@ -509,6 +509,31 @@ function renderSettings(me, partner) {
     navigate('auth');
   });
 
+  // Changer l'adresse e-mail
+  const emailInput = document.getElementById('settings-email');
+  const emailBtn   = document.getElementById('btn-set-email');
+  const emailMsg   = document.getElementById('settings-email-msg');
+  supabase.auth.getUser().then(({ data: { user } }) => {
+    if (emailInput && user?.email) emailInput.value = user.email;
+  });
+  emailBtn?.addEventListener('click', async () => {
+    const email = emailInput?.value?.trim();
+    if (!email || !email.includes('@')) {
+      if (emailMsg) { emailMsg.textContent = 'Adresse e-mail invalide.'; emailMsg.style.color = 'var(--red)'; }
+      return;
+    }
+    emailBtn.disabled = true; emailBtn.textContent = 'Envoi…';
+    try {
+      const { error } = await supabase.auth.updateUser({ email });
+      if (error) throw error;
+      if (emailMsg) { emailMsg.textContent = 'Demande envoyée. Confirme via le lien reçu sur la nouvelle adresse (et parfois l\'ancienne) pour finaliser.'; emailMsg.style.color = 'var(--elle)'; }
+    } catch (e) {
+      if (emailMsg) { emailMsg.textContent = `Échec : ${e.message || e}`; emailMsg.style.color = 'var(--red)'; }
+    } finally {
+      emailBtn.disabled = false; emailBtn.textContent = 'Changer l\'e-mail';
+    }
+  });
+
   // Définir / changer le mot de passe
   const passInput = document.getElementById('settings-password');
   const passBtn   = document.getElementById('btn-set-password');
