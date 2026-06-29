@@ -56,18 +56,26 @@
   <template id="tpl-onboarding">
     <div class="app onboard-app">
 
-      <!-- Indicateur de progression -->
-      <div class="onboard-dots">
-        <span class="onboard-dot active"></span>
-        <span class="onboard-dot"></span>
-        <span class="onboard-dot"></span>
-        <span class="onboard-dot"></span>
+      <!-- Barre de progression : retour + points + libellé lecteur d'écran -->
+      <div class="onboard-topbar">
+        <button type="button" id="btn-onboard-back" class="onboard-back" aria-label="Étape précédente" style="visibility:hidden">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="onboard-dots" role="progressbar" aria-label="Progression de la configuration"
+             aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
+          <span class="onboard-dot active"></span>
+          <span class="onboard-dot"></span>
+          <span class="onboard-dot"></span>
+          <span class="onboard-dot"></span>
+        </div>
+        <span class="onboard-back" aria-hidden="true"></span>
       </div>
+      <p id="onboard-progress-label" class="sr-only" aria-live="polite">Étape 1 sur 4</p>
 
       <!-- Étape 1 : Bienvenue -->
       <div class="onboard-step active" data-step="1">
         <div class="onboard-hero">🌸</div>
-        <h1 class="onboard-title">Notre cycle</h1>
+        <h1 class="onboard-title" tabindex="-1">Notre cycle</h1>
         <p class="onboard-desc">
           Suivez votre cycle ensemble, en couple.<br>
           Symétrique, privé, sans algorithmes.
@@ -83,35 +91,39 @@
       <!-- Étape 2 : Disclaimer -->
       <div class="onboard-step" data-step="2">
         <div class="onboard-hero" style="background:var(--red-light)">⚕️</div>
-        <h1 class="onboard-title">Important</h1>
+        <h1 class="onboard-title" tabindex="-1">Important</h1>
         <div class="disclaimer-box">
           <p>Cette application est un <strong>outil d'observation</strong>, pas un moyen de contraception.</p>
           <p style="margin-top:12px">Les prédictions sont indicatives et dépendent de la régularité de votre cycle. Consultez un professionnel de santé pour tout sujet médical.</p>
         </div>
-        <button type="button" id="btn-onboard-2" class="btn-primary" style="margin-top:28px">J'ai compris et j'accepte</button>
+        <label class="onboard-consent" for="onboard-consent">
+          <input type="checkbox" id="onboard-consent">
+          <span>J'ai compris : ces données de santé sont sensibles, restent privées à notre couple, et l'app ne remplace pas un avis médical.</span>
+        </label>
+        <button type="button" id="btn-onboard-2" class="btn-primary" style="margin-top:20px" disabled>J'ai compris et j'accepte</button>
       </div>
 
       <!-- Étape 3 : Mode du cycle -->
       <div class="onboard-step" data-step="3">
         <div class="onboard-hero">🎯</div>
-        <h1 class="onboard-title">Votre objectif</h1>
+        <h1 class="onboard-title" tabindex="-1">Votre objectif</h1>
         <p class="onboard-desc">Adaptez l'app à votre situation.</p>
-        <div class="mode-choices">
-          <button type="button" class="mode-choice active" data-mode="rules">
+        <div class="mode-choices" role="radiogroup" aria-label="Objectif du suivi">
+          <button type="button" class="mode-choice active" data-mode="rules" aria-pressed="true">
             <span class="mode-icon">🌀</span>
             <div>
               <div class="mode-title">Comprendre nos rythmes</div>
               <div class="mode-sub">Suivi du cycle, insights, synchronie</div>
             </div>
           </button>
-          <button type="button" class="mode-choice" data-mode="conception">
+          <button type="button" class="mode-choice" data-mode="conception" aria-pressed="false">
             <span class="mode-icon">🌱</span>
             <div>
               <div class="mode-title">Préparer une grossesse</div>
               <div class="mode-sub">Fenêtre fertile mise en avant</div>
             </div>
           </button>
-          <button type="button" class="mode-choice" data-mode="pregnancy">
+          <button type="button" class="mode-choice" data-mode="pregnancy" aria-pressed="false">
             <span class="mode-icon">🤰</span>
             <div>
               <div class="mode-title">Suivi de grossesse</div>
@@ -125,7 +137,7 @@
       <!-- Étape 4 : Date des dernières règles -->
       <div class="onboard-step" data-step="4">
         <div class="onboard-hero">📅</div>
-        <h1 class="onboard-title">Dernières règles</h1>
+        <h1 class="onboard-title" tabindex="-1">Dernières règles</h1>
         <p class="onboard-desc">
           Pour lancer le calcul de cycle. Vous pourrez modifier cette date plus tard.
         </p>

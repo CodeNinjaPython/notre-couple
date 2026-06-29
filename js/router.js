@@ -34,9 +34,13 @@ export function navigate(name, params = {}) {
 
   if (NAV_VIEWS.includes(name)) {
     nav.classList.add('visible');
-    nav.querySelectorAll('button').forEach(btn =>
-      btn.classList.toggle('on', btn.dataset.nav === name)
-    );
+    nav.querySelectorAll('button').forEach(btn => {
+      const active = btn.dataset.nav === name;
+      btn.classList.toggle('on', active);
+      // A11Y : signaler l'onglet courant aux technologies d'assistance
+      if (active) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
+    });
   } else {
     nav.classList.remove('visible');
   }
