@@ -17,6 +17,27 @@ const LOCATIONS   = { maison:'🏠 Maison', voyage:'✈️ Voyage', hotel:'🏨 
 // `null` si c'est une nouvelle session.
 let currentEditingSession = null;
 
+// ─── Wizard (saisie en 4 étapes) ───────────────────────────────────────────
+const WIZARD_STEPS = 4;
+let wizardStep = 1;
+
+function showWizardStep(n) {
+  wizardStep = Math.max(1, Math.min(WIZARD_STEPS, n));
+  document.querySelectorAll('#session-wizard .wizard-step').forEach(s =>
+    s.classList.toggle('active', Number(s.dataset.step) === wizardStep));
+  document.querySelectorAll('#session-wizard-progress .wizard-dot').forEach(d =>
+    d.classList.toggle('active', Number(d.dataset.step) <= wizardStep));
+
+  const prev = document.getElementById('btn-wizard-prev');
+  const next = document.getElementById('btn-wizard-next');
+  const save = document.getElementById('btn-session-save');
+  if (prev) prev.style.display = wizardStep === 1 ? 'none' : '';
+  if (next) next.style.display = wizardStep === WIZARD_STEPS ? 'none' : '';
+  if (save) save.style.display = wizardStep === WIZARD_STEPS ? '' : 'none';
+
+  document.querySelector('#session-sheet .sheet')?.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // ─── Erreur UI ─────────────────────────────────────────────────────────────
 
 function showError(id, msg) {
@@ -292,6 +313,13 @@ export function openFullSessionSheet(st) {
   document.getElementById('btn-session-save')?.addEventListener('click', () => saveFullSession(st), { once: true });
   document.getElementById('btn-session-cancel')?.addEventListener('click', closeSessionSheet, { once: true });
   document.getElementById('btn-fast-track')?.addEventListener('click', () => openFastTrack(st), { once: true });
+
+  // Wizard : navigation entre étapes (.onclick = idempotent à chaque ouverture)
+  const prevBtn = document.getElementById('btn-wizard-prev');
+  const nextBtn = document.getElementById('btn-wizard-next');
+  if (prevBtn) prevBtn.onclick = () => showWizardStep(wizardStep - 1);
+  if (nextBtn) nextBtn.onclick = () => showWizardStep(wizardStep + 1);
+  showWizardStep(1);
 }
 
 export function prepareNewSession() {
@@ -472,7 +500,7 @@ async function saveFullSession(st) {
     showError('session-error', 'Impossible d\'enregistrer. Vérifiez votre connexion et réessayez.');
     console.error('saveFullSession:', e.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer → Feedback rapide'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
     currentEditingSession = null;
   }
 }

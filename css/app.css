@@ -2342,6 +2342,19 @@ header { position: relative; }
 }
 .ihm-tt-row strong { color: var(--text); }
 
+/* ─── Wizard de saisie d'un moment (4 étapes) ─────────────────────────── */
+.wizard-progress { display: flex; gap: 6px; justify-content: center; margin: 2px 0 18px; }
+.wizard-dot { width: 30px; height: 4px; border-radius: 2px; background: var(--line); transition: background .25s; }
+.wizard-dot.active { background: var(--elle); }
+.wizard-step { display: none; }
+.wizard-step.active { display: block; animation: intime-fade-in .2s ease both; }
+.wizard-step-title {
+  font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--faint); margin-bottom: 16px;
+}
+.wizard-nav { display: flex; gap: 10px; margin-top: 10px; }
+.wizard-nav button { flex: 1; margin-top: 0; }
+
 /* Fondu cosmétique des sous-sections Intime (la bascule reste synchrone en JS). */
 .intime-section.anim-in { animation: intime-fade-in .22s ease both; }
 @keyframes intime-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

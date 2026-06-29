@@ -882,207 +882,241 @@
         <div class="sheet-handle"></div>
         <h3 class="sheet-title">Notre moment</h3>
 
-        <div class="field">
-          <label for="session-date-input">Date</label>
-          <input type="date" id="session-date-input">
+        <!-- Fil de progression du wizard -->
+        <div class="wizard-progress" id="session-wizard-progress">
+          <span class="wizard-dot active" data-step="1"></span>
+          <span class="wizard-dot" data-step="2"></span>
+          <span class="wizard-dot" data-step="3"></span>
+          <span class="wizard-dot" data-step="4"></span>
         </div>
 
-        <div class="field">
-          <label>Ambiance</label>
-          <div class="mood-grid">
-            <button type="button" class="mood-btn" data-mood="tender">🥰<span>Tendre</span></button>
-            <button type="button" class="mood-btn" data-mood="playful">😄<span>Joueur</span></button>
-            <button type="button" class="mood-btn" data-mood="passionate">🔥<span>Passionné</span></button>
-            <button type="button" class="mood-btn" data-mood="spontaneous">⚡<span>Spontané</span></button>
-          </div>
-        </div>
+        <div id="session-wizard">
 
-        <div class="field">
-          <label>Lieu</label>
-          <div class="loc-grid">
-            <button type="button" class="loc-btn" data-loc="chambre">🛏️ Chambre</button>
-            <button type="button" class="loc-btn" data-loc="lit">🛌 Lit</button>
-            <button type="button" class="loc-btn" data-loc="salle de bain">🚿 Salle de bain</button>
-            <button type="button" class="loc-btn" data-loc="douche">💧 Douche</button>
-            <button type="button" class="loc-btn" data-loc="canapé">🛋️ Canapé</button>
-            <button type="button" class="loc-btn" data-loc="voiture">🚗 Voiture</button>
-            <button type="button" class="loc-btn" data-loc="maison">🏠 Maison</button>
-            <button type="button" class="loc-btn" data-loc="voyage">✈️ Voyage</button>
-            <button type="button" class="loc-btn" data-loc="hotel">🏨 Hôtel</button>
-            <button type="button" class="loc-btn" data-loc="autre">📍 Autre</button>
-          </div>
-        </div>
+          <!-- Étape 1 : Contexte -->
+          <div class="wizard-step active" data-step="1">
+            <div class="wizard-step-title">1 · Contexte</div>
 
-        <div class="field">
-          <label>Pratiques exécutées</label>
-          <div class="act-tags-grid" id="session-practices-performed">
-            <button type="button" class="act-tag-btn" data-tag="vaginal">💞 Vaginal</button>
-            <button type="button" class="act-tag-btn" data-tag="fellation">💋 Fellation</button>
-            <button type="button" class="act-tag-btn" data-tag="cunnilingus">👅 Cunnilingus</button>
-            <button type="button" class="act-tag-btn" data-tag="doigtage">✌️ Doigtage</button>
-            <button type="button" class="act-tag-btn" data-tag="masturbation_manuelle">🤚 Mast. manuelle</button>
-            <button type="button" class="act-tag-btn" data-tag="anal">🍑 Anal</button>
-            <button type="button" class="act-tag-btn" data-tag="creampie">💧 Creampie</button>
-            <button type="button" class="act-tag-btn" data-tag="bdsm">⛓️ BDSM</button>
-            <button type="button" class="act-tag-btn" data-tag="jouet">🎯 Jouet</button>
-            <button type="button" class="act-tag-btn" data-tag="masturbation">✨ Masturbation</button>
-            <button type="button" class="act-tag-btn" data-tag="oral">👄 Oral</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Pratiques reçues</label>
-          <div class="act-tags-grid" id="session-practices-received">
-            <button type="button" class="act-tag-btn" data-tag="vaginal">💞 Vaginal</button>
-            <button type="button" class="act-tag-btn" data-tag="fellation">💋 Fellation</button>
-            <button type="button" class="act-tag-btn" data-tag="cunnilingus">👅 Cunnilingus</button>
-            <button type="button" class="act-tag-btn" data-tag="doigtage">✌️ Doigtage</button>
-            <button type="button" class="act-tag-btn" data-tag="masturbation_manuelle">🤚 Mast. manuelle</button>
-            <button type="button" class="act-tag-btn" data-tag="anal">🍑 Anal</button>
-            <button type="button" class="act-tag-btn" data-tag="creampie">💧 Creampie</button>
-            <button type="button" class="act-tag-btn" data-tag="bdsm">⛓️ BDSM</button>
-            <button type="button" class="act-tag-btn" data-tag="jouet">🎯 Jouet</button>
-            <button type="button" class="act-tag-btn" data-tag="masturbation">✨ Masturbation</button>
-            <button type="button" class="act-tag-btn" data-tag="oral">👄 Oral</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Sentiments</label>
-          <div class="act-tags-grid" id="session-feelings">
-            <button type="button" class="act-tag-btn" data-tag="affectueux">🥰 Affectueux</button>
-            <button type="button" class="act-tag-btn" data-tag="aventureux">🤠 Aventureux</button>
-            <button type="button" class="act-tag-btn" data-tag="excite">🔥 Excité</button>
-            <button type="button" class="act-tag-btn" data-tag="heureux">😊 Heureux</button>
-            <button type="button" class="act-tag-btn" data-tag="satisfait">😌 Satisfait</button>
-            <button type="button" class="act-tag-btn" data-tag="deconnecte">😕 Déconnecté</button>
-            <button type="button" class="act-tag-btn" data-tag="anxieux">😰 Anxieux</button>
-            <button type="button" class="act-tag-btn" data-tag="coupable">😔 Coupable</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Protection (Moi)</label>
-          <div class="act-tags-grid" id="session-protection-me">
-            <button type="button" class="act-tag-btn" data-tag="preservatif">🛡️ Préservatif</button>
-            <button type="button" class="act-tag-btn" data-tag="preservatif_interne">♀️ Préservatif interne</button>
-            <button type="button" class="act-tag-btn" data-tag="prep">💊 PrEP</button>
-            <button type="button" class="act-tag-btn" data-tag="tasp">💊 TasP</button>
-            <button type="button" class="act-tag-btn" data-tag="retrait">⬅️ Retrait</button>
-            <button type="button" class="act-tag-btn" data-tag="vasectomie">✂️ Vasectomie</button>
-            <button type="button" class="act-tag-btn" data-tag="sans_penetration">🚫 Sans pénétration</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Protection (Partenaire)</label>
-          <div class="act-tags-grid" id="session-protection-partner">
-            <button type="button" class="act-tag-btn" data-tag="pilule">💊 Pilule</button>
-            <button type="button" class="act-tag-btn" data-tag="diu">⚓ DIU (stérilet)</button>
-            <button type="button" class="act-tag-btn" data-tag="implant">💉 Implant</button>
-            <button type="button" class="act-tag-btn" data-tag="anneau_vaginal">💍 Anneau vaginal</button>
-            <button type="button" class="act-tag-btn" data-tag="ligature_trompes">✂️ Ligature des trompes</button>
-            <button type="button" class="act-tag-btn" data-tag="hysterectomie">🚫 Hystérectomie</button>
-            <button type="button" class="act-tag-btn" data-tag="menopause">🌸 Ménopause</button>
-            <button type="button" class="act-tag-btn" data-tag="doxypep">💊 DoxyPEP</button>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:12px">
-          <div class="field" style="flex:1">
-            <label for="session-duration">Durée totale (min)</label>
-            <input type="number" id="session-duration" min="1" max="300" placeholder="30"
-              style="padding:10px 12px" aria-label="Durée totale en minutes">
-          </div>
-          <div class="field" style="flex:1">
-            <label for="session-ejaculation">Éjaculation</label>
-            <select id="session-ejaculation" class="library-filter-select" style="width:100%;padding:10px 12px;height:44px">
-              <option value="inconnu">Inconnu</option>
-              <option value="non">Pas d'éjaculation</option>
-              <option value="vagin">Dans le vagin</option>
-              <option value="anus">Dans l'anus</option>
-              <option value="bouche">Dans la bouche</option>
-              <option value="dos">Sur le dos</option>
-              <option value="poitrine">Sur la poitrine</option>
-              <option value="visage">Sur le visage</option>
-              <option value="fesses">Sur les fesses</option>
-              <option value="ventre">Sur le ventre</option>
-              <option value="mains">Sur les mains</option>
-              <option value="pieds">Sur les pieds</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Préliminaires -->
-        <div class="toggle-row">
-          <div>
-            <div class="toggle-label">Préliminaires ?</div>
-            <div class="toggle-sub">Durée et intensité optionnelles</div>
-          </div>
-          <label class="toggle" aria-label="Préliminaires">
-            <input type="checkbox" id="session-prelim-toggle">
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-
-        <div id="prelim-details" class="prelim-expand" aria-hidden="true">
-          <div style="display:flex;gap:10px;margin-bottom:10px">
-            <div class="field" style="flex:1;margin-bottom:0">
-              <label for="session-prelim-duration">Durée prélim. (min)</label>
-              <input type="number" id="session-prelim-duration" min="1" max="120" placeholder="15"
-                style="padding:9px 12px" aria-label="Durée des préliminaires en minutes">
+            <div class="field">
+              <label for="session-date-input">Date</label>
+              <input type="date" id="session-date-input">
             </div>
-          </div>
-          <div class="field" style="margin-bottom:0">
-            <label>Intensité des préliminaires</label>
-            <div class="prelim-intensity-chips" role="group" aria-label="Intensité des préliminaires">
-              <button type="button" class="prelim-chip" data-intensity="1" aria-label="Doux">🌸 Doux</button>
-              <button type="button" class="prelim-chip" data-intensity="2" aria-label="Modéré">✨ Modéré</button>
-              <button type="button" class="prelim-chip" data-intensity="3" aria-label="Intense">🔥 Intense</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- Orgasmes — un sélecteur distinct par partenaire -->
-        <div class="field">
-          <label>Orgasmes</label>
-          <div class="orgasm-per-partner">
-            <div class="orgasm-partner-row">
-              <span class="orgasm-partner-name" id="orgasm-label-me">Moi</span>
-              <div class="orgasm-chips" role="group" aria-labelledby="orgasm-label-me">
-                <button type="button" class="orgasm-chip sel" data-partner="me" data-val="0" aria-label="Aucun">—</button>
-                <button type="button" class="orgasm-chip" data-partner="me" data-val="1" aria-label="1 orgasme">1</button>
-                <button type="button" class="orgasm-chip" data-partner="me" data-val="2" aria-label="2 orgasmes ou plus">2+</button>
+            <div class="field">
+              <label>Ambiance</label>
+              <div class="mood-grid">
+                <button type="button" class="mood-btn" data-mood="tender">🥰<span>Tendre</span></button>
+                <button type="button" class="mood-btn" data-mood="playful">😄<span>Joueur</span></button>
+                <button type="button" class="mood-btn" data-mood="passionate">🔥<span>Passionné</span></button>
+                <button type="button" class="mood-btn" data-mood="spontaneous">⚡<span>Spontané</span></button>
               </div>
             </div>
-            <div class="orgasm-partner-row">
-              <span class="orgasm-partner-name" id="orgasm-label-partner">Partenaire</span>
-              <div class="orgasm-chips" role="group" aria-labelledby="orgasm-label-partner">
-                <button type="button" class="orgasm-chip sel" data-partner="partner" data-val="0" aria-label="Aucun">—</button>
-                <button type="button" class="orgasm-chip" data-partner="partner" data-val="1" aria-label="1 orgasme">1</button>
-                <button type="button" class="orgasm-chip" data-partner="partner" data-val="2" aria-label="2 orgasmes ou plus">2+</button>
+
+            <div class="field">
+              <label>Lieu</label>
+              <div class="loc-grid">
+                <button type="button" class="loc-btn" data-loc="chambre">🛏️ Chambre</button>
+                <button type="button" class="loc-btn" data-loc="lit">🛌 Lit</button>
+                <button type="button" class="loc-btn" data-loc="salle de bain">🚿 Salle de bain</button>
+                <button type="button" class="loc-btn" data-loc="douche">💧 Douche</button>
+                <button type="button" class="loc-btn" data-loc="canapé">🛋️ Canapé</button>
+                <button type="button" class="loc-btn" data-loc="voiture">🚗 Voiture</button>
+                <button type="button" class="loc-btn" data-loc="maison">🏠 Maison</button>
+                <button type="button" class="loc-btn" data-loc="voyage">✈️ Voyage</button>
+                <button type="button" class="loc-btn" data-loc="hotel">🏨 Hôtel</button>
+                <button type="button" class="loc-btn" data-loc="autre">📍 Autre</button>
               </div>
             </div>
           </div>
-          <p style="font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:6px;line-height:1.6">
-            Déclaratif · chacun peut mettre à jour ses propres données dans le feedback.
-          </p>
+
+          <!-- Étape 2 : Préliminaires & rapport -->
+          <div class="wizard-step" data-step="2">
+            <div class="wizard-step-title">2 · Préliminaires & rapport</div>
+
+            <!-- Préliminaires -->
+            <div class="toggle-row">
+              <div>
+                <div class="toggle-label">Préliminaires ?</div>
+                <div class="toggle-sub">Durée et intensité optionnelles</div>
+              </div>
+              <label class="toggle" aria-label="Préliminaires">
+                <input type="checkbox" id="session-prelim-toggle">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+
+            <div id="prelim-details" class="prelim-expand" aria-hidden="true">
+              <div style="display:flex;gap:10px;margin-bottom:10px">
+                <div class="field" style="flex:1;margin-bottom:0">
+                  <label for="session-prelim-duration">Durée prélim. (min)</label>
+                  <input type="number" id="session-prelim-duration" min="1" max="120" placeholder="15"
+                    style="padding:9px 12px" aria-label="Durée des préliminaires en minutes">
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:0">
+                <label>Intensité des préliminaires</label>
+                <div class="prelim-intensity-chips" role="group" aria-label="Intensité des préliminaires">
+                  <button type="button" class="prelim-chip" data-intensity="1" aria-label="Doux">🌸 Doux</button>
+                  <button type="button" class="prelim-chip" data-intensity="2" aria-label="Modéré">✨ Modéré</button>
+                  <button type="button" class="prelim-chip" data-intensity="3" aria-label="Intense">🔥 Intense</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="field" style="margin-top:14px">
+              <label for="session-duration">Durée totale (min)</label>
+              <input type="number" id="session-duration" min="1" max="300" placeholder="30"
+                style="padding:10px 12px" aria-label="Durée totale en minutes">
+            </div>
+
+            <!-- Sélecteur de positions -->
+            <div class="field">
+              <label>Positions</label>
+              <div id="position-picker-grid" class="pos-pick-grid" role="group" aria-label="Sélecteur de positions"></div>
+              <div id="position-ratings" class="pos-rate-list"></div>
+            </div>
+
+            <div class="field">
+              <label>Pratiques exécutées</label>
+              <div class="act-tags-grid" id="session-practices-performed">
+                <button type="button" class="act-tag-btn" data-tag="vaginal">💞 Vaginal</button>
+                <button type="button" class="act-tag-btn" data-tag="fellation">💋 Fellation</button>
+                <button type="button" class="act-tag-btn" data-tag="cunnilingus">👅 Cunnilingus</button>
+                <button type="button" class="act-tag-btn" data-tag="doigtage">✌️ Doigtage</button>
+                <button type="button" class="act-tag-btn" data-tag="masturbation_manuelle">🤚 Mast. manuelle</button>
+                <button type="button" class="act-tag-btn" data-tag="anal">🍑 Anal</button>
+                <button type="button" class="act-tag-btn" data-tag="creampie">💧 Creampie</button>
+                <button type="button" class="act-tag-btn" data-tag="bdsm">⛓️ BDSM</button>
+                <button type="button" class="act-tag-btn" data-tag="jouet">🎯 Jouet</button>
+                <button type="button" class="act-tag-btn" data-tag="masturbation">✨ Masturbation</button>
+                <button type="button" class="act-tag-btn" data-tag="oral">👄 Oral</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Pratiques reçues</label>
+              <div class="act-tags-grid" id="session-practices-received">
+                <button type="button" class="act-tag-btn" data-tag="vaginal">💞 Vaginal</button>
+                <button type="button" class="act-tag-btn" data-tag="fellation">💋 Fellation</button>
+                <button type="button" class="act-tag-btn" data-tag="cunnilingus">👅 Cunnilingus</button>
+                <button type="button" class="act-tag-btn" data-tag="doigtage">✌️ Doigtage</button>
+                <button type="button" class="act-tag-btn" data-tag="masturbation_manuelle">🤚 Mast. manuelle</button>
+                <button type="button" class="act-tag-btn" data-tag="anal">🍑 Anal</button>
+                <button type="button" class="act-tag-btn" data-tag="creampie">💧 Creampie</button>
+                <button type="button" class="act-tag-btn" data-tag="bdsm">⛓️ BDSM</button>
+                <button type="button" class="act-tag-btn" data-tag="jouet">🎯 Jouet</button>
+                <button type="button" class="act-tag-btn" data-tag="masturbation">✨ Masturbation</button>
+                <button type="button" class="act-tag-btn" data-tag="oral">👄 Oral</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étape 3 : Ressenti -->
+          <div class="wizard-step" data-step="3">
+            <div class="wizard-step-title">3 · Ressenti</div>
+
+            <div class="field">
+              <label>Orgasmes</label>
+              <div class="orgasm-per-partner">
+                <div class="orgasm-partner-row">
+                  <span class="orgasm-partner-name" id="orgasm-label-me">Moi</span>
+                  <div class="orgasm-chips" role="group" aria-labelledby="orgasm-label-me">
+                    <button type="button" class="orgasm-chip sel" data-partner="me" data-val="0" aria-label="Aucun">—</button>
+                    <button type="button" class="orgasm-chip" data-partner="me" data-val="1" aria-label="1 orgasme">1</button>
+                    <button type="button" class="orgasm-chip" data-partner="me" data-val="2" aria-label="2 orgasmes ou plus">2+</button>
+                  </div>
+                </div>
+                <div class="orgasm-partner-row">
+                  <span class="orgasm-partner-name" id="orgasm-label-partner">Partenaire</span>
+                  <div class="orgasm-chips" role="group" aria-labelledby="orgasm-label-partner">
+                    <button type="button" class="orgasm-chip sel" data-partner="partner" data-val="0" aria-label="Aucun">—</button>
+                    <button type="button" class="orgasm-chip" data-partner="partner" data-val="1" aria-label="1 orgasme">1</button>
+                    <button type="button" class="orgasm-chip" data-partner="partner" data-val="2" aria-label="2 orgasmes ou plus">2+</button>
+                  </div>
+                </div>
+              </div>
+              <p style="font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:6px;line-height:1.6">
+                Déclaratif · chacun peut mettre à jour ses propres données dans le feedback.
+              </p>
+            </div>
+
+            <div class="field">
+              <label>Sentiments</label>
+              <div class="act-tags-grid" id="session-feelings">
+                <button type="button" class="act-tag-btn" data-tag="affectueux">🥰 Affectueux</button>
+                <button type="button" class="act-tag-btn" data-tag="aventureux">🤠 Aventureux</button>
+                <button type="button" class="act-tag-btn" data-tag="excite">🔥 Excité</button>
+                <button type="button" class="act-tag-btn" data-tag="heureux">😊 Heureux</button>
+                <button type="button" class="act-tag-btn" data-tag="satisfait">😌 Satisfait</button>
+                <button type="button" class="act-tag-btn" data-tag="deconnecte">😕 Déconnecté</button>
+                <button type="button" class="act-tag-btn" data-tag="anxieux">😰 Anxieux</button>
+                <button type="button" class="act-tag-btn" data-tag="coupable">😔 Coupable</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="session-ejaculation">Éjaculation</label>
+              <select id="session-ejaculation" class="library-filter-select" style="width:100%;padding:10px 12px;height:44px">
+                <option value="inconnu">Inconnu</option>
+                <option value="non">Pas d'éjaculation</option>
+                <option value="vagin">Dans le vagin</option>
+                <option value="anus">Dans l'anus</option>
+                <option value="bouche">Dans la bouche</option>
+                <option value="dos">Sur le dos</option>
+                <option value="poitrine">Sur la poitrine</option>
+                <option value="visage">Sur le visage</option>
+                <option value="fesses">Sur les fesses</option>
+                <option value="ventre">Sur le ventre</option>
+                <option value="mains">Sur les mains</option>
+                <option value="pieds">Sur les pieds</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Étape 4 : Protection & note -->
+          <div class="wizard-step" data-step="4">
+            <div class="wizard-step-title">4 · Protection & note</div>
+
+            <div class="field">
+              <label>Protection (Moi)</label>
+              <div class="act-tags-grid" id="session-protection-me">
+                <button type="button" class="act-tag-btn" data-tag="preservatif">🛡️ Préservatif</button>
+                <button type="button" class="act-tag-btn" data-tag="preservatif_interne">♀️ Préservatif interne</button>
+                <button type="button" class="act-tag-btn" data-tag="prep">💊 PrEP</button>
+                <button type="button" class="act-tag-btn" data-tag="tasp">💊 TasP</button>
+                <button type="button" class="act-tag-btn" data-tag="retrait">⬅️ Retrait</button>
+                <button type="button" class="act-tag-btn" data-tag="vasectomie">✂️ Vasectomie</button>
+                <button type="button" class="act-tag-btn" data-tag="sans_penetration">🚫 Sans pénétration</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Protection (Partenaire)</label>
+              <div class="act-tags-grid" id="session-protection-partner">
+                <button type="button" class="act-tag-btn" data-tag="pilule">💊 Pilule</button>
+                <button type="button" class="act-tag-btn" data-tag="diu">⚓ DIU (stérilet)</button>
+                <button type="button" class="act-tag-btn" data-tag="implant">💉 Implant</button>
+                <button type="button" class="act-tag-btn" data-tag="anneau_vaginal">💍 Anneau vaginal</button>
+                <button type="button" class="act-tag-btn" data-tag="ligature_trompes">✂️ Ligature des trompes</button>
+                <button type="button" class="act-tag-btn" data-tag="hysterectomie">🚫 Hystérectomie</button>
+                <button type="button" class="act-tag-btn" data-tag="menopause">🌸 Ménopause</button>
+                <button type="button" class="act-tag-btn" data-tag="doxypep">💊 DoxyPEP</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="session-note-input">Note partagée (optionnel)</label>
+              <input type="text" id="session-note-input" placeholder="Ce qu'on a adoré…">
+            </div>
+          </div>
+
         </div>
 
-        <div class="field">
-          <label for="session-note-input">Note partagée (optionnel)</label>
-          <input type="text" id="session-note-input" placeholder="Ce qu'on a adoré…">
+        <!-- Navigation du wizard -->
+        <div class="wizard-nav">
+          <button type="button" id="btn-wizard-prev" class="btn-secondary" style="display:none">← Précédent</button>
+          <button type="button" id="btn-wizard-next" class="btn-primary">Suivant →</button>
+          <button type="button" id="btn-session-save" class="btn-primary" style="display:none">Enregistrer</button>
         </div>
-
-        <!-- Sélecteur de positions -->
-        <div class="field">
-          <label>Positions (optionnel)</label>
-          <div id="position-picker-grid" class="pos-pick-grid" role="group" aria-label="Sélecteur de positions"></div>
-          <!-- Notation par position sélectionnée (Phase 1) -->
-          <div id="position-ratings" class="pos-rate-list"></div>
-        </div>
-
-        <button type="button" id="btn-session-save" class="btn-primary">Enregistrer → Feedback rapide</button>
         <button type="button" id="btn-fast-track" class="btn-secondary" style="margin-top:8px">⚡ Mode rapide (4 taps)</button>
         <button type="button" id="btn-session-cancel" class="btn-secondary" style="margin-top:8px">Annuler</button>
       </div>
