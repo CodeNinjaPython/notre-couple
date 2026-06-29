@@ -167,27 +167,66 @@ async function renderMainSections(st) {
 /**
  * Charge toutes les données pour la section Stats et appelle les fonctions de rendu.
  */
+let _statsRaw = null;      // données brutes (90 j) conservées pour le filtre
+let _statsCtx = null;      // { st, elleId, luiId }
+
 async function renderStatsSection(st) {
   const elleId = st.me?.tracks_cycle ? st.me.user_id : st.partner?.user_id;
   if (!elleId) return;
+  const luiId = st.me?.tracks_cycle ? st.partner?.user_id : st.me?.user_id;
 
   const since = daysAgo(90);
   const [sessionsRes, cyclesRes, feedbackRes, ratingsRes, entriesRes] = await Promise.all([
-    supabase.from('intimate_sessions').select('id, session_date, duration_min, mood').eq('couple_id', st.coupleId).gte('session_date', since).order('session_date', { ascending: false }),
+    supabase.from('intimate_sessions').select('id, session_date, duration_min, mood, created_by, session_activities(tags)').eq('couple_id', st.coupleId).gte('session_date', since).order('session_date', { ascending: false }),
     supabase.from('cycles').select('period_start').order('period_start', { ascending: false }).limit(6),
     supabase.from('session_feedback').select('session_id, user_id, satisfaction, orgasms, shared, improve_txt, created_at').gte('created_at', since + 'T00:00:00Z'),
-    supabase.from('position_ratings').select('position_id, score, pain, too_deep, rated_on').eq('couple_id', st.coupleId).gte('rated_on', since),
+    supabase.from('position_ratings').select('position_id, score, pain, too_deep, rated_on, created_by').eq('couple_id', st.coupleId).gte('rated_on', since),
     supabase.from('log_entries').select('log_date, value').eq('user_id', elleId).eq('category_id', 'journal').gte('log_date', since),
   ]);
 
-  const data = {
+  _statsRaw = {
     sessions: sessionsRes.data || [],
     cycles: cyclesRes.data || [],
     feedbacks: feedbackRes.data || [],
     ratings: ratingsRes.data || [],
     entries: entriesRes.data || [],
   };
+  _statsCtx = { st, elleId, luiId };
 
+  // Filtre Les deux / Elle / Lui (lié une fois — boutons recréés à chaque montage de vue)
+  document.querySelectorAll('#stats-filter .cal-filter-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#stats-filter .cal-filter-btn').forEach(b => b.classList.toggle('on', b === btn));
+      renderStatsView(btn.dataset.filter);
+    };
+  });
+
+  renderStatsView('both');
+}
+
+// Filtre les sessions/feedbacks/notes selon la personne (à deux = compte pour les deux).
+function filterStatsData(raw, filter, elleId, luiId) {
+  if (filter === 'both') return raw;
+  const who = filter === 'elle' ? elleId : luiId;
+  const sessions = raw.sessions.filter(s => {
+    const solo = (s.session_activities || []).flatMap(a => a.tags || []).includes('solo');
+    return !solo || s.created_by === who;
+  });
+  const ids = new Set(sessions.map(s => s.id));
+  return {
+    ...raw,
+    sessions,
+    feedbacks: raw.feedbacks.filter(f => f.user_id === who && ids.has(f.session_id)),
+    ratings: raw.ratings.filter(r => r.created_by === who),
+  };
+}
+
+function renderStatsView(filter) {
+  if (!_statsRaw || !_statsCtx) return;
+  const { st, elleId, luiId } = _statsCtx;
+  const data = filterStatsData(_statsRaw, filter, elleId, luiId);
+
+  renderFrequencyTrend(data.sessions);
   renderMonthlyHeatmap(st.coupleId, elleId, data);
   renderSatisfactionCurve(st.me?.user_id, data);
   renderOrgasmByPhase(st, data);
@@ -196,6 +235,30 @@ async function renderStatsSection(st) {
   renderCycleXIntimite(data);
   renderLibidoParPhase(elleId, data);
   renderHealthAlerts(st.me?.user_id, data.feedbacks);
+}
+
+// #2 — Fréquence des moments sur 12 semaines + tendance.
+function renderFrequencyTrend(sessions) {
+  const el = document.getElementById('frequency-trend');
+  if (!el) return;
+  const WEEKS = 12;
+  const now = Date.now();
+  const buckets = new Array(WEEKS).fill(0);
+  for (const s of (sessions || [])) {
+    if (!s.session_date) continue;
+    const wk = Math.floor((now - new Date(s.session_date + 'T12:00:00').getTime()) / (7 * 864e5));
+    if (wk >= 0 && wk < WEEKS) buckets[WEEKS - 1 - wk]++; // ancien à gauche, récent à droite
+  }
+  const total = buckets.reduce((a, b) => a + b, 0);
+  if (!total) { el.innerHTML = '<p class="intime-empty">Pas encore de moments sur la période.</p>'; return; }
+  const max = Math.max(1, ...buckets);
+  const recent = buckets.slice(-4).reduce((a, b) => a + b, 0);
+  const prev = buckets.slice(-8, -4).reduce((a, b) => a + b, 0);
+  const trend = recent > prev ? '↗ en hausse' : recent < prev ? '↘ en baisse' : '→ stable';
+  el.innerHTML = `
+    <div class="freq-bars" aria-hidden="true">${buckets.map(b =>
+      `<div class="freq-bar" style="height:${Math.max(6, Math.round(b / max * 100))}%${b ? '' : ';opacity:.3'}" title="${b}"></div>`).join('')}</div>
+    <div class="freq-meta">${total} moment${total > 1 ? 's' : ''} · ${trend}</div>`;
 }
 
 // ─── Quick add ─────────────────────────────────────────────────────────────

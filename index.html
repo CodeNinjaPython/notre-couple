@@ -867,7 +867,14 @@
         <!-- Statistiques avancées -->
         <div class="card">
           <h2>Statistiques Intimité</h2>
-          <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:16px 0 10px">Heatmap mensuelle</h3>
+          <div class="intime-cal-filter" id="stats-filter" role="group" aria-label="Filtrer les statistiques">
+            <button type="button" class="cal-filter-btn on" data-filter="both">Les deux</button>
+            <button type="button" class="cal-filter-btn" data-filter="elle">Elle</button>
+            <button type="button" class="cal-filter-btn" data-filter="lui">Lui</button>
+          </div>
+          <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:16px 0 10px">Fréquence · 12 semaines</h3>
+          <div id="frequency-trend"></div>
+          <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:20px 0 10px">Heatmap mensuelle</h3>
           <div id="intimacy-heatmap"></div>
           <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:20px 0 10px">Évolution de la satisfaction</h3>
           <div id="satisfaction-curve"></div>

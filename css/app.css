@@ -731,6 +731,11 @@ body.demo-mode .demo-badge {
 
 /* ─── Calendrier intime (détail jour) ─────────────────────────────────── */
 .cal-cell--sel { border-color: var(--violet); box-shadow: 0 0 0 2px var(--violet-dim, rgba(124,92,252,.25)); }
+/* #2 — Courbe de fréquence */
+.freq-bars { display: flex; align-items: flex-end; gap: 4px; height: 64px; padding: 4px 0; }
+.freq-bar { flex: 1; background: var(--elle); border-radius: 3px 3px 0 0; min-height: 4px; }
+.freq-meta { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 6px; font-family: "DM Mono", monospace; }
+
 .intime-cal-filter {
   display: flex; gap: 6px; background: var(--surface2);
   border-radius: 12px; padding: 4px; margin: 4px 0 12px;
