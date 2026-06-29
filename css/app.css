@@ -16,7 +16,14 @@
   /* Texte */
   --text:       #1A1830;
   --muted:      #6B6A94;
-  --faint:      #A8A7C8;
+  --faint:      #8E8CB2;   /* remonté pour la lisibilité (dates, méta) — AA */
+
+  /* Échelle typographique — source de vérité (DM Sans / DM Mono) */
+  --fs-display: 36px;  /* titre de phase */
+  --fs-h2:      19px;  /* titres de section forts */
+  --fs-body:    15px;  /* texte courant */
+  --fs-sm:      13px;  /* secondaire */
+  --fs-label:   11px;  /* micro-labels capitales */
 
   /* Elle — rose vif */
   --elle:       #E84375;
@@ -71,7 +78,7 @@ body.dark {
 
   --text:       #ECEBF5;
   --muted:      #A3A1BE;
-  --faint:      #6E6C8A;
+  --faint:      #8482A6;   /* remonté pour la lisibilité en sombre */
 
   --elle:       #F0608D;
   --elle-deep:  #F4597D;
@@ -154,15 +161,20 @@ header { padding: 52px 0 16px; }
 }
 
 .phase {
-  font-size: 36px;
+  font-size: var(--fs-display);
   font-weight: 800;
   line-height: 1.1;
   margin-top: 12px;
   letter-spacing: -.01em;
+  color: var(--elle);   /* repli si background-clip:text non supporté */
   background: linear-gradient(135deg, #E84375 0%, #7C5CFC 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+/* Repli explicite : sans clip, on garde un titre plein lisible */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .phase { background: none; -webkit-text-fill-color: var(--elle); color: var(--elle); }
 }
 
 .date {
@@ -218,11 +230,11 @@ header { padding: 52px 0 16px; }
   box-shadow: var(--sh-sm);
 }
 .card h2 {
-  font-size: 11px;
+  font-size: var(--fs-label);
   font-weight: 700;
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--faint);
+  color: var(--muted);   /* titres de section : lisibles, pas en --faint */
   margin-bottom: 16px;
 }
 
