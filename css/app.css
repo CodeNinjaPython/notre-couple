@@ -2239,11 +2239,13 @@ body.dark .card-primary { border-color: var(--elle); }
 .qlb-row { display: flex; gap: 3px; align-items: center; }
 
 /* ─── Scale buttons (libido / satisfaction in accordion) ──────────────── */
+/* Échelles de saisie : grille 5 colonnes → 1-5 sur une ligne, 1-10 sur deux
+   lignes confortables (au lieu d'une rangée nowrap qui débordait sur mobile). */
 .lca-scale-grid {
-  display: flex; flex-wrap: nowrap; gap: 6px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
 }
 .log-scale-btn {
-  flex: 1; min-width: 38px;
+  min-width: 0; min-height: 48px;
   padding: 8px 4px;
 }
 .log-scale-btn .log-card-label {
