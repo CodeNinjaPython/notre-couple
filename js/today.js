@@ -17,6 +17,7 @@ import { Cycle, predictNextPeriodAdvanced } from './cycle-model.js';
 import { renderCycleRing, renderRingLegend } from './ring-chart.js';
 import { toast as showToast, confirmDialog, friendlyError } from './ui-feedback.js';
 import { getPregnancyMilestone } from './pregnancy-milestones.js';
+import { skeletonFill } from './skeleton.js';
 
 const PHASES_DATA = {
   Menstruelle: {
@@ -104,6 +105,12 @@ export async function initToday() {
   const el = document.getElementById('today-date');
   if (el) el.textContent = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
+  // Skeletons de chargement pour les zones lourdes
+  skeletonFill([
+    { id: 'events-list', type: 'lines', lines: 3 },
+    { id: 'insight-body', type: 'lines', lines: 2 }
+  ]);
+
   // Bouton profil (en-tête) → vue Réglages
   document.getElementById('btn-profile')?.addEventListener('click', () => navigate('settings'));
 
@@ -122,41 +129,14 @@ export async function initToday() {
     ringWrap.innerHTML = '<div class="skeleton" style="width:min(260px,80vw);height:min(260px,80vw);border-radius:50%;margin:12px auto"></div>';
   }
 
-  // Charger cycle + historique + entrées en parallèle
-  const [cycle, history] = await Promise.all([
-    getCurrentCycle(),
-    getCycleHistory(),
-  ]);
-  state.currentCycle = cycle;
-
-  if (cycle) {
-    const diff = Math.floor((Date.now() - new Date(cycle.period_start)) / 864e5);
-    state.cycleDay = diff + 1;
-    state.phaseName = getPhase(state.cycleDay);
-  }
-
-  state.prediction = predictNextPeriod(history);
-
   state.logDate = localDateStr();  // timezone locale, pas UTC
   state.logDateOffset = 0;
-  await loadEntriesForDate(state.logDate);
 
-  renderHeader();
-  renderMeteoMemo();
   initNeedButtons();
-  renderPartnerStatus();
-  await renderStreak();
-  renderRingChart();     // ← anneau SVG interactif
-  renderCycleControls();
-  renderWhoToggle();
   initDateNav();
   initCopyHier();
-  await renderChart();
-  renderMetrics();
-  renderInsight();
-  renderTip();
-  renderPrediction();
-  await renderEvents();
+
+  await reloadDataAndRenderToday();
 
   // Initialiser les accordéons de la vue Today
   initCollapsibles(document.getElementById('view'));
@@ -164,9 +144,10 @@ export async function initToday() {
   // Realtime : rafraîchir les moments en temps réel
   if (state.coupleId) {
     subscribeToEvents(state.coupleId, () => renderEvents());
-    subscribeToPartnerLogs(state.coupleId, () => {
+    subscribeToPartnerLogs(state.coupleId, async () => {
       showToast('Ton partenaire vient de saisir sa journée.');
       showNotification('Notre cycle', 'Ton partenaire a saisi sa journée.');
+      await reloadDataAndRenderToday();
     });
   }
 
@@ -184,6 +165,40 @@ export async function initToday() {
       if (has) showToast(`${state.partner.display_name} a déjà saisi aujourd'hui.`);
     });
   }
+}
+
+export async function reloadDataAndRenderToday() {
+  const [cycle, history] = await Promise.all([
+    getCurrentCycle(),
+    getCycleHistory(),
+  ]);
+  state.currentCycle = cycle;
+
+  if (cycle) {
+    const diff = Math.floor((Date.now() - new Date(cycle.period_start)) / 864e5);
+    state.cycleDay = diff + 1;
+    state.phaseName = getPhase(state.cycleDay);
+  } else {
+    state.cycleDay = null;
+    state.phaseName = null;
+  }
+
+  state.prediction = predictNextPeriod(history);
+  await loadEntriesForDate(state.logDate);
+
+  renderHeader();
+  renderMeteoMemo();
+  renderPartnerStatus();
+  await renderStreak();
+  renderRingChart();     // ← anneau SVG interactif
+  renderCycleControls();
+  renderWhoToggle();
+  await renderChart();
+  renderMetrics();
+  renderInsight();
+  renderTip();
+  renderPrediction();
+  await renderEvents();
 }
 
 function getPhase(day) {
@@ -551,8 +566,7 @@ function initCopyHier() {
         { onConflict: 'user_id,log_date,category_id' }
       )
     ));
-    await loadEntriesForDate(state.logDate);
-    renderMetrics();
+    await reloadDataAndRenderToday();
     showToast(`Saisie de ${fmtDate(hier, { weekday: 'long' })} copiée ✓`);
   });
 }
@@ -825,6 +839,11 @@ async function saveEntry(categoryId, value) {
   else {
     showToast('Sauvegardé ✓');
     invalidateCache(`log-entries-${state.logDate}`); // invalide le cache du jour
+    // Pas de reload complet ici : il reconstruirait #metrics (innerHTML) et
+    // détruirait le textarea/BBT en cours de frappe (perte de focus), en plus
+    // d'un re-fetch réseau à chaque tap de chip. Les mises à jour ciblées sont
+    // déjà faites par les appelants (renderChart pour l'énergie, .val pour
+    // note/BBT). Le reload reste réservé à init / realtime partenaire / copie d'hier.
   }
 }
 
@@ -882,7 +901,7 @@ function renderPrediction() {
   document.getElementById('pred-next').textContent =
     daysUntil > 0 ? `dans ${daysUntil} jour${daysUntil > 1 ? 's' : ''}` :
     daysUntil === 0 ? "aujourd'hui" : `il y a ${-daysUntil} j`;
-  const margin = p.stdDev >= 1 ? ` ± ${p.stdDev} j` : '';
+  const margin = p.stdDev >= 1 ? ` ± ${Math.round(p.stdDev)} j` : '';
   document.getElementById('pred-next-date').textContent = fmt(nextDate) + margin;
   document.getElementById('pred-ovulation').textContent = fmt(oDate);
   document.getElementById('pred-avg').textContent =

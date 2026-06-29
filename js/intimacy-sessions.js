@@ -9,6 +9,18 @@ import { POSITIONS } from './intimacy-library.js';
 import { toast, confirmDialog, friendlyError } from './ui-feedback.js';
 import { syncSessionToDailyLog } from './session-bridge.js';
 
+// Échappe le texte saisi par l'utilisateur avant injection dans innerHTML / attributs.
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+// Sélecteur d'attribut sûr (CSS.escape si dispo, sinon repli minimal sur les guillemets).
+function attrSel(v) {
+  return typeof CSS !== 'undefined' && CSS.escape
+    ? CSS.escape(String(v))
+    : String(v).replace(/["\\]/g, '\\$&');
+}
+
 const MOODS = { tender:'🥰', playful:'😄', passionate:'🔥', spontaneous:'⚡' };
 const MOOD_LABELS = { tender:'Tendre', playful:'Joueur·se', passionate:'Passionné·e', spontaneous:'Spontané·e' };
 const LOCATIONS   = { maison:'🏠 Maison', voyage:'✈️ Voyage', hotel:'🏨 Hôtel', autre:'📍 Autre' };
@@ -16,6 +28,7 @@ const LOCATIONS   = { maison:'🏠 Maison', voyage:'✈️ Voyage', hotel:'🏨 
 // Garde en mémoire la session en cours d'édition pour la sauvegarde.
 // `null` si c'est une nouvelle session.
 let currentEditingSession = null;
+let sessionCustomPositions = [];
 
 // ─── Wizard (saisie en 4 étapes) ───────────────────────────────────────────
 const WIZARD_STEPS = 4;
@@ -216,11 +229,45 @@ export async function loadAndEditSession(sessionId, st) {
     // Détails JSONB (nouveaux champs)
     const details = session.details || {};
     (details.practices_performed || []).forEach(tag => {
-      document.querySelector(`#session-practices-performed .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
+      let existing = document.querySelector(`#session-practices-performed .act-tag-btn[data-tag="${attrSel(tag)}"]`);
+      if (!existing && tag.startsWith('custom:')) {
+        const label = tag.replace('custom:', '');
+        const container = document.getElementById('session-practices-performed');
+        if (container) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'act-tag-btn sel';
+          btn.dataset.tag = tag;
+          btn.dataset.custom = 'true';
+          btn.textContent = `✨ ${label}`;
+          btn.addEventListener('click', () => btn.classList.toggle('sel'));
+          container.appendChild(btn);
+          existing = btn;
+        }
+      }
+      existing?.classList.add('sel');
     });
+
     (details.practices_received || []).forEach(tag => {
-      document.querySelector(`#session-practices-received .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
+      let existing = document.querySelector(`#session-practices-received .act-tag-btn[data-tag="${attrSel(tag)}"]`);
+      if (!existing && tag.startsWith('custom:')) {
+        const label = tag.replace('custom:', '');
+        const container = document.getElementById('session-practices-received');
+        if (container) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'act-tag-btn sel';
+          btn.dataset.tag = tag;
+          btn.dataset.custom = 'true';
+          btn.textContent = `✨ ${label}`;
+          btn.addEventListener('click', () => btn.classList.toggle('sel'));
+          container.appendChild(btn);
+          existing = btn;
+        }
+      }
+      existing?.classList.add('sel');
     });
+
     (details.feelings || []).forEach(tag => {
       document.querySelector(`#session-feelings .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
     });
@@ -237,8 +284,21 @@ export async function loadAndEditSession(sessionId, st) {
     const allTags = session.session_activities?.[0]?.tags || [];
     const soloEl = document.getElementById('session-solo'); if (soloEl) soloEl.checked = allTags.includes('solo');
     const positionIds = allTags.filter(t => t !== 'solo');
+
     positionIds.forEach(id => {
-      document.querySelector(`.pos-pick-btn[data-id="${id}"]`)?.classList.add('sel');
+      if (id.startsWith('custom:')) {
+        const label = id.replace('custom:', '');
+        if (!sessionCustomPositions.includes(label)) {
+          sessionCustomPositions.push(label);
+        }
+      }
+    });
+
+    // Rerendre le picker de positions pour inclure les positions personnalisées chargées
+    renderPositionPicker();
+
+    positionIds.forEach(id => {
+      document.querySelector(`.pos-pick-btn[data-id="${attrSel(id)}"]`)?.classList.add('sel');
     });
 
     // Recharger les notes de position existantes (sinon la sauvegarde les effacerait).
@@ -263,6 +323,9 @@ export async function loadAndEditSession(sessionId, st) {
 export function openFullSessionSheet(st) {
   const sheet = document.getElementById('session-sheet');
   if (!sheet) return;
+
+  sessionCustomPositions = [];
+  initCustomAdders();
 
   // Réinitialiser
   const dateEl = document.getElementById('session-date-input');
@@ -350,7 +413,8 @@ const ratingState = {};
 function renderPositionPicker() {
   const grid = document.getElementById('position-picker-grid');
   if (!grid) return;
-  grid.innerHTML = POSITIONS.map(p =>
+  
+  const defaultHtml = POSITIONS.map(p =>
     `<button type="button" class="pos-pick-btn" data-id="${p.id}"
       aria-label="${p.label}" title="${p.label}">
       <div class="pos-pick-svg">${p.svg}</div>
@@ -358,9 +422,89 @@ function renderPositionPicker() {
     </button>`
   ).join('');
 
+  const customHtml = sessionCustomPositions.map(label => {
+    const id = `custom:${label}`;
+    const e = escapeHtml(label);
+    return `<button type="button" class="pos-pick-btn" data-id="${escapeHtml(id)}"
+      aria-label="${e}" title="${e}">
+      <div class="pos-pick-svg">✨</div>
+      <span class="pos-pick-label">${e}</span>
+    </button>`;
+  }).join('');
+
+  grid.innerHTML = defaultHtml + customHtml;
+
   grid.querySelectorAll('.pos-pick-btn').forEach(btn => {
     btn.addEventListener('click', () => { btn.classList.toggle('sel'); syncRatingRows(); });
   });
+}
+
+function initCustomAdders() {
+  // Supprimer les boutons de pratiques personnalisées précédents
+  document.querySelectorAll('.act-tag-btn[data-custom="true"]').forEach(b => b.remove());
+
+  // Gestionnaire d'ajout de position
+  const addPosBtn = document.getElementById('btn-add-custom-pos');
+  const inputPos = document.getElementById('input-custom-pos');
+  const grid = document.getElementById('position-picker-grid');
+  if (addPosBtn && inputPos && grid) {
+    addPosBtn.onclick = null;
+    addPosBtn.onclick = () => {
+      const val = inputPos.value.trim();
+      if (!val) return;
+      if (!sessionCustomPositions.includes(val) && !POSITIONS.some(p => p.label === val)) {
+        sessionCustomPositions.push(val);
+        renderPositionPicker();
+        // Sélectionner automatiquement la nouvelle position
+        const newBtn = grid.querySelector(`.pos-pick-btn[data-id="${attrSel('custom:' + val)}"]`);
+        if (newBtn) {
+          newBtn.classList.add('sel');
+          syncRatingRows();
+        }
+      }
+      inputPos.value = '';
+    };
+  }
+
+  // Helper pour ajouter un tag de pratique
+  const addCustomPractice = (inputEl, containerEl) => {
+    const val = inputEl.value.trim();
+    if (!val) return;
+    const tag = `custom:${val}`;
+    
+    let existing = containerEl.querySelector(`.act-tag-btn[data-tag="${attrSel(tag)}"]`);
+    if (!existing) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'act-tag-btn sel';
+      btn.dataset.tag = tag;
+      btn.dataset.custom = 'true';
+      btn.textContent = `✨ ${val}`;
+      btn.addEventListener('click', () => btn.classList.toggle('sel'));
+      containerEl.appendChild(btn);
+    } else {
+      existing.classList.add('sel');
+    }
+    inputEl.value = '';
+  };
+
+  // Gestionnaire d'ajout de pratiques exécutées
+  const addPerfBtn = document.getElementById('btn-add-custom-practice-perf');
+  const inputPerf = document.getElementById('input-custom-practice-perf');
+  const containerPerf = document.getElementById('session-practices-performed');
+  if (addPerfBtn && inputPerf && containerPerf) {
+    addPerfBtn.onclick = null;
+    addPerfBtn.onclick = () => addCustomPractice(inputPerf, containerPerf);
+  }
+
+  // Gestionnaire d'ajout de pratiques reçues
+  const addRecBtn = document.getElementById('btn-add-custom-practice-rec');
+  const inputRec = document.getElementById('input-custom-practice-rec');
+  const containerRec = document.getElementById('session-practices-received');
+  if (addRecBtn && inputRec && containerRec) {
+    addRecBtn.onclick = null;
+    addRecBtn.onclick = () => addCustomPractice(inputRec, containerRec);
+  }
 }
 
 // Affiche une ligne de notation (/10 + douleur + trop profond) par position sélectionnée.
@@ -373,10 +517,12 @@ function syncRatingRows() {
   wrap.innerHTML = selected.map(id => {
     const pos = POSITIONS.find(p => p.id === id);
     const r = ratingState[id] || (ratingState[id] = { score: 0, pain: false, too_deep: false });
-    return `<div class="pos-rate-row" data-id="${id}">
-      <div class="pos-rate-name">${pos?.label || id}</div>
+    const rawName = pos?.label || (id.startsWith('custom:') ? `✨ ${id.replace('custom:', '')}` : id);
+    const displayName = escapeHtml(rawName);
+    return `<div class="pos-rate-row" data-id="${escapeHtml(id)}">
+      <div class="pos-rate-name">${displayName}</div>
       <div class="pos-rate-controls">
-        <input type="range" class="pos-rate-score" min="0" max="10" value="${r.score}" aria-label="Note sur 10 — ${pos?.label || id}">
+        <input type="range" class="pos-rate-score" min="0" max="10" value="${r.score}" aria-label="Note sur 10 — ${displayName}">
         <span class="pos-rate-val">${r.score ? r.score + '/10' : '—'}</span>
         <button type="button" class="pos-rate-flag ${r.pain ? 'on' : ''}" data-flag="pain" aria-pressed="${r.pain}">Douleur</button>
         <button type="button" class="pos-rate-flag ${r.too_deep ? 'on' : ''}" data-flag="too_deep" aria-pressed="${r.too_deep}">Trop profond</button>

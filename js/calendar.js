@@ -274,11 +274,12 @@ function renderPredictionPanel() {
     return;
   }
   const fmt = d => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  const margin = p.stdDev >= 1 ? ` ± ${Math.round(p.stdDev)} j` : '';
   panel.innerHTML = `
     <div class="pred-row">
       <div class="pred-item">
         <div class="pred-label">Prochaines règles</div>
-        <div class="pred-val" style="color:var(--rose)">${fmt(p.nextPeriodDate)}</div>
+        <div class="pred-val" style="color:var(--rose)">${fmt(p.nextPeriodDate)}${margin}</div>
       </div>
       <div class="pred-item">
         <div class="pred-label">Ovulation estimée</div>

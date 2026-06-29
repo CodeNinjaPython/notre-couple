@@ -50,7 +50,17 @@ export function navigate(name, params = {}) {
   if (viewInits[name]) {
     Promise.resolve(viewInits[name](params)).catch(err => {
       console.error(`[router] échec de l'init de la vue "${name}"`, err);
-      import('./ui-feedback.js').then(m => m.toast(m.friendlyError(err), 'error'));
+      import('./ui-feedback.js').then(m => {
+        m.toast(m.friendlyError(err), 'error');
+        container.innerHTML = `
+          <div class="app">
+            <div class="error-card" style="margin: 40px auto; max-width: 400px;">
+              <p>Impossible de charger la page :<br>${m.friendlyError(err)}</p>
+              <button type="button" class="btn-primary" onclick="window.location.reload()" style="margin-top: 10px;">Réessayer</button>
+            </div>
+          </div>
+        `;
+      });
     });
   }
 

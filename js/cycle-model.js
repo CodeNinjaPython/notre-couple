@@ -414,7 +414,7 @@ export function predictNextPeriodAdvanced(cyclesHistory = []) {
   return {
     nextPeriodDate: r.dateDesProchainesRegles,
     avgCycleLength: r.avgCycleLength,
-    stdDev: 0,
+    stdDev: r.variabilite,
     regular: r.confidence === 'haute',
     cyclesAnalyzed: r.cyclesAnalyzed,
     ovulationDate: r.ovulationDate,

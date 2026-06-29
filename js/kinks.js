@@ -20,6 +20,8 @@ const CATEGORIES = {
   jeux:          '🎲 Jeux',
 };
 
+let localKinkRatings = {};
+
 // ---------------------------------------------------------------------------
 // Init écran Désirs
 // ---------------------------------------------------------------------------
@@ -49,7 +51,9 @@ async function renderKinkList(st) {
 
   const kinks   = kinksRes.data  || [];
   const ratings = ratingsRes.data || [];
-  const ratingMap = Object.fromEntries(ratings.map(r => [r.kink_id, r]));
+  
+  // Remplir localKinkRatings
+  localKinkRatings = Object.fromEntries(ratings.map(r => [r.kink_id, r]));
 
   // Grouper par catégorie
   const byCat = {};
@@ -62,29 +66,65 @@ async function renderKinkList(st) {
     <div class="kink-category">
       <div class="kink-cat-label">${CATEGORIES[cat] || cat}</div>
       ${items.map(k => {
-        const r = ratingMap[k.id];
+        const r = localKinkRatings[k.id];
         const val = r?.desire ?? 0;
-        return `<div class="kink-row" data-kink="${k.id}">
-          <span class="kink-label">${k.label}</span>
-          <div class="kink-slider-wrap">
-            <input type="range" class="kink-slider" min="0" max="5" value="${val}"
-              data-kink="${k.id}" aria-label="${k.label} — désir 0 à 5">
-            <span class="kink-val">${val > 0 ? val : '—'}</span>
+        return `<div class="kink-row" data-kink="${k.id}" style="display: flex; flex-direction: column; align-items: stretch; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <span class="kink-label">${k.label}</span>
+            <div class="kink-slider-wrap">
+              <input type="range" class="kink-slider" min="0" max="5" value="${val}"
+                data-kink="${k.id}" aria-label="${k.label} — désir 0 à 5">
+              <span class="kink-val">${val > 0 ? val : '—'}</span>
+            </div>
+          </div>
+          <div class="kink-note-container" style="width: 100%; display: ${val > 0 ? 'block' : 'none'};">
+            <input type="text" class="kink-note-input" data-kink="${k.id}" placeholder="Note privée (ex: scénarios, limites, idées...)" value="${escapeHtml(r?.note || '')}" style="width: 100%; padding: 6px 10px; font-size: 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text);">
           </div>
         </div>`;
       }).join('')}
     </div>`
   ).join('');
 
-  // Événements slider (debounce 600ms)
+  // Événements slider et note
   const timers = {};
+  
+  // Événements slider (debounce 600ms)
   wrap.querySelectorAll('.kink-slider').forEach(slider => {
     slider.addEventListener('input', () => {
       const kinkId = slider.dataset.kink;
       const val    = parseInt(slider.value);
       slider.nextElementSibling.textContent = val > 0 ? val : '—';
+      
+      const noteContainer = slider.closest('.kink-row').querySelector('.kink-note-container');
+      if (noteContainer) {
+        noteContainer.style.display = val > 0 ? 'block' : 'none';
+      }
+      
+      const r = localKinkRatings[kinkId] || (localKinkRatings[kinkId] = { desire: 0, shared: false });
+      r.desire = val;
+      r.shared = val > 0;
+      if (val === 0) {
+        r.note = null;
+        const noteInput = slider.closest('.kink-row').querySelector('.kink-note-input');
+        if (noteInput) noteInput.value = '';
+      }
+      
       clearTimeout(timers[kinkId]);
-      timers[kinkId] = setTimeout(() => saveKinkRating(kinkId, val), 600);
+      timers[kinkId] = setTimeout(() => saveKinkRating(kinkId, r), 600);
+    });
+  });
+
+  // Événements note (debounce 800ms)
+  wrap.querySelectorAll('.kink-note-input').forEach(input => {
+    input.addEventListener('input', () => {
+      const kinkId = input.dataset.kink;
+      const noteVal = input.value.trim();
+      
+      const r = localKinkRatings[kinkId] || (localKinkRatings[kinkId] = { desire: 0, shared: false });
+      r.note = noteVal || null;
+      
+      clearTimeout(timers[kinkId + '-note']);
+      timers[kinkId + '-note'] = setTimeout(() => saveKinkRating(kinkId, r), 800);
     });
   });
 
@@ -92,12 +132,14 @@ async function renderKinkList(st) {
   initKinkSliderGradients();
 }
 
-async function saveKinkRating(kinkId, desire) {
-  await supabase.from('kink_ratings').upsert({
+async function saveKinkRating(kinkId, r) {
+  const { error } = await supabase.from('kink_ratings').upsert({
     kink_id: kinkId,
-    desire,
-    shared: desire > 0,  // intérêt visible du partenaire dès que > 0
+    desire: r.desire,
+    shared: r.shared,
+    note: r.note || null,
   }, { onConflict: 'user_id,kink_id' });
+  if (error) console.error('saveKinkRating:', error.message);
 }
 
 // ---------------------------------------------------------------------------

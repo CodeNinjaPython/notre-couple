@@ -10,7 +10,7 @@ import { POSITIONS } from './intimacy-library.js';
 import { diffDays } from './date-utils.js';
 
 const PHASE_LABEL = { menstruelle: 'règles', folliculaire: 'folliculaire', ovulation: 'ovulation', luteale: 'lutéale' };
-const labelOf = (id) => POSITIONS.find(p => p.id === id)?.label || id;
+const labelOf = (id) => POSITIONS.find(p => p.id === id)?.label || (id.startsWith('custom:') ? `✨ ${id.replace('custom:', '')}` : id);
 
 // Phase du cycle pour une date donnée, d'après l'historique des règles.
 function phaseForDate(date, cycles) {
