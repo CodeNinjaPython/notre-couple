@@ -539,6 +539,8 @@ input::placeholder { color: var(--faint); font-weight: 400; }
   transform: translateY(100%);
   transition: transform .32s cubic-bezier(.4,0,.2,1);
   box-shadow: var(--sh-lg);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 .sheet-backdrop.open .sheet { transform: translateY(0); }
 .sheet-handle {
@@ -1235,6 +1237,12 @@ body.demo-mode .demo-badge {
 .challenge-check { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0; flex-shrink: 0; }
 .challenge-title { font-size: 14px; font-weight: 600; color: var(--text); }
 .challenge-date  { font-size: 11px; color: var(--faint); font-family: "DM Mono", monospace; margin-top: 3px; }
+.challenge-desc { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+
+.challenge-progress { margin-bottom: 16px; }
+.progress-bar-track { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--violet); transition: width .5s; border-radius: 4px; }
+.progress-label { font-size: 11px; font-weight: 700; color: var(--faint); font-family: "DM Mono", monospace; margin-top: 6px; text-align: right; }
 
 /* Session sheet — grilles mood/loc */
 .mood-grid, .loc-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
@@ -1301,7 +1309,9 @@ body.demo-mode .demo-badge {
 /* ─── Premières fois ──────────────────────────────────────────────────── */
 .first-item { padding: 10px 0; border-top: 1.5px solid var(--line); }
 .first-item:first-child { border-top: none; }
-.first-date { font-family: "DM Mono", monospace; font-size: 11px; color: var(--faint); margin-bottom: 4px; }
+.first-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.first-date { font-family: "DM Mono", monospace; font-size: 11px; color: var(--faint); }
+.first-actions { display: flex; gap: 4px; }
 .first-desc { font-size: 14px; font-weight: 600; color: var(--text); }
 .first-note { font-size: 12px; color: var(--muted); margin-top: 4px; font-style: italic; }
 
@@ -2327,6 +2337,10 @@ header { position: relative; }
   padding: 4px 0; border-top: 1px solid var(--line);
 }
 .ihm-tt-row strong { color: var(--text); }
+
+/* Fondu cosmétique des sous-sections Intime (la bascule reste synchrone en JS). */
+.intime-section.anim-in { animation: intime-fade-in .22s ease both; }
+@keyframes intime-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* ─── Accessibility + motion ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

@@ -25,44 +25,28 @@ let _state = null;
  * @param {Element} container
  * @param {{ coupleId: string, elleId: string }} opts
  */
-export async function renderIntimacyHeatmap(container, { coupleId, elleId }) {
+export async function renderIntimacyHeatmap(container, { coupleId, elleId }, data) {
   if (!container) return;
   const now = new Date();
   _state = {
     container, coupleId, elleId,
     year: now.getFullYear(), month: now.getMonth(),
-    sessions: {}, entries: {}, filter: 'all',
+    sessions: {}, entries: {}, filter: 'all', allData: data,
   };
-  await _load();
+  _processDataForCurrentMonth();
   _mount();
 }
 
 // ── Chargement ─────────────────────────────────────────────────────────────
 
-async function _load() {
-  const { year, month, coupleId, elleId } = _state;
+function _processDataForCurrentMonth() {
+  const { year, month, allData } = _state;
   const first = `${year}-${String(month + 1).padStart(2,'0')}-01`;
   const last  = localDateStr(new Date(year, month + 1, 0));
 
-  const [{ data: sessDates }, { data: logs }] = await Promise.all([
-    supabase.from('intimate_sessions')
-      .select('id,session_date,duration_min,mood')
-      .eq('couple_id', coupleId)
-      .gte('session_date', first).lte('session_date', last),
-    supabase.from('log_entries')
-      .select('log_date,value')
-      .eq('user_id', elleId)
-      .eq('category_id', 'journal')
-      .gte('log_date', first).lte('log_date', last),
-  ]);
-
-  // Charger les feedbacks séparément (évite await imbriqué + .in vide)
-  const sessIds = (sessDates || []).map(s => s.id);
-  const { data: feedbacks } = sessIds.length
-    ? await supabase.from('session_feedback')
-        .select('session_id,user_id,satisfaction,orgasms')
-        .in('session_id', sessIds)
-    : { data: [] };
+  const sessDates = (allData.sessions || []).filter(s => s.session_date >= first && s.session_date <= last);
+  const logs = (allData.entries || []).filter(e => e.log_date >= first && e.log_date <= last);
+  const feedbacks = (allData.feedbacks || []).filter(f => sessDates.some(s => s.id === f.session_id));
 
   // Sessions map: session_date → [{...session, feedbacks:[]}]
   const sessMap = {};
@@ -115,11 +99,11 @@ function _mount() {
 
   container.querySelector('#ihm-prev').addEventListener('click', async () => {
     _state.month--; if (_state.month < 0) { _state.month = 11; _state.year--; }
-    await _load(); _renderGrid();
+    _processDataForCurrentMonth(); _renderGrid();
   });
   container.querySelector('#ihm-next').addEventListener('click', async () => {
     _state.month++; if (_state.month > 11) { _state.month = 0; _state.year++; }
-    await _load(); _renderGrid();
+    _processDataForCurrentMonth(); _renderGrid();
   });
   container.querySelectorAll('.ihm-filter').forEach(btn =>
     btn.addEventListener('click', () => {

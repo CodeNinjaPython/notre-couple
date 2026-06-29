@@ -10,6 +10,7 @@
 import { supabase } from './supabase.js';
 import { getIntimacyState, initKinkSliderGradients } from './intimacy.js';
 import { toast, formDialog, friendlyError } from './ui-feedback.js';
+import { diffDays } from './date-utils.js';
 
 const CATEGORIES = {
   atmosphere:    '✨ Atmosphère',
@@ -28,9 +29,7 @@ export async function initKinks() {
     renderKinkList(st),
     renderMatches(st),
     renderWishlist(st),
-    renderMyLimits(st),
-    renderCheckIn(st),
-    renderLibidoParPhase(st),
+    renderMyLimits(st)
   ]);
   initAddLimit(st);
   initAddWish(st);
@@ -242,30 +241,20 @@ const PHASE_RANGES_K = [[1,5],[6,13],[14,16],[17,35]];
 const PHASE_NAMES_K  = ['Menstruelle','Folliculaire','Ovulation','Lutéale'];
 const PHASE_COLORS_K = { Menstruelle:'#E53935', Folliculaire:'#4278C4', Ovulation:'#7C5CFC', Lutéale:'#E84375' };
 
-async function renderLibidoParPhase(st) {
+export function renderLibidoParPhase(elleId, { entries, cycles }) {
   const el = document.getElementById('libido-par-phase');
   if (!el) return;
 
-  // Libido de elle (qui tracks_cycle)
-  const elleId = st.me?.tracks_cycle ? st.me.user_id : st.partner?.user_id;
   if (!elleId) { el.innerHTML = '<p class="intime-empty">—</p>'; return; }
 
-  const [libidoRes, cyclesRes] = await Promise.all([
-    supabase.from('log_entries').select('log_date, value')
-      .eq('user_id', elleId).eq('category_id', 'libido')
-      .order('log_date', { ascending: false }).limit(90),
-    supabase.from('cycles').select('period_start')
-      .order('period_start', { ascending: false }).limit(4),
-  ]);
+  const libidos = entries.filter(e => e.value?.libidoScale != null);
 
-  const libidos = libidoRes.data || [];
-  const cycles  = cyclesRes.data || [];
   if (!libidos.length || !cycles.length) {
     el.innerHTML = '<p class="intime-empty">Plus de données de libido pour voir les tendances par phase.</p>';
     return;
   }
 
-  const { diffDays: diff } = await import('./date-utils.js');
+  const diff = diffDays;
   const byPhase = { Menstruelle:[], Folliculaire:[], Ovulation:[], Lutéale:[] };
 
   libidos.forEach(l => {
@@ -273,8 +262,8 @@ async function renderLibidoParPhase(st) {
     if (!cycle) return;
     const day   = diff(l.log_date, cycle.period_start) + 1;
     const idx   = PHASE_RANGES_K.findIndex(([a, b]) => day >= a && day <= b);
-    const phase = PHASE_NAMES_K[idx >= 0 ? idx : 3];
-    const v     = Number(l.value?.v ?? l.value);
+    const phase = PHASE_NAMES_K[idx >= 0 ? idx : 3]; // Fallback to Luteal
+    const v     = Number(l.value?.libidoScale);
     if (!isNaN(v)) byPhase[phase].push(v);
   });
 

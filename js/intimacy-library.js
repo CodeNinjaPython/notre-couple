@@ -535,7 +535,7 @@ export function getSuggestions(phase, luiMood) {
 
 // ─── Rendu de la bibliothèque ──────────────────────────────────────────────
 
-export function renderLibrary(container, filter = {}) {
+export function renderLibrary(container, filter = {}, loggedToday = new Set()) {
   if (!container) return;
   const positions = filterPositions(filter);
 
@@ -548,8 +548,9 @@ export function renderLibrary(container, filter = {}) {
     const intLabel  = p.intensity === 1 ? 'Douce' : p.intensity === 2 ? 'Modérée' : 'Intense';
     const comfLabel = p.comfort   === 1 ? 'Facile' : p.comfort   === 2 ? 'Intermédiaire' : 'Acrobatique';
     const phaseStr  = p.phases.map(ph => PHASES_LABELS[ph]?.label || ph).join(', ');
+    const isLogged = loggedToday.has(p.label);
 
-    return `<div class="pos-card" data-id="${p.id}" role="button" tabindex="0"
+    return `<div class="pos-card ${isLogged ? 'pos-card--logged' : ''}" data-id="${p.id}" role="button" tabindex="0"
       aria-label="${p.label} — ${p.desc}">
       <div class="pos-svg">${p.svg}</div>
       <div class="pos-info">

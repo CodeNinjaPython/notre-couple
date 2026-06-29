@@ -195,7 +195,14 @@ async function routeAfterAuth() {
   if (!membership) {
     navigate('pairing');
   } else {
-    navigate('today');
+      const hash = window.location.hash.slice(1);
+      const [view, section] = hash.split('/');
+      // Si un hash est présent et correspond à une vue, on navigue dessus, sinon 'today'
+      if (hash && viewInits[view]) {
+        navigate(view, { section });
+      } else {
+        navigate('today');
+      }
     initQuickLogBar();
     if (!IS_DEMO) setTimeout(() => maybeShowNotifBanner(), 2000);
   }

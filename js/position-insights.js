@@ -30,27 +30,21 @@ function phaseForDate(date, cycles) {
 let _last = null;
 let _listenerBound = false;
 
-export async function renderPositionInsights(containerId, coupleId) {
+export async function renderPositionInsights(containerId, data) {
   const el = document.getElementById(containerId);
-  if (!el || !coupleId) return;
-  _last = { containerId, coupleId };
+  if (!el) return;
+  _last = { containerId, data };
 
   // Rechargement auto après une sauvegarde de session (lié une fois).
   if (!_listenerBound) {
     _listenerBound = true;
     document.addEventListener('nc:session-saved', () => {
-      if (_last && document.getElementById(_last.containerId)) {
-        renderPositionInsights(_last.containerId, _last.coupleId);
-      }
+      // TODO: This should trigger a re-render of the whole stats section
+      // For now, this part of the live-update is disabled by this refactoring.
     });
   }
 
-  const [ratingsRes, cyclesRes] = await Promise.all([
-    supabase.from('position_ratings').select('position_id, score, pain, too_deep, rated_on').eq('couple_id', coupleId),
-    supabase.from('cycles').select('period_start').order('period_start', { ascending: false }).limit(24),
-  ]);
-  const ratings = ratingsRes.data || [];
-  const cycles = cyclesRes.data || [];
+  const { ratings, cycles } = data;
 
   if (!ratings.length) {
     el.innerHTML = '<p class="intime-empty">Notez des positions après vos moments pour faire émerger vos favorites et repérer les jours sensibles.</p>';

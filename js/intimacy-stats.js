@@ -16,31 +16,20 @@ function showStatError(el, msg) {
 
 // ─── Heatmap mensuelle ─────────────────────────────────────────────────────
 
-export async function renderMonthlyHeatmap(coupleId, elleId) {
+export async function renderMonthlyHeatmap(coupleId, elleId, data) {
   const el = document.getElementById('intimacy-heatmap');
   if (!el) return;
 
   // Utiliser le nouveau composant rich si elleId fourni
   if (elleId) {
-    await renderIntimacyHeatmap(el, { coupleId, elleId });
+    await renderIntimacyHeatmap(el, { coupleId, elleId }, data);
     return;
   }
-
+  // Fallback to simple heatmap if no elleId (should not happen in normal flow)
   try {
-    const now      = new Date();
-    const year     = now.getFullYear();
-    const month    = now.getMonth();
-    const firstDay = `${year}-${String(month+1).padStart(2,'0')}-01`;
-    const lastDay  = localDateStr(new Date(year, month+1, 0));
-
-    const { data, error } = await supabase
-      .from('intimate_sessions')
-      .select('session_date, duration_min')
-      .eq('couple_id', coupleId)
-      .gte('session_date', firstDay)
-      .lte('session_date', lastDay);
-
+    const { data, error } = await supabase.from('intimate_sessions').select('session_date').eq('couple_id', coupleId);
     if (error) throw error;
+    const now = new Date(), year = now.getFullYear(), month = now.getMonth();
 
     const today       = localDateStr();
     const byDate      = {};
@@ -89,27 +78,12 @@ export async function renderMonthlyHeatmap(coupleId, elleId) {
 
 // ─── Courbe de satisfaction (SVG) ─────────────────────────────────────────
 
-export async function renderSatisfactionCurve(userId) {
+export function renderSatisfactionCurve(userId, { sessions, feedbacks }) {
   const el = document.getElementById('satisfaction-curve');
   if (!el) return;
 
   try {
-    const { data: sessions, error: sErr } = await supabase
-      .from('intimate_sessions')
-      .select('id, session_date')
-      .order('session_date')
-      .limit(30);
-
-    if (sErr) throw sErr;
     if (!sessions?.length) { el.innerHTML = '<p class="intime-empty">Pas encore assez de sessions pour la courbe.</p>'; return; }
-
-    const { data: feedbacks, error: fErr } = await supabase
-      .from('session_feedback')
-      .select('session_id, satisfaction')
-      .eq('user_id', userId)
-      .in('session_id', sessions.map(s => s.id));
-
-    if (fErr) throw fErr;
 
     const fbMap = Object.fromEntries((feedbacks || []).map(f => [f.session_id, f.satisfaction]));
     const points = sessions
@@ -183,7 +157,7 @@ const PHASES_DEF = [
   { id: 'luteale',      label: 'Lutéale',       range: [17,35], color: '#E84375' },
 ];
 
-export async function renderOrgasmByPhase(st) {
+export function renderOrgasmByPhase(st, { sessions, cycles, feedbacks }) {
   const el = document.getElementById('orgasm-by-phase');
   if (!el) return;
 
@@ -191,17 +165,6 @@ export async function renderOrgasmByPhase(st) {
   if (!elleId) { el.innerHTML = '<p class="intime-empty">—</p>'; return; }
 
   try {
-    const [sessRes, cycRes, fbRes] = await Promise.all([
-      supabase.from('intimate_sessions').select('id, session_date').eq('couple_id', st.coupleId).limit(50),
-      supabase.from('cycles').select('period_start').order('period_start', { ascending: false }).limit(6),
-      supabase.from('session_feedback').select('session_id, orgasms, user_id').eq('shared', false),
-    ]);
-
-    if (sessRes.error) throw sessRes.error;
-    const sessions = sessRes.data || [];
-    const cycles   = cycRes.data  || [];
-    const feedbacks = fbRes.data  || [];
-
     if (!sessions.length || !cycles.length) {
       el.innerHTML = '<p class="intime-empty">Plus de sessions pour voir les corrélations par phase.</p>';
       return;
@@ -403,26 +366,20 @@ export async function renderDebriefPostDispute(coupleId, partnerName) {
 
 // ─── Équité du plaisir ──────────────────────────────────────────────────────
 
-export async function renderEquitePlaisir(st) {
+export function renderEquitePlaisir(st, sharedFeedbacks) {
   const el = document.getElementById('equite-plaisir');
   if (!el || !st.partner) { el && (el.innerHTML = '<p class="intime-empty">En attente de votre partenaire.</p>'); return; }
 
   try {
-    const { data, error } = await supabase
-      .from('session_feedback')
-      .select('user_id, orgasms, satisfaction')
-      .eq('shared', true);
-
-    if (error) throw error;
-    if (!data?.length || data.length < 3) {
+    if (!sharedFeedbacks?.length || sharedFeedbacks.length < 3) {
       el.innerHTML = '<p class="intime-empty">Partagez vos feedbacks pour voir les tendances.</p>';
       return;
     }
 
     const myName      = st.me?.display_name    || 'Moi';
     const partnerName = st.partner?.display_name || 'Partenaire';
-    const myData      = data.filter(f => f.user_id === st.me?.user_id);
-    const theirData   = data.filter(f => f.user_id === st.partner?.user_id);
+    const myData      = sharedFeedbacks.filter(f => f.user_id === st.me?.user_id);
+    const theirData   = sharedFeedbacks.filter(f => f.user_id === st.partner?.user_id);
 
     const avgSat  = (arr) => arr.length ? (arr.reduce((a, f) => a + (f.satisfaction||0), 0) / arr.length).toFixed(1) : '—';
     const orgRate = (arr) => arr.length ? `${Math.round(arr.filter(f => f.orgasms > 0).length / arr.length * 100)}%` : '—';
@@ -445,7 +402,7 @@ export async function renderEquitePlaisir(st) {
         </div>
       </div>
       <p style="font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:10px;line-height:1.6">
-        ${data.length} feedbacks partagés · Informatif, pas un score de performance.
+        ${sharedFeedbacks.length} feedbacks partagés · Informatif, pas un score de performance.
       </p>`;
 
   } catch (e) {
@@ -468,23 +425,12 @@ const PAIN_KEYWORDS = [
   'piqûre', 'pique', 'sensible', 'sensibilité',
 ];
 
-export async function renderHealthAlerts(userId) {
+export function renderHealthAlerts(userId, feedbacks) {
   const el = document.getElementById('health-alerts');
   if (!el) return;
 
   try {
-    const since = new Date(Date.now() - 30 * 864e5).toISOString().split('T')[0];
-
-    const { data, error } = await supabase
-      .from('session_feedback')
-      .select('improve_txt, created_at')
-      .eq('user_id', userId)
-      .gte('created_at', since + 'T00:00:00Z')
-      .not('improve_txt', 'is', null);
-
-    if (error) throw error;
-
-    const painMentions = (data || []).filter(f =>
+    const painMentions = (feedbacks || []).filter(f =>
       PAIN_KEYWORDS.some(k => f.improve_txt?.toLowerCase().includes(k))
     );
 

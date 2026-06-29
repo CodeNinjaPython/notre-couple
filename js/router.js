@@ -45,7 +45,11 @@ export function navigate(name, params = {}) {
     });
   }
 
-  window.location.hash = name;
+  const subpath = params.section ? `/${params.section}` : '';
+  const newHash = `#${name}${subpath}`;
+  // history.replaceState met à jour l'URL sans ajouter d'entrée à l'historique du navigateur,
+  // ce qui est idéal pour la navigation entre onglets.
+  history.replaceState(null, '', newHash);
 }
 
 export function initNavButtons() {

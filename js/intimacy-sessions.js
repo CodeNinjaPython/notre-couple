@@ -6,11 +6,16 @@
 import { supabase } from './supabase.js';
 import { localDateStr, fmtDate, diffDays } from './date-utils.js';
 import { POSITIONS } from './intimacy-library.js';
+import { toast, confirmDialog, friendlyError } from './ui-feedback.js';
 import { syncSessionToDailyLog } from './session-bridge.js';
 
 const MOODS = { tender:'🥰', playful:'😄', passionate:'🔥', spontaneous:'⚡' };
 const MOOD_LABELS = { tender:'Tendre', playful:'Joueur·se', passionate:'Passionné·e', spontaneous:'Spontané·e' };
 const LOCATIONS   = { maison:'🏠 Maison', voyage:'✈️ Voyage', hotel:'🏨 Hôtel', autre:'📍 Autre' };
+
+// Garde en mémoire la session en cours d'édition pour la sauvegarde.
+// `null` si c'est une nouvelle session.
+let currentEditingSession = null;
 
 // ─── Erreur UI ─────────────────────────────────────────────────────────────
 
@@ -76,11 +81,54 @@ export async function renderRecentSessions(st) {
             ${tags ? `<div class="session-tags">${tags}</div>` : ''}
           </div>
           <div class="session-sat" aria-label="Satisfaction ${sat}">${sat}${partnerSat}</div>
+          <button type="button" class="session-delete btn-icon" data-id="${s.id}" aria-label="Supprimer ce moment">×</button>
         </div>
         ${s.note ? `<div class="session-note">${s.note}</div>` : ''}
         ${myFb?.loved_txt ? `<div class="session-loved">❤️ ${myFb.loved_txt}</div>` : ''}
       </div>`;
     }).join('');
+
+    // Attacher les écouteurs pour la suppression
+    wrap.querySelectorAll('.session-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation(); // Évite de déclencher d'autres clics sur la carte
+        const sessionId = btn.dataset.id;
+
+        const confirmed = await confirmDialog({
+          title: 'Supprimer ce moment ?',
+          message: 'Cette action est irréversible. Le moment et tous les feedbacks associés seront effacés.',
+          confirmLabel: 'Oui, supprimer'
+        });
+
+        if (confirmed) {
+          try {
+            // Retirer d'abord les notes de position (FK on delete set null → sinon
+            // elles resteraient comptées dans le bilan/suggestions).
+            try { await supabase.from('position_ratings').delete().eq('session_id', sessionId); }
+            catch (e) { console.warn('position_ratings delete:', e?.message || e); }
+
+            const { error } = await supabase.from('intimate_sessions').delete().eq('id', sessionId);
+            if (error) throw error;
+
+            toast('Moment supprimé.');
+            await renderRecentSessions(st);
+            notifySessionSaved(); // Notifie les autres composants (ex: calendrier)
+          } catch (error) {
+            toast(friendlyError(error), 'error');
+            console.error('Delete session error:', error);
+          }
+        }
+      });
+    });
+
+    // Tap on a card to edit it
+    wrap.querySelectorAll('.session-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Empêcher l'édition lors du clic sur le bouton de suppression
+        if (e.target.closest('.session-delete')) return;
+        loadAndEditSession(card.dataset.id, st);
+      });
+    });
 
     // Équilibre d'initiation (neutre)
     const initiators = data.map(s => s.created_by);
@@ -113,6 +161,79 @@ export async function renderRecentSessions(st) {
   }
 }
 
+/**
+ * Charge une session existante par son ID et ouvre le formulaire pour l'éditer.
+ * @param {string} sessionId
+ * @param {object} st - L'état global de l'intimité (me, partner, coupleId)
+ */
+async function loadAndEditSession(sessionId, st) {
+  try {
+    const { data: session, error } = await supabase
+      .from('intimate_sessions')
+      .select('*, session_activities(tags)')
+      .eq('id', sessionId)
+      .single();
+
+    if (error) throw error;
+    if (!session) {
+      toast('Moment introuvable.', 'error');
+      return;
+    }
+
+    currentEditingSession = session; // Définit l'état d'édition
+
+    // Ouvre la feuille de saisie (qui réinitialise d'abord tous les champs)
+    openFullSessionSheet(st);
+
+    // Remplit les champs avec les données de la session chargée
+    document.getElementById('session-date-input').value = session.session_date;
+    document.querySelector(`.mood-btn[data-mood="${session.mood}"]`)?.classList.add('sel');
+    document.querySelector(`.loc-btn[data-loc="${session.location}"]`)?.classList.add('sel');
+    document.getElementById('session-duration').value = session.duration_min || '';
+    document.getElementById('session-note-input').value = session.note || '';
+
+    // Détails JSONB (nouveaux champs)
+    const details = session.details || {};
+    (details.practices_performed || []).forEach(tag => {
+      document.querySelector(`#session-practices-performed .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
+    });
+    (details.practices_received || []).forEach(tag => {
+      document.querySelector(`#session-practices-received .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
+    });
+    (details.feelings || []).forEach(tag => {
+      document.querySelector(`#session-feelings .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
+    });
+    (details.protection_me || []).forEach(tag => {
+      document.querySelector(`#session-protection-me .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
+    });
+    (details.protection_partner || []).forEach(tag => {
+      document.querySelector(`#session-protection-partner .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
+    });
+    document.getElementById('session-ejaculation').value = details.ejaculation || 'inconnu';
+
+    // Positions (stockées dans session_activities)
+    const positionIds = session.session_activities?.[0]?.tags || [];
+    positionIds.forEach(id => {
+      document.querySelector(`.pos-pick-btn[data-id="${id}"]`)?.classList.add('sel');
+    });
+
+    // Recharger les notes de position existantes (sinon la sauvegarde les effacerait).
+    try {
+      const { data: prevRatings } = await supabase.from('position_ratings')
+        .select('position_id, score, pain, too_deep').eq('session_id', sessionId);
+      (prevRatings || []).forEach(r => {
+        ratingState[r.position_id] = { score: r.score || 0, pain: !!r.pain, too_deep: !!r.too_deep };
+      });
+    } catch (e) { /* table absente / pas de notes → ignore */ }
+
+    syncRatingRows(); // Affiche les lignes de notation (valeurs existantes incluses)
+
+  } catch (e) {
+    toast(friendlyError(e), 'error');
+    console.error('loadAndEditSession error:', e);
+  }
+}
+
 // ─── Formulaire complet ────────────────────────────────────────────────────
 
 export function openFullSessionSheet(st) {
@@ -123,7 +244,7 @@ export function openFullSessionSheet(st) {
   const dateEl = document.getElementById('session-date-input');
   if (dateEl) { dateEl.value = localDateStr(); dateEl.max = localDateStr(); }
 
-  document.querySelectorAll('.mood-btn, .loc-btn, .act-tag-btn, .prelim-chip').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('.mood-btn, .loc-btn, .act-tag-btn, .prelim-chip, .pos-pick-btn').forEach(b => b.classList.remove('sel'));
 
   // Réinitialiser la notation des positions
   Object.keys(ratingState).forEach(k => delete ratingState[k]);
@@ -131,7 +252,7 @@ export function openFullSessionSheet(st) {
   if (ratingsWrap) ratingsWrap.innerHTML = '';
 
   ['session-duration', 'session-prelim-duration', 'session-note-input'].forEach(id => {
-    const el = document.getElementById(id);
+    const el = document.getElementById(id); // @ts-ignore
     if (el) el.value = '';
   });
 
@@ -145,6 +266,11 @@ export function openFullSessionSheet(st) {
   document.querySelectorAll('.orgasm-chip').forEach(c => {
     c.classList.toggle('sel', c.dataset.val === '0');
   });
+
+  // Réinitialiser le nouveau champ select
+  const ejacEl = document.getElementById('session-ejaculation');
+  if (ejacEl) ejacEl.value = 'inconnu';
+
 
   // Mettre à jour les noms partenaires
   if (st?.me) {
@@ -166,6 +292,10 @@ export function openFullSessionSheet(st) {
   document.getElementById('btn-session-save')?.addEventListener('click', () => saveFullSession(st), { once: true });
   document.getElementById('btn-session-cancel')?.addEventListener('click', closeSessionSheet, { once: true });
   document.getElementById('btn-fast-track')?.addEventListener('click', () => openFastTrack(st), { once: true });
+}
+
+export function prepareNewSession() {
+  currentEditingSession = null;
 }
 
 export function closeSessionSheet() {
@@ -233,13 +363,24 @@ function syncRatingRows() {
 }
 
 async function saveFullSession(st) {
+  const isEditing = !!currentEditingSession;
+
   const date         = document.getElementById('session-date-input')?.value || localDateStr();
   const mood         = document.querySelector('.mood-btn.sel')?.dataset.mood || null;
   const location     = document.querySelector('.loc-btn.sel')?.dataset.loc  || null;
   const dur          = parseInt(document.getElementById('session-duration')?.value)      || null;
-  const note         = document.getElementById('session-note-input')?.value?.trim()      || null;
-  const actTags      = [...document.querySelectorAll('.act-tag-btn.sel')].map(b => b.dataset.tag);
+  const note         = document.getElementById('session-note-input')?.value?.trim() || null;
   const positionIds  = [...document.querySelectorAll('.pos-pick-btn.sel')].map(b => b.dataset.id);
+
+  // Nouveaux champs détaillés
+  const details = {
+    practices_performed:  [...document.querySelectorAll('#session-practices-performed .sel')].map(b => b.dataset.tag),
+    practices_received:   [...document.querySelectorAll('#session-practices-received .sel')].map(b => b.dataset.tag),
+    feelings:             [...document.querySelectorAll('#session-feelings .sel')].map(b => b.dataset.tag),
+    protection_me:        [...document.querySelectorAll('#session-protection-me .sel')].map(b => b.dataset.tag),
+    protection_partner:   [...document.querySelectorAll('#session-protection-partner .sel')].map(b => b.dataset.tag),
+    ejaculation:          document.getElementById('session-ejaculation')?.value || 'inconnu',
+  };
 
   // Préliminaires
   const prelimOn    = document.getElementById('session-prelim-toggle')?.checked ?? false;
@@ -257,30 +398,44 @@ async function saveFullSession(st) {
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
 
   try {
-    const { data: session, error } = await supabase.from('intimate_sessions').insert({
+    const sessionPayload = {
       couple_id:     st.coupleId,
       created_by:    st.me?.user_id,
       session_date:  date,
       mood, location,
       duration_min:  dur,
       note,
-      activity_tags: actTags,
       prelim_min:    prelimOn ? (prelimDur || null) : null,
       prelim_intensity: prelimOn ? (prelimInt || null) : null,
       partner_orgasm:   ptOrgasms || null,
-    }).select().single();
+      details, // NOTE: nécessite une colonne 'details' de type JSONB sur la table 'intimate_sessions'
+    };
+
+    const persist = (payload) => isEditing
+      ? supabase.from('intimate_sessions').update(payload).eq('id', currentEditingSession.id).select().single()
+      : supabase.from('intimate_sessions').insert(payload).select().single();
+
+    let { data: session, error } = await persist(sessionPayload);
+    // Repli si la colonne 'details' n'existe pas encore (migration non exécutée) :
+    // on enregistre quand même le moment, sans les champs détaillés.
+    if (error && /details/i.test(error.message || '')) {
+      const { details: _omit, ...withoutDetails } = sessionPayload;
+      ({ data: session, error } = await persist(withoutDetails));
+    }
 
     if (error) throw error;
 
-    // Sauvegarder les positions si sélectionnées
-    if (positionIds.length && session?.id) {
-      await supabase.from('session_activities').insert({
-        session_id: session.id,
-        tags: positionIds,
-      });
+    // Positions : en édition on repart de zéro (sinon des positions retirées
+    // resteraient). On réinsère seulement s'il en reste.
+    if (session?.id) {
+      if (isEditing) await supabase.from('session_activities').delete().eq('session_id', session.id);
+      if (positionIds.length) {
+        if (!isEditing) await supabase.from('session_activities').delete().eq('session_id', session.id);
+        await supabase.from('session_activities').insert({ session_id: session.id, tags: positionIds });
+      }
     }
 
-    // Notes de position (Phase 1) — best-effort : n'échoue pas la session si la
+    // Notes de position (Phase 3) — best-effort : n'échoue pas la session si la
     // table position_ratings n'existe pas encore (schéma à exécuter).
     if (session?.id) {
       const ratings = positionIds
@@ -292,8 +447,15 @@ async function saveFullSession(st) {
           pain: !!r.pain, too_deep: !!r.too_deep, rated_on: date,
         }));
       if (ratings.length) {
-        try { await supabase.from('position_ratings').insert(ratings); }
+        try {
+          await supabase.from('position_ratings').delete().eq('session_id', session.id);
+          await supabase.from('position_ratings').insert(ratings);
+        }
         catch (e) { console.warn('position_ratings:', e?.message || e); }
+      } else if (isEditing) {
+        // If no ratings are selected anymore on edit, clear them from DB
+        try { await supabase.from('position_ratings').delete().eq('session_id', session.id); }
+        catch (e) { console.warn('position_ratings delete:', e?.message || e); }
       }
     }
 
@@ -301,8 +463,8 @@ async function saveFullSession(st) {
     await renderRecentSessions(st);
     notifySessionSaved();
 
-    // Ouvrir le feedback post-séance, pré-rempli avec l'orgasme déclaré
-    if (session?.id) {
+    // Ouvrir le feedback post-séance pour les nouvelles sessions, pré-rempli avec l'orgasme déclaré
+    if (!isEditing && session?.id) {
       setTimeout(() => openFeedbackSheet(session.id, st, myOrgasms, date), 350);
     }
 
@@ -311,6 +473,7 @@ async function saveFullSession(st) {
     console.error('saveFullSession:', e.message);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer → Feedback rapide'; }
+    currentEditingSession = null;
   }
 }
 

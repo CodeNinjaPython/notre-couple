@@ -678,239 +678,197 @@
           🕯️
         </button>
       </header>
-
-      <!-- Fenêtre de désir -->
-      <div id="desire-window" style="margin-top:16px"></div>
-
-      <!-- Quick add -->
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button type="button" id="btn-quick-add" class="btn-quick-add" style="flex:1">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          On a partagé un moment ?
-        </button>
-        <button type="button" id="btn-fast-track-open" class="btn-secondary" style="flex-shrink:0;min-height:44px" aria-label="Mode rapide 4 taps">⚡</button>
+      <!-- Sous-navigation -->
+      <div class="sub-nav" id="intime-sub-nav">
+        <button type="button" class="sub-nav-btn on" data-section="journal">Journal</button>
+        <button type="button" class="sub-nav-btn" data-section="desirs">Désirs</button>
+        <button type="button" class="sub-nav-btn" data-section="cadre">Cadre</button>
+        <button type="button" class="sub-nav-btn" data-section="stats">Stats</button>
       </div>
 
-      <!-- Équilibre + délai neutre -->
-      <div class="intime-meta">
-        <span id="days-since" class="meta-chip" style="display:none"></span>
-        <span id="initiation-balance" class="meta-chip" style="display:none"></span>
-      </div>
-
-      <!-- Souvenir du jour -->
-      <div id="souvenir-du-jour" style="display:none;margin-top:14px"></div>
-
-      <!-- Débrief post-dispute -->
-      <div id="debrief-postdispute" style="display:none;margin-top:14px"></div>
-
-      <!-- Sessions récentes -->
-      <div class="card">
-        <h2>Nos moments récents</h2>
-        <div id="recent-sessions"></div>
-      </div>
-
-      <!-- Calendrier sexualité (suivi mensuel, comme le cycle) -->
-      <div class="card">
-        <h2>Calendrier intime</h2>
-        <div class="cal-nav" style="margin-top:8px">
-          <button id="intime-cal-prev" class="cal-nav-btn" aria-label="Mois précédent">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      <!-- ==================== SECTION JOURNAL ==================== -->
+      <div id="intime-section-journal" class="intime-section">
+        <!-- Fenêtre de désir -->
+        <div id="desire-window" style="margin-top:16px"></div>
+        <!-- Quick add -->
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button type="button" id="btn-quick-add" class="btn-quick-add" style="flex:1">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            On a partagé un moment ?
           </button>
-          <span id="intime-cal-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
-          <button id="intime-cal-next" class="cal-nav-btn" aria-label="Mois suivant">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          <button type="button" id="btn-fast-track-open" class="btn-secondary" style="flex-shrink:0;min-height:44px" aria-label="Mode rapide 4 taps">⚡</button>
+        </div>
+        <!-- Équilibre + délai neutre -->
+        <div class="intime-meta">
+          <span id="days-since" class="meta-chip" style="display:none"></span>
+          <span id="initiation-balance" class="meta-chip" style="display:none"></span>
+        </div>
+        <!-- Souvenir du jour -->
+        <div id="souvenir-du-jour" style="display:none;margin-top:14px"></div>
+        <!-- Débrief post-dispute -->
+        <div id="debrief-postdispute" style="display:none;margin-top:14px"></div>
+        <!-- Sessions récentes -->
+        <div class="card">
+          <h2>Nos moments récents</h2>
+          <div id="recent-sessions"></div>
+        </div>
+        <!-- Calendrier sexualité -->
+        <div class="card">
+          <h2>Calendrier intime</h2>
+          <div class="cal-nav" style="margin-top:8px">
+            <button id="intime-cal-prev" class="cal-nav-btn" aria-label="Mois précédent"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span id="intime-cal-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
+            <button id="intime-cal-next" class="cal-nav-btn" aria-label="Mois suivant"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <div id="intime-cal-grid" class="cal-grid"></div>
+          <div class="cal-legend">
+            <span><i class="cal-legend-dot" style="background:var(--elle)"></i>Rapport</span>
+            <span><i class="cal-legend-dot" style="background:var(--lui)"></i>Solo</span>
+            <span><i class="cal-legend-dot" style="background:var(--violet)"></i>Orgasme</span>
+          </div>
+          <div id="intime-cal-detail" style="margin-top:14px"></div>
+        </div>
+      </div>
+
+      <!-- ==================== SECTION DÉSIRS ==================== -->
+      <div id="intime-section-desirs" class="intime-section" hidden>
+        <!-- Désirs en commun (matchs) -->
+        <div class="card">
+          <h2>Désirs en commun</h2>
+          <div id="match-counter" class="match-counter-label"></div>
+          <div id="kink-matches" style="margin-top:12px"></div>
+          <button type="button" class="btn-secondary" style="margin-top:14px" onclick="document.getElementById('kinks-section').scrollIntoView({behavior:'smooth'})">Explorer tous les désirs →</button>
+        </div>
+        <!-- Suggestions contextuelles -->
+        <div class="card">
+          <h2>Pour vous ce soir</h2>
+          <div id="suggestions-contextuelles"></div>
+        </div>
+        <!-- Bibliothèque de positions -->
+        <div class="card collapsible-section" data-default-open="false">
+          <button type="button" class="collapsible-header" aria-expanded="false">
+            <h2>Bibliothèque de positions</h2>
+            <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
           </button>
+          <div class="collapsible-body">
+            <p style="font-size:12px;color:var(--muted);margin:-2px 0 12px;line-height:1.5">Tape une position pour l'ajouter à ta saisie d'aujourd'hui.</p>
+            <div id="library-phase-filter" class="library-phase-filter" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+            <div class="library-filters">
+              <select id="filter-intensity" class="library-filter-select" aria-label="Filtrer par intensité"><option value="">Toute intensité</option><option value="1">Douce (1)</option><option value="2">≤ Modérée (2)</option><option value="3">Toutes</option></select>
+              <select id="filter-comfort" class="library-filter-select" aria-label="Filtrer par confort"><option value="">Tout niveau</option><option value="1">Facile</option><option value="2">≤ Intermédiaire</option></select>
+              <select id="filter-category" class="library-filter-select" aria-label="Filtrer par catégorie"><option value="">Toutes catégories</option><option value="face-a-face">Face à face</option><option value="cote-a-cote">Côté à côté</option><option value="elle-dessus">Elle au-dessus</option><option value="par-derriere">Par derrière</option><option value="assis">Assis</option><option value="debout">Debout</option><option value="douceur">Douceur</option><option value="preliminaires">Préliminaires</option><option value="avancees">Avancées</option></select>
+            </div>
+            <div id="library-grid"></div>
+          </div>
         </div>
-        <div id="intime-cal-grid" class="cal-grid"></div>
-        <div class="cal-legend">
-          <span><i class="cal-legend-dot" style="background:var(--elle)"></i>Rapport</span>
-          <span><i class="cal-legend-dot" style="background:var(--lui)"></i>Solo</span>
-          <span><i class="cal-legend-dot" style="background:var(--violet)"></i>Orgasme</span>
+        <!-- Explorer les kinks -->
+        <div class="card" id="kinks-section">
+          <h2>Mes désirs — privé</h2>
+          <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;line-height:1.6;margin-bottom:14px">Tes réponses restent privées. Ton partenaire sait seulement que tu t'y intéresses (pas le niveau). Un match apparaît quand vous êtes deux à avoir répondu.</p>
+          <div id="kink-list"></div>
         </div>
-        <div id="intime-cal-detail" style="margin-top:14px"></div>
-      </div>
-
-      <!-- Bilan des positions (favorites, sensibles, par phase) -->
-      <div class="card">
-        <h2>Bilan des positions</h2>
-        <div id="position-insights"></div>
-      </div>
-
-      <!-- Équité du plaisir -->
-      <div class="card">
-        <h2>Satisfaction & plaisir partagé</h2>
-        <div id="equite-plaisir"></div>
-      </div>
-
-      <!-- Croisement cycle × intimité -->
-      <div class="card">
-        <h2>Intimité selon la phase du cycle</h2>
-        <div id="cycle-x-intimite"></div>
-      </div>
-
-      <!-- Alignement libido par phase (dans kinks.js) -->
-      <div class="card">
-        <h2>Libido Elle · par phase</h2>
-        <div id="libido-par-phase"></div>
-      </div>
-
-      <!-- Désirs en commun (matchs) -->
-      <div class="card">
-        <h2>Désirs en commun</h2>
-        <div id="match-counter" class="match-counter-label"></div>
-        <div id="kink-matches" style="margin-top:12px"></div>
-        <button type="button" class="btn-secondary" style="margin-top:14px"
-          onclick="document.getElementById('kinks-section').scrollIntoView({behavior:'smooth'})">
-          Explorer tous les désirs →
-        </button>
-      </div>
-
-      <!-- Suggestions contextuelles (phase × humeur) -->
-      <div class="card">
-        <h2>Pour vous ce soir</h2>
-        <div id="suggestions-contextuelles"></div>
-      </div>
-
-      <!-- Bibliothèque de positions (repliée — inspiration, pas le suivi principal) -->
-      <div class="card collapsible-section" data-default-open="false">
-        <button type="button" class="collapsible-header" aria-expanded="false">
-          <h2>Bibliothèque de positions</h2>
-          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="collapsible-body">
-        <p style="font-size:12px;color:var(--muted);margin:-2px 0 12px;line-height:1.5">Tape une position pour l'ajouter à ta saisie d'aujourd'hui.</p>
-        <!-- Filtre phase courante (injecté dynamiquement par JS) -->
-        <div id="library-phase-filter" class="library-phase-filter" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
-        <div class="library-filters">
-          <select id="filter-intensity" class="library-filter-select" aria-label="Filtrer par intensité">
-            <option value="">Toute intensité</option>
-            <option value="1">Douce (1)</option>
-            <option value="2">≤ Modérée (2)</option>
-            <option value="3">Toutes</option>
-          </select>
-          <select id="filter-comfort" class="library-filter-select" aria-label="Filtrer par confort">
-            <option value="">Tout niveau</option>
-            <option value="1">Facile</option>
-            <option value="2">≤ Intermédiaire</option>
-          </select>
-          <select id="filter-category" class="library-filter-select" aria-label="Filtrer par catégorie">
-            <option value="">Toutes catégories</option>
-            <option value="face-a-face">Face à face</option>
-            <option value="cote-a-cote">Côté à côté</option>
-            <option value="elle-dessus">Elle au-dessus</option>
-            <option value="par-derriere">Par derrière</option>
-            <option value="assis">Assis</option>
-            <option value="debout">Debout</option>
-            <option value="douceur">Douceur</option>
-            <option value="preliminaires">Préliminaires</option>
-            <option value="avancees">Avancées</option>
-          </select>
+        <!-- Wish-list -->
+        <div class="card">
+          <h2>Notre wish-list</h2>
+          <div id="wishlist"></div>
+          <button type="button" id="btn-add-wish" class="btn-secondary" style="margin-top:12px">+ Ajouter une idée</button>
         </div>
-        <div id="library-grid"></div>
+        <!-- Premières fois -->
+        <div class="card">
+          <h2>Nos premières fois</h2>
+          <div id="first-times-list"></div>
+          <button type="button" id="btn-add-first" class="btn-secondary" style="margin-top:12px">+ Ajouter une première</button>
+        </div>
+        <!-- Défis du mois -->
+        <div class="card">
+          <h2>Défis du mois</h2>
+          <div id="challenge-progress"></div>
+          <div id="challenges-list"></div>
         </div>
       </div>
 
-      <!-- Explorer les kinks (vue privée + slider) -->
-      <div class="card" id="kinks-section">
-        <h2>Mes désirs — privé</h2>
-        <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;line-height:1.6;margin-bottom:14px">
-          Tes réponses restent privées. Ton partenaire sait seulement que tu t'y intéresses (pas le niveau). Un match apparaît quand vous êtes deux à avoir répondu.
-        </p>
-        <div id="kink-list"></div>
-      </div>
-
-      <!-- Check-in pratiques validées -->
-      <div id="checkin-validated" style="display:none;margin-top:14px"></div>
-
-      <!-- Wish-list -->
-      <div class="card">
-        <h2>Notre wish-list</h2>
-        <div id="wishlist"></div>
-        <button type="button" id="btn-add-wish" class="btn-secondary" style="margin-top:12px">+ Ajouter une idée</button>
-      </div>
-
-      <!-- Premières fois -->
-      <div class="card">
-        <h2>Nos premières fois</h2>
-        <div id="first-times-list"></div>
-        <button type="button" id="btn-add-first" class="btn-secondary" style="margin-top:12px">+ Ajouter une première</button>
-      </div>
-
-      <!-- Défis du mois -->
-      <div class="card">
-        <h2>Défis du mois</h2>
-        <div id="challenges-list"></div>
-      </div>
-
-      <!-- Aftercare préférences (local, très privé) -->
-      <div class="card">
-        <h2>Mes préférences d'aftercare — privé</h2>
-        <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:12px;line-height:1.6">
-          Stocké uniquement sur cet appareil. Non partagé.
-        </p>
-        <div id="aftercare-prefs">
-          <textarea id="aftercare-input" class="note-input" rows="3"
-            placeholder="Ex. : câlins, silence, verre d'eau, musique douce…"></textarea>
+      <!-- ==================== SECTION CADRE ==================== -->
+      <div id="intime-section-cadre" class="intime-section" hidden>
+        <!-- Check-in pratiques validées -->
+        <div id="checkin-validated" style="display:none;margin-top:14px"></div>
+        <!-- Limites & Consentement -->
+        <div class="card" style="border-color:rgba(124,92,252,.25)">
+          <h2 style="color:var(--violet)">Mes limites</h2>
+          <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.6">Les hard limits sont toujours visibles de votre partenaire — c'est leur but.</p>
+          <div id="my-limits"></div>
+          <button type="button" id="btn-add-limit" class="btn-secondary" style="margin-top:12px">+ Poser une limite</button>
+        </div>
+        <!-- Hard limits du couple -->
+        <div class="card">
+          <h2>Hard limits du couple</h2>
+          <div id="hard-limits-display"></div>
+        </div>
+        <!-- Safewords -->
+        <div class="card">
+          <h2>Safewords</h2>
+          <div id="safewords-display"></div>
+        </div>
+        <!-- Aftercare préférences -->
+        <div class="card">
+          <h2>Mes préférences d'aftercare — privé</h2>
+          <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:12px;line-height:1.6">Stocké uniquement sur cet appareil. Non partagé.</p>
+          <div id="aftercare-prefs"><textarea id="aftercare-input" class="note-input" rows="3" placeholder="Ex. : câlins, silence, verre d'eau, musique douce…"></textarea></div>
+        </div>
+        <!-- PIN & sécurité -->
+        <div class="card">
+          <h2 style="color:var(--violet)">🔒 Sécurité</h2>
+          <div class="settings-row">
+            <span class="settings-label">Code PIN</span>
+            <span id="pin-status" style="font-size:13px;color:var(--muted)">Pas de PIN</span>
+          </div>
+          <div class="settings-actions" style="margin-top:10px">
+            <button type="button" id="btn-set-pin" class="btn-secondary">Définir un PIN</button>
+            <button type="button" id="btn-delete-pin" class="btn-secondary btn-danger" style="display:none">Supprimer le PIN</button>
+            <button type="button" id="btn-quick-hide" class="btn-secondary">Masquer instantanément</button>
+          </div>
+          <p style="font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:12px;line-height:1.6">Le PIN est stocké sous forme de hash SHA-256 localement. Aucun serveur ne le voit jamais.</p>
+        </div>
+        <!-- Santé -->
+        <div class="card">
+          <h2>Santé — privé par défaut</h2>
+          <div id="health-alerts" style="display:none;margin-bottom:14px"></div>
+          <div id="health-summary"></div>
+          <button type="button" id="btn-add-health" class="btn-secondary" style="margin-top:12px">+ Ajouter une entrée</button>
         </div>
       </div>
 
-      <!-- Santé (privé par défaut) -->
-      <div class="card">
-        <h2>Santé — privé par défaut</h2>
-        <!-- §2C : alerte santé récurrente (non diagnostique) -->
-        <div id="health-alerts" style="display:none;margin-bottom:14px"></div>
-        <div id="health-summary"></div>
-        <button type="button" id="btn-add-health" class="btn-secondary" style="margin-top:12px">+ Ajouter une entrée</button>
-      </div>
-
-      <!-- Limites & Consentement -->
-      <div class="card" style="border-color:rgba(124,92,252,.25)">
-        <h2 style="color:var(--violet)">Mes limites</h2>
-        <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.6">
-          Les hard limits sont toujours visibles de votre partenaire — c'est leur but.
-        </p>
-        <div id="my-limits"></div>
-        <button type="button" id="btn-add-limit" class="btn-secondary" style="margin-top:12px">+ Poser une limite</button>
-      </div>
-
-      <!-- Hard limits du couple (toujours visibles) -->
-      <div class="card">
-        <h2>Hard limits du couple</h2>
-        <div id="hard-limits-display"></div>
-      </div>
-
-      <!-- Safewords -->
-      <div class="card">
-        <h2>Safewords</h2>
-        <div id="safewords-display"></div>
-      </div>
-
-      <!-- Statistiques avancées -->
-      <div class="card">
-        <h2>Statistiques Intimité</h2>
-        <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:16px 0 10px">Heatmap mensuelle</h3>
-        <div id="intimacy-heatmap"></div>
-        <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:20px 0 10px">Évolution de la satisfaction</h3>
-        <div id="satisfaction-curve"></div>
-        <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:20px 0 10px">Plaisir par phase du cycle</h3>
-        <div id="orgasm-by-phase"></div>
-      </div>
-
-      <!-- PIN & sécurité -->
-      <div class="card">
-        <h2 style="color:var(--violet)">🔒 Sécurité</h2>
-        <div class="settings-row">
-          <span class="settings-label">Code PIN</span>
-          <span id="pin-status" style="font-size:13px;color:var(--muted)">Pas de PIN</span>
+      <!-- ==================== SECTION STATS ==================== -->
+      <div id="intime-section-stats" class="intime-section" hidden>
+        <!-- Bilan des positions -->
+        <div class="card">
+          <h2>Bilan des positions</h2>
+          <div id="position-insights"></div>
         </div>
-        <div class="settings-actions" style="margin-top:10px">
-          <button type="button" id="btn-set-pin"    class="btn-secondary">Définir un PIN</button>
-          <button type="button" id="btn-delete-pin" class="btn-secondary btn-danger" style="display:none">Supprimer le PIN</button>
-          <button type="button" id="btn-quick-hide" class="btn-secondary">Masquer instantanément</button>
+        <!-- Équité du plaisir -->
+        <div class="card">
+          <h2>Satisfaction & plaisir partagé</h2>
+          <div id="equite-plaisir"></div>
         </div>
-        <p style="font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:12px;line-height:1.6">
-          Le PIN est stocké sous forme de hash SHA-256 localement. Aucun serveur ne le voit jamais.
-        </p>
+        <!-- Croisement cycle × intimité -->
+        <div class="card">
+          <h2>Intimité selon la phase du cycle</h2>
+          <div id="cycle-x-intimite"></div>
+        </div>
+        <!-- Alignement libido par phase -->
+        <div class="card">
+          <h2>Libido Elle · par phase</h2>
+          <div id="libido-par-phase"></div>
+        </div>
+        <!-- Statistiques avancées -->
+        <div class="card">
+          <h2>Statistiques Intimité</h2>
+          <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:16px 0 10px">Heatmap mensuelle</h3>
+          <div id="intimacy-heatmap"></div>
+          <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:20px 0 10px">Évolution de la satisfaction</h3>
+          <div id="satisfaction-curve"></div>
+          <h3 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:20px 0 10px">Plaisir par phase du cycle</h3>
+          <div id="orgasm-by-phase"></div>
+        </div>
       </div>
 
       <p class="disclaimer">
@@ -956,21 +914,77 @@
         </div>
 
         <div class="field">
-          <label>Type d'activité (multi-sélection)</label>
-          <div class="act-tags-grid">
+          <label>Pratiques exécutées</label>
+          <div class="act-tags-grid" id="session-practices-performed">
             <button type="button" class="act-tag-btn" data-tag="vaginal">💞 Vaginal</button>
             <button type="button" class="act-tag-btn" data-tag="fellation">💋 Fellation</button>
             <button type="button" class="act-tag-btn" data-tag="cunnilingus">👅 Cunnilingus</button>
             <button type="button" class="act-tag-btn" data-tag="doigtage">✌️ Doigtage</button>
-            <button type="button" class="act-tag-btn" data-tag="masturbation manuelle">🤚 Masturbation manuelle</button>
+            <button type="button" class="act-tag-btn" data-tag="masturbation_manuelle">🤚 Mast. manuelle</button>
             <button type="button" class="act-tag-btn" data-tag="anal">🍑 Anal</button>
             <button type="button" class="act-tag-btn" data-tag="creampie">💧 Creampie</button>
             <button type="button" class="act-tag-btn" data-tag="bdsm">⛓️ BDSM</button>
-            <button type="button" class="act-tag-btn" data-tag="massage">💆 Massage</button>
-            <button type="button" class="act-tag-btn" data-tag="toys">🎯 Accessoires</button>
-            <button type="button" class="act-tag-btn" data-tag="roleplay">🎭 Jeu de rôles</button>
-            <button type="button" class="act-tag-btn" data-tag="bondage_soft">🎀 Contrainte douce</button>
-            <button type="button" class="act-tag-btn" data-tag="slow">🕯️ Ralenti</button>
+            <button type="button" class="act-tag-btn" data-tag="jouet">🎯 Jouet</button>
+            <button type="button" class="act-tag-btn" data-tag="masturbation">✨ Masturbation</button>
+            <button type="button" class="act-tag-btn" data-tag="oral">👄 Oral</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Pratiques reçues</label>
+          <div class="act-tags-grid" id="session-practices-received">
+            <button type="button" class="act-tag-btn" data-tag="vaginal">💞 Vaginal</button>
+            <button type="button" class="act-tag-btn" data-tag="fellation">💋 Fellation</button>
+            <button type="button" class="act-tag-btn" data-tag="cunnilingus">👅 Cunnilingus</button>
+            <button type="button" class="act-tag-btn" data-tag="doigtage">✌️ Doigtage</button>
+            <button type="button" class="act-tag-btn" data-tag="masturbation_manuelle">🤚 Mast. manuelle</button>
+            <button type="button" class="act-tag-btn" data-tag="anal">🍑 Anal</button>
+            <button type="button" class="act-tag-btn" data-tag="creampie">💧 Creampie</button>
+            <button type="button" class="act-tag-btn" data-tag="bdsm">⛓️ BDSM</button>
+            <button type="button" class="act-tag-btn" data-tag="jouet">🎯 Jouet</button>
+            <button type="button" class="act-tag-btn" data-tag="masturbation">✨ Masturbation</button>
+            <button type="button" class="act-tag-btn" data-tag="oral">👄 Oral</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Sentiments</label>
+          <div class="act-tags-grid" id="session-feelings">
+            <button type="button" class="act-tag-btn" data-tag="affectueux">🥰 Affectueux</button>
+            <button type="button" class="act-tag-btn" data-tag="aventureux">🤠 Aventureux</button>
+            <button type="button" class="act-tag-btn" data-tag="excite">🔥 Excité</button>
+            <button type="button" class="act-tag-btn" data-tag="heureux">😊 Heureux</button>
+            <button type="button" class="act-tag-btn" data-tag="satisfait">😌 Satisfait</button>
+            <button type="button" class="act-tag-btn" data-tag="deconnecte">😕 Déconnecté</button>
+            <button type="button" class="act-tag-btn" data-tag="anxieux">😰 Anxieux</button>
+            <button type="button" class="act-tag-btn" data-tag="coupable">😔 Coupable</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Protection (Moi)</label>
+          <div class="act-tags-grid" id="session-protection-me">
+            <button type="button" class="act-tag-btn" data-tag="preservatif">🛡️ Préservatif</button>
+            <button type="button" class="act-tag-btn" data-tag="preservatif_interne">♀️ Préservatif interne</button>
+            <button type="button" class="act-tag-btn" data-tag="prep">💊 PrEP</button>
+            <button type="button" class="act-tag-btn" data-tag="tasp">💊 TasP</button>
+            <button type="button" class="act-tag-btn" data-tag="retrait">⬅️ Retrait</button>
+            <button type="button" class="act-tag-btn" data-tag="vasectomie">✂️ Vasectomie</button>
+            <button type="button" class="act-tag-btn" data-tag="sans_penetration">🚫 Sans pénétration</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Protection (Partenaire)</label>
+          <div class="act-tags-grid" id="session-protection-partner">
+            <button type="button" class="act-tag-btn" data-tag="pilule">💊 Pilule</button>
+            <button type="button" class="act-tag-btn" data-tag="diu">⚓ DIU (stérilet)</button>
+            <button type="button" class="act-tag-btn" data-tag="implant">💉 Implant</button>
+            <button type="button" class="act-tag-btn" data-tag="anneau_vaginal">💍 Anneau vaginal</button>
+            <button type="button" class="act-tag-btn" data-tag="ligature_trompes">✂️ Ligature des trompes</button>
+            <button type="button" class="act-tag-btn" data-tag="hysterectomie">🚫 Hystérectomie</button>
+            <button type="button" class="act-tag-btn" data-tag="menopause">🌸 Ménopause</button>
+            <button type="button" class="act-tag-btn" data-tag="doxypep">💊 DoxyPEP</button>
           </div>
         </div>
 
@@ -979,6 +993,23 @@
             <label for="session-duration">Durée totale (min)</label>
             <input type="number" id="session-duration" min="1" max="300" placeholder="30"
               style="padding:10px 12px" aria-label="Durée totale en minutes">
+          </div>
+          <div class="field" style="flex:1">
+            <label for="session-ejaculation">Éjaculation</label>
+            <select id="session-ejaculation" class="library-filter-select" style="width:100%;padding:10px 12px;height:44px">
+              <option value="inconnu">Inconnu</option>
+              <option value="non">Pas d'éjaculation</option>
+              <option value="vagin">Dans le vagin</option>
+              <option value="anus">Dans l'anus</option>
+              <option value="bouche">Dans la bouche</option>
+              <option value="dos">Sur le dos</option>
+              <option value="poitrine">Sur la poitrine</option>
+              <option value="visage">Sur le visage</option>
+              <option value="fesses">Sur les fesses</option>
+              <option value="ventre">Sur le ventre</option>
+              <option value="mains">Sur les mains</option>
+              <option value="pieds">Sur les pieds</option>
+            </select>
           </div>
         </div>
 
