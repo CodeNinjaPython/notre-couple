@@ -3,6 +3,13 @@ import { localDateStr } from './date-utils.js';
 
 const STORAGE_KEY = 'notif-asked';
 
+// Safari iOS en PWA standalone n'expose pas le global Notification : y accéder
+// directement lève « Can't find variable: Notification ». Toujours passer par ce
+// garde avant de lire Notification.permission.
+function notifGranted() {
+  return ('Notification' in window) && Notification.permission === 'granted';
+}
+
 export async function requestPermission() {
   if (!('Notification' in window)) return false;
   if (Notification.permission === 'granted') return true;
@@ -23,7 +30,7 @@ export function declineNotifications() {
 
 // Affiche une notification via le Service Worker (persiste en background)
 export function showNotification(title, body, tag = 'notre-rythme') {
-  if (Notification.permission !== 'granted') return;
+  if (!notifGranted()) return;
   navigator.serviceWorker?.ready.then(reg => {
     reg.showNotification(title, {
       body,
@@ -38,7 +45,7 @@ export function showNotification(title, body, tag = 'notre-rythme') {
 // Rappel quotidien si l'utilisateur n'a pas encore saisi aujourd'hui
 // Appelé lors de l'ouverture de l'app (>= heure configurée)
 export async function maybeRemindToLog() {
-  if (Notification.permission !== 'granted') return;
+  if (!notifGranted()) return;
   const settings = getSettings();
   if (!settings.daily) return;
   const hour = new Date().getHours();
@@ -68,7 +75,7 @@ export async function checkPartnerLoggedToday(partnerUserId) {
 
 // Alerte règles imminentes (< 3 jours) — respecte les settings
 export function checkRulesImminentes(prediction) {
-  if (!prediction || Notification.permission !== 'granted') return;
+  if (!prediction || !notifGranted()) return;
   const settings = getSettings();
   if (!settings.rules) return;
   const daysUntil = Math.round((new Date(prediction.nextPeriodDate) - new Date()) / 864e5);
@@ -82,7 +89,7 @@ export function checkRulesImminentes(prediction) {
 
 // Alerte fenêtre fertile (mode conception)
 export function checkFertileWindow(prediction) {
-  if (!prediction || Notification.permission !== 'granted') return;
+  if (!prediction || !notifGranted()) return;
   const settings = getSettings();
   if (!settings.fertile) return;
   const daysUntilFertile = Math.round(
@@ -95,7 +102,7 @@ export function checkFertileWindow(prediction) {
 
 // Alerte partenaire — partenaire a commencé ses règles
 export function notifyPartnerPeriodStart(partnerName) {
-  if (Notification.permission !== 'granted') return;
+  if (!notifGranted()) return;
   showNotification('Notre cycle', `${partnerName} vient de noter le début de ses règles.`, 'partner-rules');
 }
 
@@ -103,7 +110,7 @@ export function notifyPartnerPeriodStart(partnerName) {
 // Strictement optionnelle : nécessite libido_aligned = true dans les settings.
 // Déclenchée une seule fois par jour (guard localStorage).
 export async function notifyLibidosAligned() {
-  if (Notification.permission !== 'granted') return;
+  if (!notifGranted()) return;
   const settings = getSettings();
   if (!settings.libido_aligned) return;
 
