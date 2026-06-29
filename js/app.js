@@ -10,7 +10,6 @@ import { onboardingDone, initOnboarding, markOnboardingDone } from './onboarding
 import { initIntimacy } from './intimacy.js';
 import { initKinks } from './kinks.js';
 import { initQuickHide } from './pin-lock.js';
-import { initQuickLogBar } from './quick-log-bar.js';
 
 // Gestionnaire d'erreur global — remplace l'écran gris par un message lisible
 window.addEventListener('unhandledrejection', e => {
@@ -203,7 +202,6 @@ async function routeAfterAuth() {
       } else {
         navigate('today');
       }
-    initQuickLogBar();
     if (!IS_DEMO) setTimeout(() => maybeShowNotifBanner(), 2000);
   }
 }
