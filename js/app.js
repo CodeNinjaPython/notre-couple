@@ -10,6 +10,10 @@ import { onboardingDone, initOnboarding, markOnboardingDone } from './onboarding
 import { initIntimacy } from './intimacy.js';
 import { initKinks } from './kinks.js';
 import { initQuickHide } from './pin-lock.js';
+import { initTheme } from './theme.js';
+
+// Restaurer le thème (clair/sombre) avant tout rendu
+initTheme();
 
 // Gestionnaire d'erreur global — remplace l'écran gris par un message lisible
 window.addEventListener('unhandledrejection', e => {

@@ -12,6 +12,7 @@ import {
 } from './analytics.js';
 import { currentWeekDates, daysAgo, localDateStr } from './date-utils.js';
 import { exportPDF } from './pdf.js';
+import { isDark, setDarkMode } from './theme.js';
 import { generateInsights, computeLibidoAlignment, loadSessionsWithFeedback } from './insights.js';
 import { skeletonFill } from './skeleton.js';
 import { toast, confirmDialog, friendlyError } from './ui-feedback.js';
@@ -523,6 +524,13 @@ function renderSettings(me, partner) {
   document.getElementById('btn-export-pdf')?.addEventListener('click',  () => exportPDF(me?.couple_id, me, partner));
   document.getElementById('btn-delete-data')?.addEventListener('click', () => deleteAllData(me));
   document.getElementById('btn-unlink')?.addEventListener('click', () => unlinkAccount(me));
+  // Mode sombre global
+  const darkEl = document.getElementById('settings-dark-toggle');
+  if (darkEl) {
+    darkEl.checked = isDark();
+    darkEl.addEventListener('change', () => setDarkMode(darkEl.checked));
+  }
+
   initClueImport(me);
   initNotifSettings();
 

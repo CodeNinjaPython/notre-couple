@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
+  <!-- Applique le mode sombre avant le 1er rendu (évite le flash clair) -->
+  <script>try{if(localStorage.getItem('nc-dark')==='1'){document.body.classList.add('dark');document.querySelector('meta[name="theme-color"]').setAttribute('content','#14131C');}}catch(e){}</script>
 
   <!-- Mount point -->
   <div id="view"></div>
@@ -1338,6 +1340,18 @@
         </div>
         <button type="button" id="btn-set-password" class="btn-primary" style="margin-top:10px">Enregistrer le mot de passe</button>
         <div id="settings-password-msg" style="font-size:13px;margin-top:8px"></div>
+      </div>
+
+      <!-- Apparence -->
+      <div class="card">
+        <h2>Apparence</h2>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Mode sombre</div>
+            <div class="toggle-sub">Thème foncé pour toute l'application</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="settings-dark-toggle"><span class="toggle-track"></span></label>
+        </div>
       </div>
 
       <!-- Mode du cycle -->

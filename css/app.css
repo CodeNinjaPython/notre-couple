@@ -57,6 +57,52 @@
   --sh-lui:  0 4px 16px rgba(66,120,196,.32);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   DARK MODE GLOBAL — activé via body.dark (toggle dans Réglages).
+   Palette neutre/froide, distincte du dark "intime" (burgundy/gold).
+   Tout passe par les variables : .card, nav, inputs… héritent sans override.
+   Défini AVANT body.intime-dark pour que l'intime garde sa teinte chaude.
+   ═══════════════════════════════════════════════════════════════════════ */
+body.dark {
+  --bg:         #14131C;
+  --surface:    #1E1C2A;
+  --surface2:   #272534;
+  --line:       #34313F;
+
+  --text:       #ECEBF5;
+  --muted:      #A3A1BE;
+  --faint:      #6E6C8A;
+
+  --elle:       #F0608D;
+  --elle-deep:  #F4597D;
+  --elle-mid:   #C4265A;
+  --elle-light: rgba(232,67,117,.16);
+  --elle-dim:   rgba(232,67,117,.22);
+
+  --lui:        #5E92DA;
+  --lui-deep:   #91B4E6;
+  --lui-mid:    #2B5AA6;
+  --lui-light:  rgba(66,120,196,.18);
+  --lui-dim:    rgba(66,120,196,.22);
+
+  --red:        #FF5B57;
+  --red-light:  rgba(229,57,53,.18);
+  --red-dim:    rgba(229,57,53,.22);
+
+  --violet:     #9C7BFF;
+  --violet-light: rgba(124,92,252,.20);
+  --violet-dim: rgba(124,92,252,.24);
+
+  --sh-sm:   0 1px 3px rgba(0,0,0,.40), 0 1px 10px rgba(0,0,0,.30);
+  --sh-md:   0 4px 14px rgba(0,0,0,.45), 0 1px 4px rgba(0,0,0,.30);
+  --sh-lg:   0 8px 36px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.40);
+}
+/* Encart "insight" : le dégradé clair d'origine vire au sombre teinté */
+body.dark .insight {
+  background: linear-gradient(135deg, var(--elle-light), var(--violet-light));
+  border-color: rgba(232,67,117,.30);
+}
+
 /* ─── Reset ───────────────────────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
