@@ -1826,6 +1826,7 @@ body.dark .card-primary { border-color: var(--elle); }
   text-align: center;
 }
 .log-card:hover { border-color: var(--cat-color, var(--elle)); }
+.log-card:active { transform: scale(.96); }   /* retour tactile à l'appui */
 .log-card.active {
   border-color: var(--cat-color, var(--elle));
   background: color-mix(in srgb, var(--cat-color, var(--elle)) 12%, transparent);
