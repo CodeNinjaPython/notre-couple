@@ -198,6 +198,35 @@
   <!-- ================================================================
        TEMPLATE : PAIRING
        ================================================================ -->
+  <template id="tpl-profile">
+    <div class="app">
+      <header>
+        <div class="eyebrow">Première connexion</div>
+        <div class="phase">Ton profil</div>
+      </header>
+      <div class="card" style="margin-top:24px">
+        <h2>Qui es-tu&nbsp;?</h2>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px">
+          Quelques infos pour personnaliser ton espace.
+        </p>
+        <div class="field">
+          <label for="profile-name">Ton prénom</label>
+          <input type="text" id="profile-name" autocomplete="given-name" placeholder="ex. Juliette">
+        </div>
+        <div class="field">
+          <label>Tu es&nbsp;?</label>
+          <div class="who" id="profile-role" role="radiogroup" aria-label="Ton rôle">
+            <button type="button" data-role="elle" aria-pressed="false">♀ Elle</button>
+            <button type="button" data-role="lui" aria-pressed="false">♂ Lui</button>
+          </div>
+          <div class="toggle-sub" style="margin-top:6px">Elle = suivi de cycle complet · Lui = suivi bien-être. Vous voyez chacun les données de l'autre, mais ne modifiez que les vôtres.</div>
+        </div>
+        <button id="btn-profile-continue" class="btn-primary" style="margin-top:22px">Continuer →</button>
+      </div>
+      <p class="disclaimer">App privée pour votre couple. Données sensibles, jamais partagées hors de votre espace.</p>
+    </div>
+  </template>
+
   <template id="tpl-pairing">
     <div class="app">
       <header>
@@ -221,18 +250,7 @@
       <div id="pairing-create" style="display:none">
         <div class="card">
           <h2>Créer notre espace</h2>
-          <div class="field">
-            <label for="create-name">Votre prénom</label>
-            <input type="text" id="create-name" autocomplete="given-name" placeholder="ex. Juliette">
-          </div>
-          <div class="field">
-            <label>Qui es-tu dans le couple&nbsp;?</label>
-            <div class="who" id="create-role" role="radiogroup" aria-label="Ton rôle">
-              <button type="button" data-role="elle" aria-pressed="false">♀ Elle</button>
-              <button type="button" data-role="lui" aria-pressed="false">♂ Lui</button>
-            </div>
-            <div class="toggle-sub" style="margin-top:6px">Elle = suivi de cycle complet · Lui = suivi bien-être</div>
-          </div>
+          <div class="profile-recap" id="create-profile-recap"></div>
           <button id="btn-create-submit" class="btn-primary" style="margin-top:20px">Créer notre espace</button>
           <button id="btn-create-back" class="btn-secondary" style="margin-top:10px">Retour</button>
         </div>
@@ -273,18 +291,7 @@
             <input type="text" id="join-code" maxlength="6" autocomplete="off" placeholder="ex. AB3K7P"
               style="text-transform:uppercase;letter-spacing:.2em;font-family:'DM Mono',monospace;font-size:20px">
           </div>
-          <div class="field">
-            <label for="join-name">Votre prénom</label>
-            <input type="text" id="join-name" autocomplete="given-name" placeholder="ex. Lucas">
-          </div>
-          <div class="field">
-            <label>Qui es-tu dans le couple&nbsp;?</label>
-            <div class="who" id="join-role" role="radiogroup" aria-label="Ton rôle">
-              <button type="button" data-role="elle" aria-pressed="false">♀ Elle</button>
-              <button type="button" data-role="lui" aria-pressed="false">♂ Lui</button>
-            </div>
-            <div class="toggle-sub" style="margin-top:6px">Elle = suivi de cycle complet · Lui = suivi bien-être</div>
-          </div>
+          <div class="profile-recap" id="join-profile-recap"></div>
           <button id="btn-join-submit" class="btn-primary" style="margin-top:20px">Rejoindre</button>
           <button id="btn-join-back" class="btn-secondary" style="margin-top:10px">Retour</button>
         </div>

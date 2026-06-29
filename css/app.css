@@ -512,6 +512,17 @@ input::placeholder { color: var(--faint); font-weight: 400; }
   box-shadow: var(--sh-sm);
 }
 .btn-choice:hover { border-color: var(--elle); box-shadow: var(--sh-elle); transform: translateY(-1px); }
+/* Récap du profil (prénom + rôle) sur l'écran d'appairage */
+.profile-recap {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 12px; padding: 12px 14px; font-size: 14px;
+}
+.profile-recap .pr-name { font-weight: 700; }
+.profile-recap .pr-edit {
+  margin-left: auto; background: none; border: none; cursor: pointer;
+  color: var(--elle); font-weight: 600; font-size: 13px; padding: 4px;
+}
 .btn-choice .sub {
   font-size: 13px; color: var(--muted); font-weight: 400;
   display: block; margin-top: 5px; line-height: 1.5;

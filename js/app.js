@@ -6,7 +6,8 @@ import { initToday } from './today.js';
 import { initCalendar } from './calendar.js';
 import { initNous, initSettings } from './nous.js';
 import { requestPermission, getPermission, declineNotifications } from './notifications.js';
-import { onboardingDone, initOnboarding, markOnboardingDone } from './onboarding.js';
+import { onboardingDone, initOnboarding, markOnboardingDone,
+         profileComplete, getProfileName, getProfileRole, saveProfile } from './onboarding.js';
 import { initIntimacy } from './intimacy.js';
 import { initKinks } from './kinks.js';
 import { initQuickHide } from './pin-lock.js';
@@ -58,6 +59,7 @@ if (window.location.search.includes('run-tests')) {
   import('./intimacy-tests.js').then(m => m.runAllTests());
 }
 registerView('auth',       () => initAuthView());
+registerView('profile',    () => initProfileView());
 registerView('pairing',    () => initPairingView());
 registerView('onboarding', () => initOnboarding());
 
@@ -105,6 +107,42 @@ function initAuthView() {
   passIn?.addEventListener('keydown', e => { if (e.key === 'Enter') submitAuth(); });
 }
 
+// Échappe une saisie utilisateur avant injection dans innerHTML.
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ── Profile view (première connexion : prénom + rôle ♀/♂) ───────────────────
+function initProfileView() {
+  const nameIn = document.getElementById('profile-name');
+  if (nameIn) nameIn.value = getProfileName();
+
+  const group = document.getElementById('profile-role');
+  const current = getProfileRole();
+  group?.querySelectorAll('button[data-role]').forEach(btn => {
+    const on = btn.dataset.role === current;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.addEventListener('click', () => {
+      group.querySelectorAll('button[data-role]').forEach(b => {
+        const sel = b === btn;
+        b.classList.toggle('on', sel);
+        b.setAttribute('aria-pressed', sel ? 'true' : 'false');
+      });
+    });
+  });
+
+  document.getElementById('btn-profile-continue')?.addEventListener('click', () => {
+    const name = nameIn?.value?.trim();
+    const roleBtn = group?.querySelector('button.on[data-role]');
+    if (!name) { showMsg('profile-error', 'Entre ton prénom pour continuer.'); return; }
+    if (!roleBtn) { showMsg('profile-error', 'Indique si tu es Elle ♀ ou Lui ♂.'); return; }
+    saveProfile(name, roleBtn.dataset.role);
+    routeAfterAuth();  // enchaîne sur le mode de cycle (Elle) puis l'appairage
+  });
+}
+
 // ── Pairing view ───────────────────────────────────────────────────────────
 function initPairingView() {
   const choice        = document.getElementById('pairing-choice');
@@ -112,11 +150,22 @@ function initPairingView() {
   const joinSection   = document.getElementById('pairing-join');
   const codeSection   = document.getElementById('pairing-code-display');
 
+  // Récap du profil (prénom + rôle), avec lien « Modifier » → écran profil.
+  function renderRecap(elId) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const role = getProfileRole() === 'elle' ? '♀ Elle' : '♂ Lui';
+    el.innerHTML = `<span class="pr-name">${escapeHtml(getProfileName())}</span>
+      <span class="pr-role">${role}</span>
+      <button type="button" class="pr-edit">Modifier</button>`;
+    el.querySelector('.pr-edit')?.addEventListener('click', () => navigate('profile'));
+  }
+
   document.getElementById('btn-create')?.addEventListener('click', () => {
-    choice.style.display = 'none'; createSection.style.display = 'block';
+    choice.style.display = 'none'; createSection.style.display = 'block'; renderRecap('create-profile-recap');
   });
   document.getElementById('btn-join')?.addEventListener('click', () => {
-    choice.style.display = 'none'; joinSection.style.display = 'block';
+    choice.style.display = 'none'; joinSection.style.display = 'block'; renderRecap('join-profile-recap');
   });
   document.getElementById('btn-create-back')?.addEventListener('click', () => {
     createSection.style.display = 'none'; choice.style.display = 'block';
@@ -125,31 +174,10 @@ function initPairingView() {
     joinSection.style.display = 'none'; choice.style.display = 'block';
   });
 
-  // Sélecteur de rôle ♀ Elle / ♂ Lui (widget segmenté .who). Sélection unique.
-  function wireRoleGroup(groupId) {
-    document.getElementById(groupId)?.querySelectorAll('button[data-role]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.getElementById(groupId).querySelectorAll('button[data-role]').forEach(b => {
-          const on = b === btn;
-          b.classList.toggle('on', on);
-          b.setAttribute('aria-pressed', on ? 'true' : 'false');
-        });
-      });
-    });
-  }
-  wireRoleGroup('create-role');
-  wireRoleGroup('join-role');
-  // Renvoie true (Elle = suit le cycle) / false (Lui) / null si aucun choix.
-  function selectedTracksCycle(groupId) {
-    const sel = document.getElementById(groupId)?.querySelector('button.on[data-role]');
-    return sel ? sel.dataset.role === 'elle' : null;
-  }
-
   document.getElementById('btn-create-submit')?.addEventListener('click', async () => {
-    const name       = document.getElementById('create-name')?.value?.trim();
-    const tracksCycle = selectedTracksCycle('create-role');
-    if (!name) { showMsg('create-error', 'Entre ton prénom pour continuer.'); return; }
-    if (tracksCycle === null) { showMsg('create-error', 'Indique si tu es Elle ♀ ou Lui ♂.'); return; }
+    const name        = getProfileName();
+    const tracksCycle = getProfileRole() === 'elle';
+    if (!profileComplete()) { navigate('profile'); return; }
     const btn = document.getElementById('btn-create-submit');
     btn.disabled = true; btn.textContent = 'Création…';
     try {
@@ -202,11 +230,11 @@ function initPairingView() {
   });
 
   document.getElementById('btn-join-submit')?.addEventListener('click', async () => {
-    const code       = document.getElementById('join-code')?.value?.trim();
-    const name       = document.getElementById('join-name')?.value?.trim();
-    const tracksCycle = selectedTracksCycle('join-role');
-    if (!code || !name) return;
-    if (tracksCycle === null) { showMsg('join-error', 'Indique si tu es Elle ♀ ou Lui ♂.'); return; }
+    const code        = document.getElementById('join-code')?.value?.trim();
+    const name        = getProfileName();
+    const tracksCycle = getProfileRole() === 'elle';
+    if (!profileComplete()) { navigate('profile'); return; }
+    if (!code) { showMsg('join-error', 'Saisis le code reçu de ton partenaire.'); return; }
     const btn = document.getElementById('btn-join-submit');
     btn.disabled = true; btn.textContent = 'Vérification…';
     try {
@@ -219,28 +247,30 @@ function initPairingView() {
 
 // ── Routing ────────────────────────────────────────────────────────────────
 async function routeAfterAuth() {
-  // Onboarding si pas encore vu (sauf en mode démo — seed déjà configuré)
-  if (!IS_DEMO && !onboardingDone()) {
-    navigate('onboarding');
+  const membership = await getMyMembership();
+
+  if (!membership) {
+    // Première connexion : 1) profil dédié (prénom + rôle), 2) mode de cycle
+    // (Elle uniquement — sans objet pour Lui), 3) appairage.
+    if (!profileComplete()) { navigate('profile'); return; }
+    if (!IS_DEMO && !onboardingDone()) {
+      if (getProfileRole() === 'elle') { navigate('onboarding'); return; }
+      markOnboardingDone(); // Lui : le mode de cycle ne le concerne pas
+    }
+    navigate('pairing');
     return;
   }
-  const membership = await getMyMembership();
-  if (!membership) {
-    navigate('pairing');
-  } else {
-      const hash = window.location.hash.slice(1);
-      const [view, section] = hash.split('/');
-      // Si un hash est présent et correspond à une vue, on navigue dessus, sinon 'today'
-      if (hash && isRegisteredView(view)) {
-        navigate(view, { section });
-      } else {
-        navigate('today');
-      }
-    if (!IS_DEMO) setTimeout(() => maybeShowNotifBanner(), 2000);
-    // Abonnement Web Push si la permission est déjà accordée (#12).
-    if (!IS_DEMO && getPermission() === 'granted') {
-      import('./push.js').then(({ subscribeToPush }) => subscribeToPush(membership.couple_id, membership.user_id));
-    }
+
+  const hash = window.location.hash.slice(1);
+  const [view, section] = hash.split('/');
+  // Si un hash est présent et correspond à une vue, on navigue dessus, sinon 'today'
+  if (hash && isRegisteredView(view)) navigate(view, { section });
+  else navigate('today');
+
+  if (!IS_DEMO) setTimeout(() => maybeShowNotifBanner(), 2000);
+  // Abonnement Web Push si la permission est déjà accordée (#12).
+  if (!IS_DEMO && getPermission() === 'granted') {
+    import('./push.js').then(({ subscribeToPush }) => subscribeToPush(membership.couple_id, membership.user_id));
   }
 }
 

@@ -9,6 +9,25 @@ import { localDateStr, daysAgo } from './date-utils.js';
 const KEY = 'nc-onboarding-v1';
 const MODE_KEY = 'nc-cycle-mode';
 const PERIOD_KEY = 'nc-last-period';
+const PROFILE_NAME_KEY = 'nc-profile-name';
+const PROFILE_ROLE_KEY = 'nc-profile-role';   // 'elle' | 'lui'
+
+// --- Profil de première connexion (prénom + rôle) --------------------------
+// Stocké côté client : la ligne couple_members n'existe qu'après création/
+// jointure du couple. On applique ces valeurs au moment du pairing.
+export function profileComplete() {
+  return !!localStorage.getItem(PROFILE_NAME_KEY) && !!localStorage.getItem(PROFILE_ROLE_KEY);
+}
+export function getProfileName() {
+  return localStorage.getItem(PROFILE_NAME_KEY) || '';
+}
+export function getProfileRole() {
+  return localStorage.getItem(PROFILE_ROLE_KEY) || '';
+}
+export function saveProfile(name, role) {
+  localStorage.setItem(PROFILE_NAME_KEY, name);
+  localStorage.setItem(PROFILE_ROLE_KEY, role);
+}
 
 export function onboardingDone() {
   return localStorage.getItem(KEY) === 'done';
