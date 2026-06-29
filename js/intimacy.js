@@ -177,7 +177,7 @@ async function renderStatsSection(st) {
 
   const since = daysAgo(90);
   const [sessionsRes, cyclesRes, feedbackRes, ratingsRes, entriesRes] = await Promise.all([
-    supabase.from('intimate_sessions').select('id, session_date, duration_min, mood, created_by, session_activities(tags)').eq('couple_id', st.coupleId).gte('session_date', since).order('session_date', { ascending: false }),
+    supabase.from('intimate_sessions').select('id, session_date, duration_min, mood, created_by, details, session_activities(tags)').eq('couple_id', st.coupleId).gte('session_date', since).order('session_date', { ascending: false }),
     supabase.from('cycles').select('period_start').order('period_start', { ascending: false }).limit(6),
     supabase.from('session_feedback').select('session_id, user_id, satisfaction, orgasms, shared, improve_txt, created_at').gte('created_at', since + 'T00:00:00Z'),
     supabase.from('position_ratings').select('position_id, score, pain, too_deep, rated_on, created_by').eq('couple_id', st.coupleId).gte('rated_on', since),
@@ -227,14 +227,84 @@ function renderStatsView(filter) {
   const data = filterStatsData(_statsRaw, filter, elleId, luiId);
 
   renderFrequencyTrend(data.sessions);
+  renderPracticesInsights(data.sessions);
   renderMonthlyHeatmap(st.coupleId, elleId, data);
   renderSatisfactionCurve(st.me?.user_id, data);
   renderOrgasmByPhase(st, data);
   renderEquitePlaisir(st, data.feedbacks.filter(f => f.shared));
   renderPositionInsights('position-insights', data);
   renderCycleXIntimite(data);
+  renderActivityByPhase(data.sessions, data.cycles);
   renderLibidoParPhase(elleId, data);
   renderHealthAlerts(st.me?.user_id, data.feedbacks);
+}
+
+// #4 — Fréquence des moments par phase du cycle.
+const PHASE_RANGES = [
+  ['menstruelle', 'Règles', 1, 5], ['folliculaire', 'Folliculaire', 6, 13],
+  ['ovulation', 'Ovulation', 14, 16], ['luteale', 'Lutéale', 17, 35],
+];
+function renderActivityByPhase(sessions, cycles) {
+  const el = document.getElementById('activity-by-phase');
+  if (!el) return;
+  if (!sessions?.length || !cycles?.length) {
+    el.innerHTML = '<p class="intime-empty">Quelques cycles de plus pour ce croisement.</p>';
+    return;
+  }
+  const counts = { menstruelle: 0, folliculaire: 0, ovulation: 0, luteale: 0 };
+  let total = 0;
+  for (const s of sessions) {
+    const cycle = cycles.find(c => c.period_start <= s.session_date);
+    if (!cycle) continue;
+    const day = diffDays(s.session_date, cycle.period_start) + 1;
+    const ph = PHASE_RANGES.find(([, , lo, hi]) => day >= lo && day <= hi);
+    if (ph) { counts[ph[0]]++; total++; }
+  }
+  if (!total) { el.innerHTML = '<p class="intime-empty">Pas assez de données.</p>'; return; }
+  const max = Math.max(...Object.values(counts), 1);
+  const top = PHASE_RANGES.map(([id, label]) => [label, counts[id]]).sort((a, b) => b[1] - a[1])[0];
+  el.innerHTML = PHASE_RANGES.map(([id, label]) => {
+    const c = counts[id];
+    return `<div class="phase-act-row">
+      <span class="phase-act-label">${label}</span>
+      <span class="phase-act-bar-wrap"><span class="phase-act-bar" style="width:${Math.round(c / max * 100)}%"></span></span>
+      <span class="phase-act-val">${c}</span>
+    </div>`;
+  }).join('') + `<div class="freq-meta">Plus actifs en phase ${top[0].toLowerCase()}.</div>`;
+}
+
+// #3 — Hall of fame des pratiques + suggestions d'exploration.
+const PRACTICES_CATALOG = [
+  ['vaginal', '💞 Vaginal'], ['fellation', '💋 Fellation'], ['cunnilingus', '👅 Cunnilingus'],
+  ['doigtage', '✌️ Doigtage'], ['masturbation_manuelle', '🤚 Mast. manuelle'], ['anal', '🍑 Anal'],
+  ['creampie', '💧 Creampie'], ['bdsm', '⛓️ BDSM'], ['jouet', '🎯 Jouet'],
+  ['masturbation', '✨ Masturbation'], ['oral', '👄 Oral'],
+];
+function renderPracticesInsights(sessions) {
+  const el = document.getElementById('practices-insights');
+  if (!el) return;
+  const counts = {};
+  for (const s of (sessions || [])) {
+    const d = s.details || {};
+    [...(d.practices_performed || []), ...(d.practices_received || [])].forEach(p => { counts[p] = (counts[p] || 0) + 1; });
+  }
+  const used = PRACTICES_CATALOG.filter(([id]) => counts[id]).sort((a, b) => counts[b[0]] - counts[a[0]]);
+  const never = PRACTICES_CATALOG.filter(([id]) => !counts[id]);
+  if (!used.length) {
+    el.innerHTML = '<p class="intime-empty">Renseigne les pratiques dans un moment pour voir vos préférées et des idées à explorer.</p>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="pi-block">
+      <div class="pi-title">⭐ Vos pratiques</div>
+      ${used.slice(0, 6).map(([id, label]) => `<div class="pi-row">
+        <span class="pi-name">${label}</span><span class="pi-sub">${counts[id]}×</span>
+      </div>`).join('')}
+    </div>
+    ${never.length ? `<div class="pi-block">
+      <div class="pi-title">🌱 À explorer</div>
+      <div class="intime-cal-tags">${never.slice(0, 8).map(([, label]) => `<span class="intime-tag">${label}</span>`).join('')}</div>
+    </div>` : ''}`;
 }
 
 // #2 — Fréquence des moments sur 12 semaines + tendance.

@@ -731,6 +731,13 @@ body.demo-mode .demo-badge {
 
 /* ─── Calendrier intime (détail jour) ─────────────────────────────────── */
 .cal-cell--sel { border-color: var(--violet); box-shadow: 0 0 0 2px var(--violet-dim, rgba(124,92,252,.25)); }
+/* #4 — Fréquence par phase */
+.phase-act-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
+.phase-act-label { width: 96px; flex-shrink: 0; color: var(--muted); font-weight: 600; }
+.phase-act-bar-wrap { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.phase-act-bar { display: block; height: 100%; background: var(--elle); border-radius: 4px; }
+.phase-act-val { width: 22px; text-align: right; font-family: "DM Mono", monospace; font-weight: 700; color: var(--text); }
+
 /* #2 — Courbe de fréquence */
 .freq-bars { display: flex; align-items: flex-end; gap: 4px; height: 64px; padding: 4px 0; }
 .freq-bar { flex: 1; background: var(--elle); border-radius: 3px 3px 0 0; min-height: 4px; }
