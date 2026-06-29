@@ -125,10 +125,31 @@ function initPairingView() {
     joinSection.style.display = 'none'; choice.style.display = 'block';
   });
 
+  // Sélecteur de rôle ♀ Elle / ♂ Lui (widget segmenté .who). Sélection unique.
+  function wireRoleGroup(groupId) {
+    document.getElementById(groupId)?.querySelectorAll('button[data-role]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById(groupId).querySelectorAll('button[data-role]').forEach(b => {
+          const on = b === btn;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      });
+    });
+  }
+  wireRoleGroup('create-role');
+  wireRoleGroup('join-role');
+  // Renvoie true (Elle = suit le cycle) / false (Lui) / null si aucun choix.
+  function selectedTracksCycle(groupId) {
+    const sel = document.getElementById(groupId)?.querySelector('button.on[data-role]');
+    return sel ? sel.dataset.role === 'elle' : null;
+  }
+
   document.getElementById('btn-create-submit')?.addEventListener('click', async () => {
     const name       = document.getElementById('create-name')?.value?.trim();
-    const tracksCycle = document.getElementById('create-tracks')?.checked ?? false;
+    const tracksCycle = selectedTracksCycle('create-role');
     if (!name) { showMsg('create-error', 'Entre ton prénom pour continuer.'); return; }
+    if (tracksCycle === null) { showMsg('create-error', 'Indique si tu es Elle ♀ ou Lui ♂.'); return; }
     const btn = document.getElementById('btn-create-submit');
     btn.disabled = true; btn.textContent = 'Création…';
     try {
@@ -183,8 +204,9 @@ function initPairingView() {
   document.getElementById('btn-join-submit')?.addEventListener('click', async () => {
     const code       = document.getElementById('join-code')?.value?.trim();
     const name       = document.getElementById('join-name')?.value?.trim();
-    const tracksCycle = document.getElementById('join-tracks')?.checked ?? false;
+    const tracksCycle = selectedTracksCycle('join-role');
     if (!code || !name) return;
+    if (tracksCycle === null) { showMsg('join-error', 'Indique si tu es Elle ♀ ou Lui ♂.'); return; }
     const btn = document.getElementById('btn-join-submit');
     btn.disabled = true; btn.textContent = 'Vérification…';
     try {

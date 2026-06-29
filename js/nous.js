@@ -416,11 +416,24 @@ function initClueImport(me) {
       catch { throw new Error('Fichier illisible — ce n\'est pas un JSON valide.'); }
 
       // Auto-détection du format : tableau → Clue ; objet avec « activity » → LoveLust.
+      // Routage par rôle : Clue = données de cycle → compte d'ELLE ; LoveLust →
+      // compte de LUI. On ne peut pas écrire le compte du partenaire (la RLS
+      // garantit le « lecture seule » croisé), donc on bloque avec un message
+      // au lieu d'importer sur le mauvais compte. Les moments « à deux » de
+      // LoveLust restent visibles par les deux (tables couple, couple_id).
       if (Array.isArray(data)) {
+        if (!me.tracks_cycle) {
+          say('Cet export Clue concerne le cycle : importe-le depuis le compte d\'ELLE ♀. Les données du partenaire sont en lecture seule ici.', 'var(--red)');
+          return;
+        }
         const { importClueData } = await import('./clue-import.js');
         const res = await importClueData(data, me.user_id, me.couple_id, txt => say(txt));
         say(`✓ Import Clue terminé : ${res.cyclesInserted} cycle(s), ${res.daysLogged} jour(s) de journal (${res.dateRange?.[0]} → ${res.dateRange?.[1]}). Recharge l'app.`, 'var(--elle)');
       } else if (data && Array.isArray(data.activity)) {
+        if (me.tracks_cycle) {
+          say('Cet export LoveLust est rattaché à LUI ♂ : importe-le depuis le compte de LUI. Les moments à deux resteront visibles par vous deux.', 'var(--red)');
+          return;
+        }
         const { importLovelustData } = await import('./lovelust-import.js');
         const res = await importLovelustData(data, me.user_id, me.couple_id, txt => say(txt));
         const pn = res.partnerName ? ` · partenaire : ${res.partnerName}` : '';

@@ -242,6 +242,7 @@ function initDateNav() {
       updateDisplay();
       await loadEntriesForDate(state.logDate);
       renderMetrics();
+      renderRingChart();  // l'anneau utilise getDayInCycle(logDate) → suivre la date
     }
     if (state.logDateOffset === -30) prevBtn.disabled = true;
   });
@@ -253,6 +254,7 @@ function initDateNav() {
       updateDisplay();
       await loadEntriesForDate(state.logDate);
       renderMetrics();
+      renderRingChart();  // idem : refléter le jour sélectionné
     }
   });
 
