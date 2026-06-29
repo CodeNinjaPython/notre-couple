@@ -314,6 +314,11 @@ export function openFullSessionSheet(st) {
   document.getElementById('btn-session-cancel')?.addEventListener('click', closeSessionSheet, { once: true });
   document.getElementById('btn-fast-track')?.addEventListener('click', () => openFastTrack(st), { once: true });
 
+  // Fermer : bouton ✕ + clic sur le fond (en dehors de la feuille). .onclick = idempotent.
+  const closeBtn = document.getElementById('btn-session-close');
+  if (closeBtn) closeBtn.onclick = closeSessionSheet;
+  sheet.onclick = (e) => { if (e.target === sheet) closeSessionSheet(); };
+
   // Wizard : navigation entre étapes (.onclick = idempotent à chaque ouverture)
   const prevBtn = document.getElementById('btn-wizard-prev');
   const nextBtn = document.getElementById('btn-wizard-next');

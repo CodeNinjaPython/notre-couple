@@ -12,8 +12,29 @@ const MONTH_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const DAY_FR = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-const cal = { year: 0, month: 0, byDate: {}, st: null, coupleId: null, elleId: null, luiId: null, onAddMoment: null, selected: null };
+const cal = { year: 0, month: 0, byDate: {}, st: null, coupleId: null, elleId: null, luiId: null, onAddMoment: null, selected: null, filter: 'both' };
 let listenerBound = false;
+
+// Le moment correspond-il au filtre courant ? Un moment « à deux » compte pour
+// les deux ; un solo ne compte que pour son auteur.
+function sessionMatchesFilter(s) {
+  if (cal.filter === 'both') return true;
+  if (!s.solo) return true; // à deux → visible dans Elle ET Lui
+  return cal.filter === 'elle' ? s.created_by === cal.elleId : s.created_by === cal.luiId;
+}
+
+// Drapeaux d'affichage d'un jour, restreints au filtre courant.
+function dayFlags(e) {
+  const f = { couple: false, soloElle: false, soloLui: false, orgasm: false };
+  for (const s of e.sessions) {
+    if (!sessionMatchesFilter(s)) continue;
+    if (s.solo) { if (s.created_by === cal.elleId) f.soloElle = true; else f.soloLui = true; }
+    else f.couple = true;
+    if (s.orgasms > 0) f.orgasm = true;
+  }
+  f.any = f.couple || f.soloElle || f.soloLui;
+  return f;
+}
 
 export async function initIntimacyCalendar(st, onAddMoment) {
   const grid = document.getElementById('intime-cal-grid');
@@ -98,12 +119,15 @@ function renderGrid() {
 
     let dots = '';
     if (e) {
-      dots = '<div class="cal-dots">'
-        + (e.couple ? '<i class="cal-dot" style="background:#D9B36A"></i>' : '')      // à deux = or
-        + (e.soloElle ? '<i class="cal-dot" style="background:var(--elle)"></i>' : '') // solo elle = rose
-        + (e.soloLui ? '<i class="cal-dot" style="background:var(--lui)"></i>' : '')   // solo lui = bleu
-        + (e.orgasm ? '<i class="cal-dot" style="background:var(--violet)"></i>' : '')
-        + '</div>';
+      const f = dayFlags(e);
+      if (f.any) {
+        dots = '<div class="cal-dots">'
+          + (f.couple ? '<i class="cal-dot" style="background:#D9B36A"></i>' : '')      // à deux = or
+          + (f.soloElle ? '<i class="cal-dot" style="background:var(--elle)"></i>' : '') // solo elle = rose
+          + (f.soloLui ? '<i class="cal-dot" style="background:var(--lui)"></i>' : '')   // solo lui = bleu
+          + (f.orgasm ? '<i class="cal-dot" style="background:var(--violet)"></i>' : '')
+          + '</div>';
+      }
     }
     html += `<div class="${cls}" data-date="${dateStr}"><span class="cal-num">${d}</span>${dots}</div>`;
   }
@@ -123,9 +147,10 @@ function showDay(dateStr) {
   const human = new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   const future = dateStr > localDateStr();
 
+  const visibleSessions = e ? e.sessions.filter(sessionMatchesFilter) : [];
   let body = `<div class="intime-cal-day-title">${human}</div>`;
-  if (e && e.sessions.length) {
-    body += e.sessions.map(s => {
+  if (visibleSessions.length) {
+    body += visibleSessions.map(s => {
       const who = s.solo
         ? (s.created_by === cal.elleId ? 'Solo (elle)' : s.created_by === cal.luiId ? 'Solo (lui)' : 'Solo')
         : 'À deux';
@@ -166,6 +191,17 @@ function showDay(dateStr) {
 function bindNav() {
   document.getElementById('intime-cal-prev')?.addEventListener('click', () => shiftMonth(-1));
   document.getElementById('intime-cal-next')?.addEventListener('click', () => shiftMonth(1));
+
+  // Filtre Les deux / Elle / Lui
+  document.querySelectorAll('#intime-cal-filter .cal-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cal.filter = btn.dataset.filter;
+      document.querySelectorAll('#intime-cal-filter .cal-filter-btn')
+        .forEach(b => b.classList.toggle('on', b === btn));
+      renderGrid();
+      if (cal.selected) showDay(cal.selected);
+    });
+  });
 }
 
 function shiftMonth(delta) {

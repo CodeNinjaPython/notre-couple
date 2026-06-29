@@ -719,6 +719,11 @@
             <span id="intime-cal-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
             <button id="intime-cal-next" class="cal-nav-btn" aria-label="Mois suivant"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
           </div>
+          <div class="intime-cal-filter" id="intime-cal-filter" role="group" aria-label="Filtrer par personne">
+            <button type="button" class="cal-filter-btn on" data-filter="both">Les deux</button>
+            <button type="button" class="cal-filter-btn" data-filter="elle">Elle</button>
+            <button type="button" class="cal-filter-btn" data-filter="lui">Lui</button>
+          </div>
           <div id="intime-cal-grid" class="cal-grid"></div>
           <div class="cal-legend">
             <span><i class="cal-legend-dot" style="background:#D9B36A"></i>À deux</span>
@@ -879,6 +884,7 @@
     <!-- Sheet : logger une session -->
     <div id="session-sheet" class="sheet-backdrop">
       <div class="sheet">
+        <button type="button" class="sheet-close" id="btn-session-close" aria-label="Fermer">✕</button>
         <div class="sheet-handle"></div>
         <h3 class="sheet-title">Notre moment</h3>
 
