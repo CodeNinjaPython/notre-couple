@@ -7,6 +7,11 @@ export function registerView(name, initFn) {
   viewInits[name] = initFn;
 }
 
+// Vrai si une vue a été enregistrée pour ce nom (viewInits est privé au module).
+export function isRegisteredView(name) {
+  return Object.prototype.hasOwnProperty.call(viewInits, name);
+}
+
 export function navigate(name, params = {}) {
   const tpl = document.getElementById(`tpl-${name}`);
   const container = document.getElementById('view');

@@ -1,7 +1,7 @@
 import { supabase, IS_DEMO } from './supabase.js';
 import { signInOrSignUp, onAuthChange } from './auth.js';
 import { getMyMembership, createCouple, joinWithCode, renewPairingCode } from './pairing.js';
-import { navigate, registerView, initNavButtons } from './router.js';
+import { navigate, registerView, initNavButtons, isRegisteredView } from './router.js';
 import { initToday } from './today.js';
 import { initCalendar } from './calendar.js';
 import { initNous, initSettings } from './nous.js';
@@ -198,7 +198,7 @@ async function routeAfterAuth() {
       const hash = window.location.hash.slice(1);
       const [view, section] = hash.split('/');
       // Si un hash est présent et correspond à une vue, on navigue dessus, sinon 'today'
-      if (hash && viewInits[view]) {
+      if (hash && isRegisteredView(view)) {
         navigate(view, { section });
       } else {
         navigate('today');
