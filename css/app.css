@@ -2190,6 +2190,16 @@ nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
   font-family: "DM Mono", monospace; letter-spacing: .01em;
 }
 
+/* Toggles chip (solo / films) dans le sheet */
+.chip-toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip-toggle {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface2); border-radius: 100px;
+  padding: 8px 13px; font-size: 13px; font-weight: 600; color: var(--muted);
+}
+.chip-toggle input { width: 17px; height: 17px; accent-color: var(--elle); }
+.chip-toggle:has(input:checked) { border-color: var(--elle); background: var(--elle-light); color: var(--elle); }
+
 /* #6 — SOS besoin */
 .sos-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); margin-bottom: 10px; }
 .sos-btns { display: flex; gap: 8px; }

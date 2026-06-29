@@ -231,9 +231,12 @@ export async function loadAndEditSession(sessionId, st) {
       document.querySelector(`#session-protection-partner .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
     });
     document.getElementById('session-ejaculation').value = details.ejaculation || 'inconnu';
+    const wp = document.getElementById('session-watched-porn'); if (wp) wp.checked = !!details.watched_porn;
 
-    // Positions (stockées dans session_activities)
-    const positionIds = session.session_activities?.[0]?.tags || [];
+    // Positions + marqueur solo (stockés dans session_activities.tags)
+    const allTags = session.session_activities?.[0]?.tags || [];
+    const soloEl = document.getElementById('session-solo'); if (soloEl) soloEl.checked = allTags.includes('solo');
+    const positionIds = allTags.filter(t => t !== 'solo');
     positionIds.forEach(id => {
       document.querySelector(`.pos-pick-btn[data-id="${id}"]`)?.classList.add('sel');
     });
@@ -291,6 +294,11 @@ export function openFullSessionSheet(st) {
   // Réinitialiser le nouveau champ select
   const ejacEl = document.getElementById('session-ejaculation');
   if (ejacEl) ejacEl.value = 'inconnu';
+
+  // Réinitialiser solo / films olé olé
+  ['session-solo', 'session-watched-porn'].forEach(id => {
+    const c = document.getElementById(id); if (c) c.checked = false;
+  });
 
 
   // Mettre à jour les noms partenaires
@@ -403,7 +411,10 @@ async function saveFullSession(st) {
   const location     = document.querySelector('.loc-btn.sel')?.dataset.loc  || null;
   const dur          = parseInt(document.getElementById('session-duration')?.value)      || null;
   const note         = document.getElementById('session-note-input')?.value?.trim() || null;
+  const isSolo = document.getElementById('session-solo')?.checked ?? false;
+  // Tags positions + marqueur solo (distingue solo elle/lui sur le calendrier).
   const positionIds  = [...document.querySelectorAll('.pos-pick-btn.sel')].map(b => b.dataset.id);
+  const activityTags = isSolo ? [...positionIds, 'solo'] : positionIds;
 
   // Nouveaux champs détaillés
   const details = {
@@ -413,6 +424,8 @@ async function saveFullSession(st) {
     protection_me:        [...document.querySelectorAll('#session-protection-me .sel')].map(b => b.dataset.tag),
     protection_partner:   [...document.querySelectorAll('#session-protection-partner .sel')].map(b => b.dataset.tag),
     ejaculation:          document.getElementById('session-ejaculation')?.value || 'inconnu',
+    watched_porn:         document.getElementById('session-watched-porn')?.checked ?? false,
+    solo:                 isSolo,
   };
 
   // Préliminaires
@@ -462,9 +475,9 @@ async function saveFullSession(st) {
     // resteraient). On réinsère seulement s'il en reste.
     if (session?.id) {
       if (isEditing) await supabase.from('session_activities').delete().eq('session_id', session.id);
-      if (positionIds.length) {
+      if (activityTags.length) {
         if (!isEditing) await supabase.from('session_activities').delete().eq('session_id', session.id);
-        await supabase.from('session_activities').insert({ session_id: session.id, tags: positionIds });
+        await supabase.from('session_activities').insert({ session_id: session.id, tags: activityTags });
       }
     }
 
