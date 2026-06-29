@@ -60,6 +60,31 @@ function notifySessionSaved() {
   document.dispatchEvent(new CustomEvent('nc:session-saved'));
 }
 
+// Supprime une session (+ ses notes de position) après confirmation.
+// Émet nc:session-saved (calendrier/bilan se rechargent). Renvoie true si supprimé.
+export async function deleteSession(sessionId, st) {
+  const confirmed = await confirmDialog({
+    title: 'Supprimer ce moment ?',
+    message: 'Cette action est irréversible. Le moment et ses feedbacks/notes seront effacés.',
+    confirmLabel: 'Oui, supprimer',
+    danger: true,
+  });
+  if (!confirmed) return false;
+  try {
+    try { await supabase.from('position_ratings').delete().eq('session_id', sessionId); }
+    catch (e) { console.warn('position_ratings delete:', e?.message || e); }
+    const { error } = await supabase.from('intimate_sessions').delete().eq('id', sessionId);
+    if (error) throw error;
+    toast('Moment supprimé.');
+    notifySessionSaved();
+    return true;
+  } catch (error) {
+    toast(friendlyError(error), 'error');
+    console.error('deleteSession:', error);
+    return false;
+  }
+}
+
 export async function renderRecentSessions(st) {
   const wrap = document.getElementById('recent-sessions');
   if (!wrap) return;
@@ -113,32 +138,7 @@ export async function renderRecentSessions(st) {
     wrap.querySelectorAll('.session-delete').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation(); // Évite de déclencher d'autres clics sur la carte
-        const sessionId = btn.dataset.id;
-
-        const confirmed = await confirmDialog({
-          title: 'Supprimer ce moment ?',
-          message: 'Cette action est irréversible. Le moment et tous les feedbacks associés seront effacés.',
-          confirmLabel: 'Oui, supprimer'
-        });
-
-        if (confirmed) {
-          try {
-            // Retirer d'abord les notes de position (FK on delete set null → sinon
-            // elles resteraient comptées dans le bilan/suggestions).
-            try { await supabase.from('position_ratings').delete().eq('session_id', sessionId); }
-            catch (e) { console.warn('position_ratings delete:', e?.message || e); }
-
-            const { error } = await supabase.from('intimate_sessions').delete().eq('id', sessionId);
-            if (error) throw error;
-
-            toast('Moment supprimé.');
-            await renderRecentSessions(st);
-            notifySessionSaved(); // Notifie les autres composants (ex: calendrier)
-          } catch (error) {
-            toast(friendlyError(error), 'error');
-            console.error('Delete session error:', error);
-          }
-        }
+        if (await deleteSession(btn.dataset.id, st)) await renderRecentSessions(st);
       });
     });
 
@@ -187,7 +187,7 @@ export async function renderRecentSessions(st) {
  * @param {string} sessionId
  * @param {object} st - L'état global de l'intimité (me, partner, coupleId)
  */
-async function loadAndEditSession(sessionId, st) {
+export async function loadAndEditSession(sessionId, st) {
   try {
     const { data: session, error } = await supabase
       .from('intimate_sessions')

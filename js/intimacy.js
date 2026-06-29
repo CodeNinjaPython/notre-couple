@@ -115,7 +115,7 @@ export async function initIntimacy(params = {}) { // This function is now much c
   notifyLibidosAligned();
 
   // Calendrier intime (suivi mensuel de la sexualité)
-  initIntimacyCalendar(st.coupleId, (date) => {
+  initIntimacyCalendar(st, (date) => {
     prepareNewSession();
     openFullSessionSheet(st);
     const dateEl = document.getElementById('session-date-input');

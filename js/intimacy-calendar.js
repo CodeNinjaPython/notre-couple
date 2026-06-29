@@ -6,18 +6,22 @@
  */
 import { supabase } from './supabase.js';
 import { localDateStr } from './date-utils.js';
+import { loadAndEditSession, deleteSession } from './intimacy-sessions.js';
 
 const MONTH_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const DAY_FR = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-const cal = { year: 0, month: 0, byDate: {}, coupleId: null, onAddMoment: null, selected: null };
+const cal = { year: 0, month: 0, byDate: {}, st: null, coupleId: null, elleId: null, luiId: null, onAddMoment: null, selected: null };
 let listenerBound = false;
 
-export async function initIntimacyCalendar(coupleId, onAddMoment) {
+export async function initIntimacyCalendar(st, onAddMoment) {
   const grid = document.getElementById('intime-cal-grid');
   if (!grid) return;
-  cal.coupleId = coupleId;
+  cal.st = st;
+  cal.coupleId = st?.coupleId;
+  cal.elleId = st?.me?.tracks_cycle ? st.me.user_id : st?.partner?.user_id;
+  cal.luiId  = st?.me?.tracks_cycle ? st?.partner?.user_id : st?.me?.user_id;
   cal.onAddMoment = onAddMoment;
   cal.selected = null;
   const now = new Date();
@@ -48,7 +52,7 @@ async function loadSessions() {
   cal.byDate = {};
   if (!cal.coupleId) return;
   const { data } = await supabase.from('intimate_sessions')
-    .select('id, session_date, note, duration_min, session_feedback(orgasms), session_activities(tags)')
+    .select('id, session_date, note, duration_min, created_by, session_feedback(orgasms), session_activities(tags)')
     .eq('couple_id', cal.coupleId)
     .order('session_date', { ascending: false });
 
@@ -58,10 +62,14 @@ async function loadSessions() {
     const orgasms = (s.session_feedback || []).reduce((n, f) => n + (f.orgasms || 0), 0);
     const solo = tags.includes('solo');
     const e = cal.byDate[s.session_date] || (cal.byDate[s.session_date] =
-      { count: 0, couple: false, solo: false, orgasm: false, sessions: [] });
+      { count: 0, couple: false, soloElle: false, soloLui: false, orgasm: false, sessions: [] });
     e.count++;
-    e.couple = e.couple || !solo;
-    e.solo = e.solo || solo;
+    if (solo) {
+      if (s.created_by === cal.elleId) e.soloElle = true;
+      else e.soloLui = true; // par défaut côté lui si auteur inconnu
+    } else {
+      e.couple = true;
+    }
     e.orgasm = e.orgasm || orgasms > 0;
     e.sessions.push({ ...s, tags, orgasms, solo });
   }
@@ -91,8 +99,9 @@ function renderGrid() {
     let dots = '';
     if (e) {
       dots = '<div class="cal-dots">'
-        + (e.couple ? '<i class="cal-dot" style="background:var(--elle)"></i>' : '')
-        + (e.solo ? '<i class="cal-dot" style="background:var(--lui)"></i>' : '')
+        + (e.couple ? '<i class="cal-dot" style="background:#D9B36A"></i>' : '')      // à deux = or
+        + (e.soloElle ? '<i class="cal-dot" style="background:var(--elle)"></i>' : '') // solo elle = rose
+        + (e.soloLui ? '<i class="cal-dot" style="background:var(--lui)"></i>' : '')   // solo lui = bleu
         + (e.orgasm ? '<i class="cal-dot" style="background:var(--violet)"></i>' : '')
         + '</div>';
     }
@@ -117,13 +126,22 @@ function showDay(dateStr) {
   let body = `<div class="intime-cal-day-title">${human}</div>`;
   if (e && e.sessions.length) {
     body += e.sessions.map(s => {
-      const meta = [s.solo ? 'Solo' : 'À deux'];
+      const who = s.solo
+        ? (s.created_by === cal.elleId ? 'Solo (elle)' : s.created_by === cal.luiId ? 'Solo (lui)' : 'Solo')
+        : 'À deux';
+      const meta = [who];
       if (s.duration_min) meta.push(`${s.duration_min} min`);
       if (s.orgasms) meta.push(`${s.orgasms} orgasme${s.orgasms > 1 ? 's' : ''}`);
       const tagStr = (s.tags || []).filter(t => t !== 'solo').slice(0, 8)
         .map(t => `<span class="intime-tag">${escapeHtml(t)}</span>`).join('');
-      return `<div class="intime-cal-session">
-        <div class="intime-cal-session-meta">${meta.join(' · ')}</div>
+      return `<div class="intime-cal-session" data-id="${s.id}">
+        <div class="intime-cal-session-head">
+          <div class="intime-cal-session-meta">${meta.join(' · ')}</div>
+          <div class="intime-cal-session-actions">
+            <button type="button" class="cal-sess-edit" data-id="${s.id}" aria-label="Modifier ce moment">✏️</button>
+            <button type="button" class="cal-sess-del" data-id="${s.id}" aria-label="Supprimer ce moment">×</button>
+          </div>
+        </div>
         ${s.note ? `<div class="intime-cal-session-note">${escapeHtml(s.note)}</div>` : ''}
         ${tagStr ? `<div class="intime-cal-tags">${tagStr}</div>` : ''}
       </div>`;
@@ -136,6 +154,13 @@ function showDay(dateStr) {
   }
   detail.innerHTML = body;
   document.getElementById('intime-cal-add')?.addEventListener('click', () => cal.onAddMoment?.(dateStr));
+
+  // Éditer / supprimer un moment directement depuis le calendrier.
+  detail.querySelectorAll('.cal-sess-edit').forEach(b =>
+    b.addEventListener('click', () => loadAndEditSession(b.dataset.id, cal.st)));
+  detail.querySelectorAll('.cal-sess-del').forEach(b =>
+    b.addEventListener('click', () => deleteSession(b.dataset.id, cal.st)));
+  // (deleteSession émet nc:session-saved → le calendrier se recharge tout seul.)
 }
 
 function bindNav() {
