@@ -9,9 +9,16 @@ function randomCode() {
 }
 
 export async function getMyMembership() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  // Filtrer explicitement sur user_id : la RLS laisse voir TOUS les membres du
+  // couple (pour la visibilité du partenaire), donc sans ce filtre la requête
+  // ramène 2 lignes dès que le couple est complet → .maybeSingle() échoue avec
+  // « JSON object requested, multiple (or no) rows returned ».
   const { data, error } = await supabase
     .from('couple_members')
     .select('user_id, couple_id, display_name, tracks_cycle')
+    .eq('user_id', user.id)
     .maybeSingle();
   if (error) throw error;
   return data;
