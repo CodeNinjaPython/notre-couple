@@ -29,6 +29,9 @@ import { cachedQuery, invalidateCache } from './query-cache.js';
 import { initCollapsibles } from './collapse.js';
 import { toast, confirmDialog, formDialog, friendlyError } from './ui-feedback.js';
 
+// Variable pour garder une référence au listener et pouvoir le supprimer
+let handleSessionSaved;
+
 function initSubNav(initialSection = 'journal') {
   const nav = document.getElementById('intime-sub-nav');
   if (!nav) return;
@@ -140,6 +143,13 @@ export async function initIntimacy(params = {}) { // This function is now much c
   initPINSettings();
   initHealthAdd();
   initFirstTimesSection();
+
+  // Rafraîchissement silencieux des stats quand une séance est enregistrée/supprimée
+  // (aligné sur le calendrier et position-insights, qui écoutent le même event sans toast).
+  handleSessionSaved = () => {
+    renderStatsSection(st).catch(err => console.warn('[intimacy] refresh stats:', err?.message || err));
+  };
+  document.addEventListener('nc:session-saved', handleSessionSaved);
 }
 
 /**
@@ -615,7 +625,7 @@ async function renderSuggestions() {
 
 // ─── Fonctions extraites de l'ancien intimacy.js ───────────────────────────
 
-function escapeHtml(s) {
+export function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -906,6 +916,10 @@ function initDarkModeToggle() {
 // Nettoyer le dark mode quand on quitte la vue intime
 export function cleanupIntimacy() {
   document.body.classList.remove('intime-dark');
+  if (handleSessionSaved) {
+    document.removeEventListener('nc:session-saved', handleSessionSaved);
+    handleSessionSaved = null;
+  }
 }
 
 // ─── Voice input (Web Speech API) ──────────────────────────────────────────

@@ -8,8 +8,8 @@
  * - Personne ne découvre l'intérêt de l'autre en avançant seul.
  */
 import { supabase } from './supabase.js';
-import { getIntimacyState, initKinkSliderGradients } from './intimacy.js';
-import { toast, formDialog, friendlyError } from './ui-feedback.js';
+import { getIntimacyState, initKinkSliderGradients, escapeHtml } from './intimacy.js';
+import { toast, confirmDialog, formDialog, friendlyError } from './ui-feedback.js';
 import { diffDays } from './date-utils.js';
 
 const CATEGORIES = {
@@ -32,7 +32,7 @@ export async function initKinks() {
     renderMyLimits(st)
   ]);
   initAddLimit(st);
-  initAddWish(st);
+  initWishlistSection(st);
 }
 
 // ---------------------------------------------------------------------------
@@ -171,28 +171,70 @@ async function renderWishlist(st) {
 
   wrap.innerHTML = data.map(f => {
     const isMe = f.created_by === st.me?.user_id;
-    return `<div class="wish-item">
+    return `<div class="wish-item" data-id="${f.id}" data-content="${escapeHtml(f.content)}">
       <div class="wish-status">${STATUS_LABELS[f.status] || f.status}</div>
-      <div class="wish-content">${f.content}</div>
+      <div class="wish-content">${escapeHtml(f.content)}</div>
       <div class="wish-footer">
         <span class="wish-by">${isMe ? 'Moi' : (st.partner?.display_name || 'Partenaire')}</span>
-        ${isMe ? `<select class="wish-select" data-id="${f.id}">
-          ${Object.entries(STATUS_LABELS).map(([k, v]) =>
-            `<option value="${k}"${f.status === k ? ' selected' : ''}>${v}</option>`
-          ).join('')}
-        </select>` : ''}
+        <div class="wish-actions">
+          ${isMe ? `<select class="wish-select" data-id="${f.id}">
+            ${Object.entries(STATUS_LABELS).map(([k, v]) =>
+              `<option value="${k}"${f.status === k ? ' selected' : ''}>${v}</option>`
+            ).join('')}
+          </select>` : ''}
+          ${isMe ? `<button type="button" class="btn-icon btn-edit-wish" aria-label="Modifier">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button type="button" class="btn-icon btn-delete-wish" aria-label="Supprimer">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>` : ''}
+        </div>
       </div>
     </div>`;
   }).join('');
-
-  wrap.querySelectorAll('.wish-select').forEach(sel => {
-    sel.addEventListener('change', async () => {
-      await supabase.from('fantasies').update({ status: sel.value }).eq('id', sel.dataset.id);
-    });
-  });
 }
 
-function initAddWish(st) {
+function initWishlistSection(st) {
+  const listEl = document.getElementById('wishlist');
+  if (!listEl) return;
+
+  // Délégation d'événements pour le statut, l'édition et la suppression
+  listEl.addEventListener('click', async (e) => {
+    const item = e.target.closest('.wish-item');
+    if (!item) return;
+    const wishId = item.dataset.id;
+
+    // Gérer la suppression
+    if (e.target.closest('.btn-delete-wish')) {
+      const ok = await confirmDialog({ title: 'Supprimer ce souhait ?', message: 'Cette idée sera effacée de votre liste.', confirmLabel: 'Supprimer', danger: true });
+      if (!ok) return;
+      try { await supabase.from('fantasies').delete().eq('id', wishId); toast('Souhait supprimé.'); await renderWishlist(st); }
+      catch (err) { toast(friendlyError(err), 'error'); }
+    }
+
+    // Gérer l'édition
+    if (e.target.closest('.btn-edit-wish')) {
+      const res = await formDialog({
+        title: 'Modifier un souhait',
+        fields: [{ name: 'content', label: 'Votre fantasme ou idée', type: 'textarea', value: item.dataset.content, required: true }],
+      });
+      if (!res) return;
+      try {
+        await supabase.from('fantasies').update({ content: res.content }).eq('id', wishId);
+        toast('Souhait mis à jour.');
+        await renderWishlist(st);
+      } catch (err) { toast(friendlyError(err), 'error'); }
+    }
+  });
+
+  // Listener pour le changement de statut (délégation aussi)
+  listEl.addEventListener('change', async (e) => {
+    if (e.target.classList.contains('wish-select')) {
+      await supabase.from('fantasies').update({ status: e.target.value }).eq('id', e.target.dataset.id);
+    }
+  });
+
+  // Bouton d'ajout
   document.getElementById('btn-add-wish')?.addEventListener('click', async () => {
     const res = await formDialog({
       title: 'Ajouter à la wish-list',
@@ -206,7 +248,7 @@ function initAddWish(st) {
         content: res.content,
         shared: true,
       });
-      await renderWishlist(st);
+      await renderWishlist(st); // Re-render to show the new item
     } catch (e) { toast(friendlyError(e), 'error'); }
   });
 }
