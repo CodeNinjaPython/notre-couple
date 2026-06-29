@@ -361,19 +361,8 @@
         </button>
       </div>
 
-      <!-- ① Double rythme (toujours visible) -->
-      <div class="card rhythm">
-        <h2>Notre rythme · ce cycle</h2>
-        <svg id="chart" viewBox="0 0 340 148" preserveAspectRatio="none"
-          aria-label="Courbes superposées des deux partenaires sur le cycle"></svg>
-        <div class="legend">
-          <span><i class="dot g"></i>Elle</span>
-          <span><i class="dot s"></i>Lui</span>
-        </div>
-      </div>
-
-      <!-- ② Saisie du jour (toujours visible — action principale) -->
-      <div class="card">
+      <!-- ① Saisie du jour — action principale, remontée au-dessus du graphe -->
+      <div class="card card-primary">
         <div class="log-date-nav">
           <button type="button" id="btn-log-prev" class="log-nav-btn" aria-label="Jour précédent">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
@@ -389,6 +378,17 @@
             <div class="es-icon">✏️</div>
             <p>Chargement…</p>
           </div>
+        </div>
+      </div>
+
+      <!-- ② Double rythme (sous la saisie) -->
+      <div class="card rhythm">
+        <h2>Notre rythme · ce cycle</h2>
+        <svg id="chart" viewBox="0 0 340 148" preserveAspectRatio="none"
+          aria-label="Courbes superposées des deux partenaires sur le cycle"></svg>
+        <div class="legend">
+          <span><i class="dot g"></i>Elle</span>
+          <span><i class="dot s"></i>Lui</span>
         </div>
       </div>
 
@@ -411,7 +411,7 @@
       </div>
 
       <!-- ④ Prédiction (collapsible, ouverte si dispo) -->
-      <div class="card collapsible-section" id="prediction-card" style="display:none" data-default-open="true">
+      <div class="card card-soft collapsible-section" id="prediction-card" style="display:none" data-default-open="true">
         <button type="button" class="collapsible-header" aria-expanded="true">
           <h2>Prochainement</h2>
           <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
@@ -437,7 +437,7 @@
       </div>
 
       <!-- ⑤ Nos moments (collapsible, fermé par défaut) -->
-      <div class="card collapsible-section" data-default-open="false">
+      <div class="card card-soft collapsible-section" data-default-open="false">
         <button type="button" class="collapsible-header" aria-expanded="false">
           <h2>Nos moments</h2>
           <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>

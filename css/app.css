@@ -1542,6 +1542,27 @@ body.intime-dark .card:hover {
 }
 .card { animation: fade-up .28s ease both; }
 
+/* Hiérarchie de l'écran Aujourd'hui :
+   .card-primary = action quotidienne (saisie) mise en avant
+   .card-soft    = info secondaire/tertiaire aplatie pour réduire le bruit */
+.card-primary {
+  position: relative; overflow: hidden;
+  border-color: var(--elle-mid);
+  box-shadow: var(--sh-md);
+}
+.card-primary::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: linear-gradient(90deg, var(--elle), var(--violet));
+}
+body.dark .card-primary { border-color: var(--elle); }
+
+.card-soft {
+  background: var(--surface2);
+  border-color: transparent;
+  box-shadow: none;
+}
+
 /* ─── Slider kinks avec gradient de couleur ──────────────────────────── */
 /* La var --fill est mise à jour dynamiquement en JS */
 .kink-slider {
