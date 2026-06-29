@@ -33,6 +33,14 @@ if (IS_DEMO) document.body.classList.add('demo-mode');
 // Service worker (prod seulement — en démo le SW ne sert pas le réseau)
 if ('serviceWorker' in navigator && !IS_DEMO) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
+  // Auto-rechargement quand une nouvelle version prend le contrôle (évite de rester
+  // bloqué sur du code en cache après un déploiement). Reload unique (garde anti-boucle).
+  let _reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (_reloading) return;
+    _reloading = true;
+    window.location.reload();
+  });
 }
 
 // ── Register view inits ────────────────────────────────────────────────────
