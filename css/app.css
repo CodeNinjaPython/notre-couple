@@ -539,8 +539,12 @@ input::placeholder { color: var(--faint); font-weight: 400; }
   transform: translateY(100%);
   transition: transform .32s cubic-bezier(.4,0,.2,1);
   box-shadow: var(--sh-lg);
-  max-height: 90vh;
+  max-height: 88vh;
+  max-height: 88dvh;                 /* iOS PWA : tient compte des barres dynamiques */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* défilement inertiel iOS */
+  overscroll-behavior: contain;      /* évite le blocage par chaînage au body */
+  touch-action: pan-y;               /* autorise le scroll vertical tactile */
 }
 .sheet-backdrop.open .sheet { transform: translateY(0); }
 .sheet-handle {
