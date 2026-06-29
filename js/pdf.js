@@ -6,21 +6,34 @@ import { supabase } from './supabase.js';
 import { localDateStr, daysAgo, fmtDate } from './date-utils.js';
 
 const PHASE_LABELS = { Menstruelle: '🔴', Folliculaire: '🔵', Ovulation: '🟣', Lutéale: '🩷' };
-const EV_LABELS = { intimacy: '❤️ Intimité', conflict: '💬 Tension', date_night: '🌙 Soirée', other: '✨ Moment' };
+const EV_LABELS = {
+  intimacy: '❤️ Intimité', conflict: '💬 Tension', date_night: '🌙 Soirée', other: '✨ Moment',
+  reconfort: '💛 Besoin de douceur', presence: '🫂 Besoin de présence', espace: '🌿 Besoin d\'espace',
+};
 
 export async function exportPDF(coupleId, me, partner) {
   const since = daysAgo(30);
   const today = localDateStr();
 
-  const [logRes, evRes, cycRes] = await Promise.all([
+  const [logRes, evRes, cycRes, sesRes, fbRes] = await Promise.all([
     supabase.from('log_entries').select('*').gte('log_date', since).order('log_date'),
     supabase.from('couple_events').select('*').eq('couple_id', coupleId).gte('event_date', since).order('event_date'),
     supabase.from('cycles').select('*').order('period_start', { ascending: false }).limit(3),
+    supabase.from('intimate_sessions').select('id, session_date, duration_min').eq('couple_id', coupleId).gte('session_date', since),
+    supabase.from('session_feedback').select('satisfaction, orgasms').gte('created_at', since + 'T00:00:00Z'),
   ]);
 
   const entries = logRes.data || [];
   const events  = evRes.data  || [];
   const cycles  = cycRes.data || [];
+  const sessions = sesRes.data || [];
+  const fbs      = fbRes.data || [];
+
+  // Résumé intimité (#14)
+  const nbSessions = sessions.length;
+  const sats = fbs.map(f => f.satisfaction).filter(s => s != null);
+  const avgSat = sats.length ? (sats.reduce((a, b) => a + b, 0) / sats.length).toFixed(1) : '—';
+  const totalOrg = fbs.reduce((s, f) => s + (f.orgasms || 0), 0);
 
   // Regrouper par date
   const byDate = {};
@@ -89,6 +102,13 @@ ${rows.map(r => {
   </tr>`;
 }).join('')}
 </table>
+
+<h2>Intimité (30 jours)</h2>
+<div class="cycle-row">
+  <div class="cycle-item"><strong>${nbSessions}</strong> moment${nbSessions > 1 ? 's' : ''}</div>
+  <div class="cycle-item">Satisfaction moy. <strong>${avgSat}${avgSat !== '—' ? '/10' : ''}</strong></div>
+  <div class="cycle-item"><strong>${totalOrg}</strong> orgasme${totalOrg > 1 ? 's' : ''}</div>
+</div>
 
 <h2>Moments partagés</h2>
 ${events.length ? events.map(ev => `
