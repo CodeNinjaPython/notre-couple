@@ -1,4 +1,4 @@
-const CACHE = 'notre-rythme-v55';
+const CACHE = 'notre-rythme-v56';
 const SHELL = [
   '/',
   '/index.html',

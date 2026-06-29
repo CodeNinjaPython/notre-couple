@@ -731,6 +731,15 @@ body.demo-mode .demo-badge {
 
 /* ─── Calendrier intime (détail jour) ─────────────────────────────────── */
 .cal-cell--sel { border-color: var(--violet); box-shadow: 0 0 0 2px var(--violet-dim, rgba(124,92,252,.25)); }
+/* #10 — Aperçu de l'année */
+#cal-year { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; }
+.yr-month-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); margin-bottom: 5px; text-align: center; }
+.yr-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.yr-cell { aspect-ratio: 1; border-radius: 2px; background: var(--surface2); }
+.yr-cell.empty { background: transparent; }
+.yr-cell.period { background: var(--red); }
+.yr-cell.today { outline: 1.5px solid var(--elle); outline-offset: -1px; }
+
 /* #4 — Fréquence par phase */
 .phase-act-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
 .phase-act-label { width: 96px; flex-shrink: 0; color: var(--muted); font-weight: 600; }

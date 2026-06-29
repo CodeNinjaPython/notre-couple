@@ -530,6 +530,23 @@
         </div>
       </div>
 
+      <!-- Aperçu de l'année (#10, collapsible) -->
+      <div class="card collapsible-section" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Aperçu de l'année</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div class="cal-nav" style="margin-bottom:10px">
+            <button id="yr-prev" class="cal-nav-btn" aria-label="Année précédente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span id="yr-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
+            <button id="yr-next" class="cal-nav-btn" aria-label="Année suivante"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <div id="cal-year"></div>
+          <div class="cal-legend" style="margin-top:10px"><span><i class="cal-legend-dot" style="background:#E53935"></i>Règles</span></div>
+        </div>
+      </div>
+
       <!-- Historique cycles (collapsible, fermée par défaut) -->
       <div class="card collapsible-section" data-default-open="false">
         <button type="button" class="collapsible-header" aria-expanded="false">
