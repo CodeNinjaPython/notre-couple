@@ -2301,9 +2301,15 @@ nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
   flex: 1; border: 1.5px solid var(--line); background: var(--surface2); border-radius: 12px;
   padding: 11px 6px; font-size: 13px; font-weight: 700; color: var(--text); cursor: pointer;
   font-family: "DM Sans"; transition: all .15s;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
 }
 .sos-btn:hover { border-color: var(--elle-mid); background: var(--elle-light); color: var(--elle); }
 .sos-btn:disabled { opacity: .5; }
+
+/* Icône trait pour les micro-sélecteurs (SOS, types de moments) — cohérente avec la nav */
+.ctl-icon { width: 22px; height: 22px; flex-shrink: 0; }
+.sos-btn .ctl-icon { color: var(--elle); }
+.ev-type-btn .ctl-icon { color: inherit; }
 
 /* #5 — Météo-mémo */
 .meteo-memo { border: 1.5px solid var(--lui-mid); background: var(--lui-light); }

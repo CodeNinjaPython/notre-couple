@@ -326,9 +326,18 @@
       <div id="sos-card" class="card sos-card" style="display:none">
         <div class="sos-label">Signaler un besoin</div>
         <div class="sos-btns">
-          <button type="button" class="sos-btn" data-need="reconfort">💛 Douceur</button>
-          <button type="button" class="sos-btn" data-need="presence">🫂 Présence</button>
-          <button type="button" class="sos-btn" data-need="espace">🌿 Espace</button>
+          <button type="button" class="sos-btn" data-need="reconfort">
+            <svg class="ctl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Douceur
+          </button>
+          <button type="button" class="sos-btn" data-need="presence">
+            <svg class="ctl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Présence
+          </button>
+          <button type="button" class="sos-btn" data-need="espace">
+            <svg class="ctl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>
+            Espace
+          </button>
         </div>
       </div>
 
@@ -460,10 +469,18 @@
         <div class="sheet-handle"></div>
         <h3 class="sheet-title">Noter un moment</h3>
         <div class="ev-types">
-          <button class="ev-type-btn" data-type="intimacy">❤️<span>Intimité</span></button>
-          <button class="ev-type-btn" data-type="date_night">🌙<span>Soirée</span></button>
-          <button class="ev-type-btn" data-type="conflict">💬<span>Tension</span></button>
-          <button class="ev-type-btn" data-type="other">✨<span>Autre</span></button>
+          <button class="ev-type-btn" data-type="intimacy">
+            <svg class="ctl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span>Intimité</span></button>
+          <button class="ev-type-btn" data-type="date_night">
+            <svg class="ctl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <span>Soirée</span></button>
+          <button class="ev-type-btn" data-type="conflict">
+            <svg class="ctl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <span>Tension</span></button>
+          <button class="ev-type-btn" data-type="other">
+            <svg class="ctl-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>Autre</span></button>
         </div>
         <div class="field" style="margin-top:18px">
           <label for="event-note">Note (optionnel)</label>
