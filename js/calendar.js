@@ -83,47 +83,6 @@ function renderCalendar() {
   renderMonthGrid();
   renderPredictionPanel();
   renderCycleHistory();
-  renderYearOverview();
-}
-
-// #10 — Aperçu compact de l'année : 12 mini-mois avec jours de règles.
-let yearShown = null;
-function renderYearOverview() {
-  const el = document.getElementById('cal-year');
-  if (!el) return;
-  if (yearShown == null) yearShown = calState.year;
-  const title = document.getElementById('yr-title');
-  if (title) title.textContent = String(yearShown);
-
-  // Ensemble des jours de règles depuis l'historique.
-  const periodDays = new Set();
-  for (const c of (calState.cycles || [])) {
-    if (!c.period_start) continue;
-    const s = new Date(c.period_start + 'T12:00:00');
-    const e = c.period_end ? new Date(c.period_end + 'T12:00:00') : s;
-    for (let d = new Date(s); d <= e; d = new Date(d.getTime() + 864e5)) periodDays.add(localDateStr(d));
-  }
-  const today = localDateStr();
-
-  let html = '';
-  for (let m = 0; m < 12; m++) {
-    const days = new Date(yearShown, m + 1, 0).getDate();
-    const first = (new Date(yearShown, m, 1).getDay() + 6) % 7;
-    let cells = '';
-    for (let i = 0; i < first; i++) cells += '<span class="yr-cell empty"></span>';
-    for (let d = 1; d <= days; d++) {
-      const ds = `${yearShown}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      let cls = 'yr-cell';
-      if (periodDays.has(ds)) cls += ' period';
-      if (ds === today) cls += ' today';
-      cells += `<span class="${cls}"></span>`;
-    }
-    html += `<div class="yr-month"><div class="yr-month-name">${MONTH_FR[m].slice(0, 3)}</div><div class="yr-grid">${cells}</div></div>`;
-  }
-  el.innerHTML = html;
-
-  document.getElementById('yr-prev')?.addEventListener('click', () => { yearShown--; renderYearOverview(); }, { once: true });
-  document.getElementById('yr-next')?.addEventListener('click', () => { yearShown++; renderYearOverview(); }, { once: true });
 }
 
 // Skeleton de la grille (en-têtes réels + cellules grisées) pendant le fetch.

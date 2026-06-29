@@ -344,11 +344,27 @@ function renderFrequencyTrend(sessions) {
 // ─── Quick add ─────────────────────────────────────────────────────────────
 
 function initQuickAdd() {
-  document.getElementById('btn-quick-add')?.addEventListener('click', () => {
+  document.getElementById('btn-add-couple-moment')?.addEventListener('click', () => {
     prepareNewSession();
     openFullSessionSheet(st);
+    const soloEl = document.getElementById('session-solo');
+    if (soloEl) {
+      soloEl.checked = false;
+      // Trigger event listener manually to update classes
+      soloEl.dispatchEvent(new Event('change'));
+    }
   });
-  document.getElementById('btn-fast-track-open')?.addEventListener('click', () => openFastTrack(st));
+
+  document.getElementById('btn-add-solo-moment')?.addEventListener('click', () => {
+    prepareNewSession();
+    openFullSessionSheet(st);
+    const soloEl = document.getElementById('session-solo');
+    if (soloEl) {
+      soloEl.checked = true;
+      // Trigger event listener manually to update classes
+      soloEl.dispatchEvent(new Event('change'));
+    }
+  });
 }
 
 // ─── Matchs kinks ──────────────────────────────────────────────────────────
@@ -434,9 +450,8 @@ const PHASE_LABEL = {
   ovulation: 'Ovulation',    luteale: 'Lutéale',
 };
 
-async function logPositionToday(posId, card, loggedTodaySet) {
-  const pos = POSITIONS.find(p => p.id === posId);
-  if (!pos || !st.me) return;
+async function togglePositionLog(pos, loggedTodaySet) {
+  if (!st.me) return;
   const today = localDateStr();
   try {
     const { data } = await supabase.from('log_entries')
@@ -444,22 +459,90 @@ async function logPositionToday(posId, card, loggedTodaySet) {
     const log = data ? DailyLog.fromDB(data) : new DailyLog({ date: today, userId: st.me.user_id });
     if (!Array.isArray(log.positionsPersonnalisees)) log.positionsPersonnalisees = [];
 
-    if (log.positionsPersonnalisees.includes(pos.label)) {
-      toast(`« ${pos.label} » déjà notée aujourd'hui`, 'info');
-      return;
+    const isLogged = log.positionsPersonnalisees.includes(pos.label);
+    if (isLogged) {
+      log.positionsPersonnalisees = log.positionsPersonnalisees.filter(p => p !== pos.label);
+      loggedTodaySet.delete(pos.label);
+      toast(`« ${pos.label} » retirée ✓`);
+    } else {
+      log.positionsPersonnalisees.push(pos.label);
+      loggedTodaySet.add(pos.label);
+      toast(`« ${pos.label} » ajoutée à aujourd'hui ✓`);
     }
-    log.positionsPersonnalisees.push(pos.label);
+
     const { error } = await supabase.from('log_entries').upsert(
       { ...log.toDBEntry(), user_id: st.me.user_id },
       { onConflict: 'user_id,log_date,category_id' }
     );
     if (error) throw error;
     invalidateCache('log_entries');
-    loggedTodaySet.add(pos.label); // Update in-memory set
-    card?.classList.add('pos-card--logged');
-    toast(`« ${pos.label} » ajoutée à aujourd'hui ✓`);
+
+    const logBtn = document.getElementById('btn-toggle-pos-log');
+    if (logBtn) {
+      const nowLogged = loggedTodaySet.has(pos.label);
+      logBtn.textContent = nowLogged ? "Retirer de la saisie d'aujourd'hui" : "Noter pour aujourd'hui";
+      logBtn.className = nowLogged ? 'btn-secondary' : 'btn-primary';
+    }
+
+    const cards = document.querySelectorAll(`.pos-card[data-id="${pos.id}"]`);
+    cards.forEach(card => {
+      card.classList.toggle('pos-card--logged', loggedTodaySet.has(pos.label));
+    });
   } catch (e) {
     toast(friendlyError(e), 'error');
+  }
+}
+
+function showPositionDetails(posId, loggedTodaySet) {
+  const pos = POSITIONS.find(p => p.id === posId);
+  if (!pos) return;
+
+  const intensityMap = { 1: '🌸 Doux', 2: '✨ Modéré', 3: '🔥 Intense' };
+  const comfortMap = { 1: '🛋️ Confortable', 2: '⚡ Moyen', 3: '💪 Exigeant' };
+  const phaseTranslations = {
+    menstruelle: '🌸 Menstruelle',
+    folliculaire: '⚡ Folliculaire',
+    ovulation: '🔥 Ovulation',
+    luteale: '✨ Lutéale'
+  };
+
+  const isLogged = loggedTodaySet.has(pos.label);
+
+  const detailContent = document.getElementById('pos-detail-content');
+  if (detailContent) {
+    detailContent.innerHTML = `
+      <div class="pos-detail-svg">${pos.svg}</div>
+      <h4>${escapeHtml(pos.label)}</h4>
+      <p class="desc">${escapeHtml(pos.desc)}</p>
+      <div class="pos-detail-tags">
+        <span class="pos-detail-tag">${intensityMap[pos.intensity] || 'Intensité : ' + pos.intensity}</span>
+        <span class="pos-detail-tag">${comfortMap[pos.comfort] || 'Confort : ' + pos.comfort}</span>
+        ${(pos.phases || []).map(ph => `<span class="pos-detail-tag highlight">${phaseTranslations[ph] || ph}</span>`).join('')}
+      </div>
+    `;
+  }
+
+  const logBtn = document.getElementById('btn-toggle-pos-log');
+  if (logBtn) {
+    logBtn.textContent = isLogged ? "Retirer de la saisie d'aujourd'hui" : "Noter pour aujourd'hui";
+    logBtn.className = isLogged ? 'btn-secondary' : 'btn-primary';
+    logBtn.onclick = async () => {
+      await togglePositionLog(pos, loggedTodaySet);
+    };
+  }
+
+  const sheet = document.getElementById('position-detail-sheet');
+  if (sheet) {
+    sheet.classList.add('open');
+    sheet.removeAttribute('aria-hidden');
+
+    const closeSheet = () => {
+      sheet.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+    };
+    document.getElementById('btn-close-pos-detail').onclick = closeSheet;
+    document.getElementById('btn-close-pos-sheet').onclick = closeSheet;
+    sheet.onclick = (e) => { if (e.target === sheet) closeSheet(); };
   }
 }
 
@@ -488,17 +571,17 @@ async function renderLibrarySection() {
     renderLibrary(grid, filters, loggedToday);
   }
 
-  // Taper une position l'ajoute à la saisie du jour (délégation, liée une fois).
+  // Cliquer une position ouvre la fiche de détails (délégation, liée une fois).
   if (!grid._posLoggerBound) {
     grid._posLoggerBound = true;
     grid.addEventListener('click', (e) => {
       const card = e.target.closest('.pos-card');
-      if (card?.dataset.id) logPositionToday(card.dataset.id, card, loggedToday);
+      if (card?.dataset.id) showPositionDetails(card.dataset.id, loggedToday);
     });
     grid.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       const card = e.target.closest('.pos-card');
-      if (card?.dataset.id) { e.preventDefault(); logPositionToday(card.dataset.id, card, loggedToday); }
+      if (card?.dataset.id) { e.preventDefault(); showPositionDetails(card.dataset.id, loggedToday); }
     });
   }
 

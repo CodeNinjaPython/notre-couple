@@ -562,22 +562,6 @@
         </div>
       </div>
 
-      <!-- Aperçu de l'année (#10, collapsible) -->
-      <div class="card collapsible-section" data-default-open="false">
-        <button type="button" class="collapsible-header" aria-expanded="false">
-          <h2>Aperçu de l'année</h2>
-          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="collapsible-body">
-          <div class="cal-nav" style="margin-bottom:10px">
-            <button id="yr-prev" class="cal-nav-btn" aria-label="Année précédente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-            <span id="yr-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
-            <button id="yr-next" class="cal-nav-btn" aria-label="Année suivante"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
-          </div>
-          <div id="cal-year"></div>
-          <div class="cal-legend" style="margin-top:10px"><span><i class="cal-legend-dot" style="background:#E53935"></i>Règles</span></div>
-        </div>
-      </div>
 
       <!-- Historique cycles (collapsible, fermée par défaut) -->
       <div class="card collapsible-section" data-default-open="false">
@@ -749,16 +733,49 @@
 
       <!-- ==================== SECTION JOURNAL ==================== -->
       <div id="intime-section-journal" class="intime-section">
+        <!-- Calendrier sexualité (remonté tout en haut) -->
+        <div class="card" id="intime-cal-card">
+          <h2>Calendrier intime</h2>
+          
+          <!-- Toggle Mois / Année -->
+          <div class="who" id="toggle-intime-view" style="margin: 10px auto; max-width: 200px; padding: 3px;">
+            <button type="button" class="on" data-p="elle" data-view="month" style="padding: 6px; font-size: 11px;">Mois</button>
+            <button type="button" data-p="elle" data-view="year" style="padding: 6px; font-size: 11px;">Année</button>
+          </div>
+
+          <div class="cal-nav" style="margin-top:8px">
+            <button id="intime-cal-prev" class="cal-nav-btn" aria-label="Mois précédent"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span id="intime-cal-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
+            <button id="intime-cal-next" class="cal-nav-btn" aria-label="Mois suivant"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
+          <div class="intime-cal-filter" id="intime-cal-filter" role="group" aria-label="Filtrer par personne">
+            <button type="button" class="cal-filter-btn on" data-filter="both">Les deux</button>
+            <button type="button" class="cal-filter-btn" data-filter="elle">Elle</button>
+            <button type="button" class="cal-filter-btn" data-filter="lui">Lui</button>
+          </div>
+          <div id="intime-cal-grid" class="cal-grid"></div>
+          <div class="cal-legend" id="intime-cal-legend">
+            <span><i class="cal-legend-dot" style="background:#D9B36A"></i>À deux</span>
+            <span><i class="cal-legend-dot" style="background:var(--elle)"></i>Solo elle</span>
+            <span><i class="cal-legend-dot" style="background:var(--lui)"></i>Solo lui</span>
+            <span><i class="cal-legend-dot" style="background:var(--violet)"></i>Orgasme</span>
+          </div>
+          <div id="intime-cal-detail" style="margin-top:14px"></div>
+        </div>
+
+        <!-- Deux boutons de saisie : Moment à deux / Moment solo -->
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button type="button" id="btn-add-couple-moment" class="btn-quick-add btn-quick-add-couple" style="flex:1; margin-top:0;">
+            💞 Moment à deux
+          </button>
+          <button type="button" id="btn-add-solo-moment" class="btn-quick-add btn-quick-add-solo" style="flex:1; margin-top:0;">
+            🙋 Moment solo
+          </button>
+        </div>
+
         <!-- Fenêtre de désir -->
         <div id="desire-window" style="margin-top:16px"></div>
-        <!-- Quick add -->
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <button type="button" id="btn-quick-add" class="btn-quick-add" style="flex:1">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            On a partagé un moment ?
-          </button>
-          <button type="button" id="btn-fast-track-open" class="btn-secondary" style="flex-shrink:0;min-height:44px" aria-label="Mode rapide 4 taps">⚡</button>
-        </div>
+
         <!-- Équilibre + délai neutre -->
         <div class="intime-meta">
           <span id="days-since" class="meta-chip" style="display:none"></span>
@@ -772,28 +789,6 @@
         <div class="card">
           <h2>Nos moments récents</h2>
           <div id="recent-sessions"></div>
-        </div>
-        <!-- Calendrier sexualité -->
-        <div class="card">
-          <h2>Calendrier intime</h2>
-          <div class="cal-nav" style="margin-top:8px">
-            <button id="intime-cal-prev" class="cal-nav-btn" aria-label="Mois précédent"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-            <span id="intime-cal-title" style="font-family:'DM Mono',monospace;font-size:13px;letter-spacing:.1em"></span>
-            <button id="intime-cal-next" class="cal-nav-btn" aria-label="Mois suivant"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
-          </div>
-          <div class="intime-cal-filter" id="intime-cal-filter" role="group" aria-label="Filtrer par personne">
-            <button type="button" class="cal-filter-btn on" data-filter="both">Les deux</button>
-            <button type="button" class="cal-filter-btn" data-filter="elle">Elle</button>
-            <button type="button" class="cal-filter-btn" data-filter="lui">Lui</button>
-          </div>
-          <div id="intime-cal-grid" class="cal-grid"></div>
-          <div class="cal-legend">
-            <span><i class="cal-legend-dot" style="background:#D9B36A"></i>À deux</span>
-            <span><i class="cal-legend-dot" style="background:var(--elle)"></i>Solo elle</span>
-            <span><i class="cal-legend-dot" style="background:var(--lui)"></i>Solo lui</span>
-            <span><i class="cal-legend-dot" style="background:var(--violet)"></i>Orgasme</span>
-          </div>
-          <div id="intime-cal-detail" style="margin-top:14px"></div>
         </div>
       </div>
 
@@ -1059,7 +1054,7 @@
             </div>
 
             <!-- Sélecteur de positions -->
-            <div class="field">
+            <div class="field couple-only">
               <label>Positions</label>
               <div id="position-picker-grid" class="pos-pick-grid" role="group" aria-label="Sélecteur de positions"></div>
               <div class="custom-add-row" style="margin-top: 10px; display: flex; gap: 8px;">
@@ -1090,7 +1085,7 @@
               </div>
             </div>
 
-            <div class="field">
+            <div class="field couple-only">
               <label>Pratiques reçues</label>
               <div class="act-tags-grid" id="session-practices-received">
                 <button type="button" class="act-tag-btn" data-tag="vaginal">💞 Vaginal</button>
@@ -1110,6 +1105,13 @@
                 <button type="button" id="btn-add-custom-practice-rec" class="btn-secondary" style="padding: 0 16px; min-height: 36px; border-radius: 8px;">+</button>
               </div>
             </div>
+
+            <!-- Sextoys / Accessoires (uniquement solo) -->
+            <div class="field solo-only">
+              <div class="chip-toggles">
+                <label class="chip-toggle"><input type="checkbox" id="session-solo-toys"><span>🧸 Sextoys / Accessoires</span></label>
+              </div>
+            </div>
           </div>
 
           <!-- Étape 3 : Ressenti -->
@@ -1127,7 +1129,7 @@
                     <button type="button" class="orgasm-chip" data-partner="me" data-val="2" aria-label="2 orgasmes ou plus">2+</button>
                   </div>
                 </div>
-                <div class="orgasm-partner-row">
+                <div class="orgasm-partner-row couple-only">
                   <span class="orgasm-partner-name" id="orgasm-label-partner">Partenaire</span>
                   <div class="orgasm-chips" role="group" aria-labelledby="orgasm-label-partner">
                     <button type="button" class="orgasm-chip sel" data-partner="partner" data-val="0" aria-label="Aucun">—</button>
@@ -1155,7 +1157,7 @@
               </div>
             </div>
 
-            <div class="field">
+            <div class="field couple-only">
               <label for="session-ejaculation">Lieu d'éjaculation</label>
               <select id="session-ejaculation" class="library-filter-select" style="width:100%;padding:10px 12px;height:44px">
                 <option value="inconnu">Inconnu</option>
@@ -1199,7 +1201,7 @@
               </div>
             </div>
 
-            <div class="field">
+            <div class="field couple-only">
               <label>Protection (Partenaire)</label>
               <div class="act-tags-grid" id="session-protection-partner">
                 <button type="button" class="act-tag-btn" data-tag="preservatif">🛡️ Préservatif</button>
@@ -1321,6 +1323,45 @@
 
         <button type="button" id="btn-feedback-save" class="btn-primary">Enregistrer</button>
         <button type="button" id="btn-feedback-skip" class="btn-secondary" style="margin-top:10px">Passer</button>
+      </div>
+    </div>
+
+    <!-- Sheet : détails position -->
+    <div id="position-detail-sheet" class="sheet-backdrop" aria-hidden="true">
+      <div class="sheet">
+        <button type="button" class="sheet-close" id="btn-close-pos-detail" aria-label="Fermer">✕</button>
+        <div class="sheet-handle"></div>
+        <div id="pos-detail-content"></div>
+        <div class="sheet-actions" style="margin-top:20px; display:flex; flex-direction:column; gap:8px;">
+          <button type="button" id="btn-toggle-pos-log" class="btn-primary" style="width:100%">Noter pour aujourd'hui</button>
+          <button type="button" id="btn-close-pos-sheet" class="btn-secondary" style="width:100%">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay : vue Année défilante -->
+    <div id="intime-year-overlay" class="sheet-backdrop" aria-hidden="true" style="z-index: 100;">
+      <div class="sheet" style="max-height: 95vh; display: flex; flex-direction: column;">
+        <button type="button" class="sheet-close" id="btn-close-intime-year" aria-label="Fermer">✕</button>
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title" style="text-align: center;">Aperçu de l'année</h3>
+        
+        <!-- Année de navigation -->
+        <div class="cal-nav" style="margin-bottom:15px; justify-content: center; gap: 20px;">
+          <button id="intime-yr-prev" class="cal-nav-btn" aria-label="Année précédente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <span id="intime-yr-title" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;letter-spacing:.1em"></span>
+          <button id="intime-yr-next" class="cal-nav-btn" aria-label="Année suivante"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+
+        <!-- Légende annuelle -->
+        <div class="cal-legend" style="margin-bottom:15px; justify-content: center;">
+          <span><i class="cal-legend-dot" style="background:#E53935"></i>Règles</span>
+          <span><i class="cal-legend-dot" style="background:#D9B36A"></i>Rapports</span>
+          <span><i class="cal-legend-dot" style="background:linear-gradient(135deg, #E53935 50%, #D9B36A 50%)"></i>Les deux</span>
+        </div>
+
+        <!-- Conteneur défilant verticalement pour les 12 mois -->
+        <div id="intime-year-months-list" style="flex: 1; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; gap: 24px;"></div>
       </div>
     </div>
   </template>

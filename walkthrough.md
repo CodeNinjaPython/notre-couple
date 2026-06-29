@@ -1,63 +1,61 @@
-# Walkthrough des améliorations implémentées
+# Walkthrough des améliorations implémentées - Refontes Espace Intime
 
-Nous avons complété l'implémentation de l'ensemble des améliorations demandées. Voici le récapitulatif détaillé des changements.
-
----
-
-## 1. Structure Technique & Robustesse
-- **[router.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/router.js)** : En cas d'erreur lors de l'initialisation d'une vue (panne réseau Supabase ou autre), un bloc `.error-card` propre s'affiche à la place de l'écran cassé ou vide, avec un message clair et un bouton « Réessayer ».
-- **[today.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/today.js)** : Au lancement de `initToday()`, les skeletons animés (`skeletonFill`) sont immédiatement injectés pour masquer le chargement des zones lourdes (liste d'événements, aperçus/conseils).
+Toutes les tâches prévues pour la refonte de l'Espace Intime ont été implémentées et vérifiées avec succès. Voici le récapitulatif détaillé.
 
 ---
 
-## 2. Recalcul & Synchronisation en Temps Réel
-- **Unified Reload Pipeline** : centralisation des rafraîchissements graphiques dans `reloadDataAndRenderToday()` (chargement cycle, historique, prédiction, météo, streak, anneau SVG, graphe double rythme, métriques, insights et événements).
-- **Synchronisation dynamique** :
-  - Après chaque modification locale d'une métrique (`saveEntry`), le recalcul et le ré-affichage s'effectuent instantanément.
-  - La copie de la saisie d'hier (`initCopyHier`) recalcule et ré-affiche l'ensemble des données.
-  - Lors de la réception d'un événement Realtime de saisie du partenaire (`subscribeToPartnerLogs`), les données et graphiques se rechargent immédiatement pour refléter les informations partagées à deux.
+## 1. Architecture & Mise en page
+
+### Calendrier intime en haut
+- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : La carte contenant le calendrier intime (`#intime-cal-card`) a été déplacée au tout début de la section Journal (`#intime-section-journal`), juste en dessous de l'en-tête de page, pour lui accorder la priorité visuelle absolue.
+
+### Deux boutons d'action : Moment à deux / Moment solo
+- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : L'ancienne zone "Quick Add" a été remplacée par deux boutons côte à côte :
+  - **💞 Moment à deux** : initie une saisie classique.
+  - **🙋 Moment solo** : initie une saisie solo (coche automatiquement la case solo).
+- **[intimacy.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/intimacy.js)** : Branchement des écouteurs sur ces nouveaux boutons. Ils appellent `openFullSessionSheet` et déclenchent le changement d'état du bouton solo de manière réactive.
+
+### Suppression de l'Aperçu de l'année indépendant
+- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : Retrait de l'ancienne carte rétractable "Aperçu de l'année" de l'onglet de suivi de cycle.
+- **[calendar.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/calendar.js)** : Suppression de la fonction obsolète `renderYearOverview()` et de ses appels/écouteurs.
 
 ---
 
-## 3. Icônes PWA Réelles
-- **Générateur d'icônes** : écriture du script Python `scripts/generate_icons.py` utilisant la bibliothèque `Pillow` avec super-sampling 4x et downscaling par filtre de Lanczos haute qualité.
-- **Rendu graphique** :
-  - Courbe "Elle" (or `#D9B36A`) et courbe "Lui" (sauge `#93A98F`) entrelacées sur fond noir chaud (`#0E0A07`).
-  - Halo radial central doré et ombres portées floutées.
-  - Génération réussie des fichiers :
-    - [icon-192.png](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/icons/icon-192.png)
-    - [icon-512.png](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/icons/icon-512.png)
-    - [apple-touch-icon.png](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/icons/apple-touch-icon.png)
+## 2. Refonte Design (UI/UX)
+
+### Sous-navigation en commutateur capsule (Pill nav)
+- **[app.css](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/css/app.css)** : Stylisation des boutons de navigation de l'espace intime (`#intime-sub-nav` et `.sub-nav-btn`) pour copier le style exact du commutateur `.who` de l'application (angles arrondis, bordures douces, arrière-plan et dégradé rose actif).
+- **Modernisation des boutons** : Les boutons Couple (`.btn-quick-add-couple`) et Solo (`.btn-quick-add-solo`) sont stylisés avec les codes couleurs de l'application pour offrir une distinction visuelle immédiate.
 
 ---
 
-## 4. Module Cycle & Prédictions
-- **[cycle-model.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/cycle-model.js)** : Retour de l'écart-type (`stdDev: r.variabilite`) dans la fonction avancée `predictNextPeriodAdvanced`.
-- **[calendar.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/calendar.js)** : Affichage de la plage de confiance (`± 2 j` par exemple) directement à côté de la date de prédiction des prochaines règles.
+## 3. Évolution du Calendrier intime (Vue Année défilante)
+
+- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** :
+  - Intégration d'un bouton Toggle Mois/Année (au style `.who` avec dégradé rose) dans la carte du Calendrier intime.
+  - Ajout d'une feuille d'overlay plein écran `#intime-year-overlay` pour l'affichage annuel.
+- **[intimacy-calendar.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/intimacy-calendar.js)** :
+  - Gestion réactive du Toggle : l'affichage annuel ouvre l'overlay vertical défilant.
+  - Rendu des 12 mois de l'année de haut en bas.
+  - Représentation combinée : affiche les règles (en rouge) et les rapports intimes (en doré) avec un dégradé bi-colore (les deux) pour chaque jour de l'année.
+  - Boutons de navigation par année (`intime-yr-prev` / `intime-yr-next`) et bouton retour (`✕`) pour fermer et retourner à la vue mensuelle.
 
 ---
 
-## 5. Personnalisation dans le Module Intimité
-- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : Ajout d'inputs de texte et boutons `+` pour insérer de nouvelles positions et pratiques personnalisées.
+## 4. Logique dynamique « Moment Solo »
+
 - **[intimacy-sessions.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/intimacy-sessions.js)** :
-  - Gestion des ajouts à la volée pendant la saisie d'un rapport intime.
-  - Sélection optimiste et instantanée lors de l'ajout.
-  - Reconstruction automatique des boutons personnalisés lors du rechargement en mode édition (lecture des tags de préfixe `custom:`).
-  - Formatage soigné (ex: `✨ Nom de la position`) dans la liste de notation de Step 2.
-- **[position-insights.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/position-insights.js)** : Formatage des libellés de positions personnalisées pour nettoyer le préfixe `custom:`.
+  - Écoute du changement sur le checkbox `#session-solo` et application de la classe `.is-solo` sur le conteneur du formulaire `#session-sheet`.
+  - Intégration et sauvegarde du champ `solo_toys` (Sextoys / Accessoires solo) dans le payload JSON.
+- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** & **[app.css](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/css/app.css)** :
+  - Ajout des classes `.solo-only` (ex: films olé olé, sextoys) et `.couple-only` (ex: positions, pratiques reçues, protection partenaire, éjaculation).
+  - Les règles CSS masquent dynamiquement les sections non pertinentes selon que le mode solo est coché ou non à chaque étape.
 
 ---
 
-## 6. Notes privées sur les Kinks
-- **[kinks.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/kinks.js)** :
-  - Rendu dynamique d'un champ de note textuel sous chaque Kink dès que le désir est supérieur à 0 (`desire > 0`).
-  - Cache en mémoire `localKinkRatings` pour éviter les écrasements de données lors des sauvegardes partielles.
-  - Sauvegarde debouncée de la note (800ms) et du score de désir (600ms) dans la table `kink_ratings`.
-  - Nettoyage et masquage automatique de la note si le désir est remis à 0.
+## 5. Fiche détaillée & Coche réversible de la Bibliothèque de Positions
 
----
-
-## Vérification manuelle
-1. L'intégrité de la syntaxe JS/HTML a été validée.
-2. Le script d'icônes a été exécuté avec succès et les images ont été générées et visuellement contrôlées.
-3. Les liaisons de fonctions (de-doublonnage, debounces et synchronisations) ont été relues et inspectées avec soin.
+- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : Ajout du slide-up overlay `#position-detail-sheet` contenant le descriptif complet de la position et les actions.
+- **[intimacy.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/intimacy.js)** :
+  - Le clic sur une position de la bibliothèque ouvre le popup de détails avec son illustration SVG, sa description, sa difficulté et ses phases recommandées.
+  - Implémentation du bouton réversible « Noter pour aujourd'hui » / « Retirer d'aujourd'hui ». Le clic ajoute ou supprime instantanément la position du log journalier dans Supabase, avec une mise à jour visuelle réactive en temps réel sur la bibliothèque (`.pos-card--logged`).

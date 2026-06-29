@@ -279,10 +279,12 @@ export async function loadAndEditSession(sessionId, st) {
     });
     document.getElementById('session-ejaculation').value = details.ejaculation || 'inconnu';
     const wp = document.getElementById('session-watched-porn'); if (wp) wp.checked = !!details.watched_porn;
+    const stoy = document.getElementById('session-solo-toys'); if (stoy) stoy.checked = !!details.solo_toys;
 
     // Positions + marqueur solo (stockés dans session_activities.tags)
     const allTags = session.session_activities?.[0]?.tags || [];
     const soloEl = document.getElementById('session-solo'); if (soloEl) soloEl.checked = allTags.includes('solo');
+    const sheet = document.getElementById('session-sheet'); if (sheet && soloEl) sheet.classList.toggle('is-solo', soloEl.checked);
     const positionIds = allTags.filter(t => t !== 'solo');
 
     positionIds.forEach(id => {
@@ -359,9 +361,10 @@ export function openFullSessionSheet(st) {
   if (ejacEl) ejacEl.value = 'inconnu';
 
   // Réinitialiser solo / films olé olé
-  ['session-solo', 'session-watched-porn'].forEach(id => {
+  ['session-solo', 'session-watched-porn', 'session-solo-toys'].forEach(id => {
     const c = document.getElementById(id); if (c) c.checked = false;
   });
+  sheet.classList.remove('is-solo');
 
 
   // Mettre à jour les noms partenaires
@@ -571,6 +574,7 @@ async function saveFullSession(st) {
     protection_partner:   [...document.querySelectorAll('#session-protection-partner .sel')].map(b => b.dataset.tag),
     ejaculation:          document.getElementById('session-ejaculation')?.value || 'inconnu',
     watched_porn:         document.getElementById('session-watched-porn')?.checked ?? false,
+    solo_toys:            document.getElementById('session-solo-toys')?.checked ?? false,
     solo:                 isSolo,
   };
 
@@ -876,4 +880,12 @@ export function initSessionSheetListeners() {
       b.classList.add('sel');
     })
   );
+
+  // Moment solo : toggle -> adapter l'affichage du wizard
+  document.getElementById('session-solo')?.addEventListener('change', (e) => {
+    const sheet = document.getElementById('session-sheet');
+    if (sheet) {
+      sheet.classList.toggle('is-solo', e.target.checked);
+    }
+  });
 }

@@ -122,7 +122,7 @@ function renderGrid() {
       const f = dayFlags(e);
       if (f.any) {
         dots = '<div class="cal-dots">'
-          + (f.couple ? '<i class="cal-dot" style="background:#D9B36A"></i>' : '')      // à deux = or
+          + (f.couple ? '<i class="cal-dot" style="background:var(--intime-gold)"></i>' : '')      // à deux = or
           + (f.soloElle ? '<i class="cal-dot" style="background:var(--elle)"></i>' : '') // solo elle = rose
           + (f.soloLui ? '<i class="cal-dot" style="background:var(--lui)"></i>' : '')   // solo lui = bleu
           + (f.orgasm ? '<i class="cal-dot" style="background:var(--violet)"></i>' : '')
@@ -188,9 +188,127 @@ function showDay(dateStr) {
   // (deleteSession émet nc:session-saved → le calendrier se recharge tout seul.)
 }
 
+let yearShown = new Date().getFullYear();
+let cyclePeriods = [];
+
+async function loadCyclePeriods() {
+  if (!cal.coupleId) return;
+  const { data } = await supabase.from('cycles')
+    .select('period_start, period_end')
+    .order('period_start', { ascending: false });
+  cyclePeriods = data || [];
+}
+
+function renderYearGrid() {
+  const listContainer = document.getElementById('intime-year-months-list');
+  const titleContainer = document.getElementById('intime-yr-title');
+  if (!listContainer || !titleContainer) return;
+
+  titleContainer.textContent = String(yearShown);
+
+  const periodDays = new Set();
+  for (const c of cyclePeriods) {
+    if (!c.period_start) continue;
+    const s = new Date(c.period_start + 'T12:00:00');
+    const e = c.period_end ? new Date(c.period_end + 'T12:00:00') : s;
+    for (let d = new Date(s); d <= e; d = new Date(d.getTime() + 864e5)) {
+      periodDays.add(localDateStr(d));
+    }
+  }
+
+  const intimacyDays = new Set(Object.keys(cal.byDate));
+  const today = localDateStr();
+
+  let html = '';
+  for (let m = 0; m < 12; m++) {
+    const daysInMonth = new Date(yearShown, m + 1, 0).getDate();
+    const firstWeekday = (new Date(yearShown, m, 1).getDay() + 6) % 7; // 0 = Lundi
+
+    let dayHeaders = DAY_FR.map(d => `<div class="intime-year-day-header">${d}</div>`).join('');
+    let cells = '';
+    
+    for (let i = 0; i < firstWeekday; i++) {
+      cells += '<span class="yr-cell empty"></span>';
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${yearShown}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      let cls = 'yr-cell';
+      if (periodDays.has(ds)) cls += ' period';
+      if (intimacyDays.has(ds)) cls += ' intimacy';
+      if (ds === today) cls += ' today';
+      cells += `<span class="${cls}"></span>`;
+    }
+
+    html += `
+      <div class="intime-year-grid-item">
+        <div class="intime-year-month-title">${MONTH_FR[m]}</div>
+        <div class="intime-year-month-grid">
+          ${dayHeaders}
+          ${cells}
+        </div>
+      </div>
+    `;
+  }
+  listContainer.innerHTML = html;
+}
+
+async function openYearOverlay() {
+  const overlay = document.getElementById('intime-year-overlay');
+  if (overlay) {
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+  await loadCyclePeriods();
+  renderYearGrid();
+}
+
+function closeYearOverlay() {
+  const overlay = document.getElementById('intime-year-overlay');
+  if (overlay) {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+  const toggleButtons = document.querySelectorAll('#toggle-intime-view button');
+  toggleButtons.forEach(btn => {
+    btn.classList.toggle('on', btn.dataset.view === 'month');
+  });
+}
+
 function bindNav() {
   document.getElementById('intime-cal-prev')?.addEventListener('click', () => shiftMonth(-1));
   document.getElementById('intime-cal-next')?.addEventListener('click', () => shiftMonth(1));
+
+  // Toggle Mois / Année
+  const toggleButtons = document.querySelectorAll('#toggle-intime-view button');
+  toggleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleButtons.forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      const view = btn.dataset.view;
+      if (view === 'year') {
+        openYearOverlay();
+      } else {
+        closeYearOverlay();
+      }
+    });
+  });
+
+  // Fermer la vue Année
+  document.getElementById('btn-close-intime-year')?.addEventListener('click', closeYearOverlay);
+  document.getElementById('intime-year-overlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'intime-year-overlay') closeYearOverlay();
+  });
+
+  // Navigation par année dans la vue Année
+  document.getElementById('intime-yr-prev')?.addEventListener('click', () => {
+    yearShown--;
+    renderYearGrid();
+  });
+  document.getElementById('intime-yr-next')?.addEventListener('click', () => {
+    yearShown++;
+    renderYearGrid();
+  });
 
   // Filtre Les deux / Elle / Lui
   document.querySelectorAll('#intime-cal-filter .cal-filter-btn').forEach(btn => {

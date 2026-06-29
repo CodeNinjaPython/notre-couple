@@ -56,6 +56,9 @@
   --sage-dim:   var(--lui);
   --rose:       var(--red);
 
+  /* Marqueur « moment à deux » des calendriers intimes (mois + année) */
+  --intime-gold: #D9B36A;
+
   /* Ombres */
   --sh-sm:   0 1px 3px rgba(26,24,48,.05), 0 1px 10px rgba(26,24,48,.04);
   --sh-md:   0 4px 14px rgba(26,24,48,.08), 0 1px 4px rgba(26,24,48,.04);
@@ -2565,4 +2568,155 @@ header { position: relative; }
   position: absolute !important; width: 1px; height: 1px;
   padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* ─── Espace Intime Refontes ────────────────────────────────────────── */
+
+/* Style pour la sous-navigation calqué sur .who */
+#intime-sub-nav {
+  display: flex;
+  gap: 5px;
+  background: var(--surface2);
+  border: 1.5px solid var(--line);
+  border-radius: 100px;
+  padding: 5px;
+  margin: 18px 0;
+}
+#intime-sub-nav .sub-nav-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all .22s cubic-bezier(.4,0,.2,1);
+  letter-spacing: .02em;
+}
+#intime-sub-nav .sub-nav-btn.on {
+  background: linear-gradient(135deg, #E84375, #F4597D);
+  color: #fff;
+  box-shadow: var(--sh-elle);
+}
+
+/* Boutons Moment à deux / Moment solo */
+.btn-quick-add-couple {
+  background: linear-gradient(135deg, var(--elle-light), var(--violet-light));
+  border: 1.5px solid var(--elle-mid);
+  color: var(--elle);
+}
+.btn-quick-add-couple:hover {
+  box-shadow: var(--sh-elle);
+  transform: translateY(-1px);
+}
+.btn-quick-add-solo {
+  background: var(--surface2);
+  border: 1.5px solid var(--line);
+  color: var(--text);
+}
+.btn-quick-add-solo:hover {
+  background: var(--line);
+  transform: translateY(-1px);
+}
+
+/* Visibilité conditionnelle mode solo / couple.
+   La classe is-solo est posée sur #session-sheet (.sheet-backdrop), pas sur
+   l'enfant .sheet → cibler le backdrop, sinon les sections ne basculent jamais. */
+.sheet-backdrop:not(.is-solo) .solo-only { display: none !important; }
+.sheet-backdrop.is-solo .couple-only { display: none !important; }
+
+/* Cellules annuelles combinant règles et rapports */
+.yr-cell.intimacy {
+  background: var(--intime-gold) !important;
+}
+.yr-cell.period {
+  background: var(--red) !important;
+}
+.yr-cell.period.intimacy {
+  background: linear-gradient(135deg, var(--red) 50%, var(--intime-gold) 50%) !important;
+}
+
+/* Grilles et éléments de la vue Année défilante */
+.intime-year-grid-item {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: var(--sh-sm);
+}
+.intime-year-month-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: capitalize;
+  margin-bottom: 8px;
+  color: var(--text);
+  text-align: center;
+  font-family: "DM Sans", sans-serif;
+  letter-spacing: .02em;
+}
+.intime-year-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.intime-year-day-header {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--faint);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+/* Position Detail Sheet styles */
+#pos-detail-content {
+  padding: 10px 5px;
+  font-family: "DM Sans", sans-serif;
+  color: var(--text);
+}
+#pos-detail-content h4 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+#pos-detail-content p.desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.pos-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.pos-detail-tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.pos-detail-tag.highlight {
+  background: var(--elle-light);
+  border-color: var(--elle-mid);
+  color: var(--elle);
+}
+.pos-detail-svg {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0;
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--line);
+}
+.pos-detail-svg svg {
+  max-width: 150px;
+  height: auto;
 }
