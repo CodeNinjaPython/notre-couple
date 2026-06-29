@@ -92,6 +92,7 @@ class QB {
   lte(c, v)       { this._fil.push(r => (r[c] ?? '') <= v);                              return this; }
   gte(c, v)       { this._fil.push(r => (r[c] ?? '') >= v);                              return this; }
   gt(c, v)        { this._fil.push(r => (r[c] ?? '') >  v);                              return this; }
+  lt(c, v)        { this._fil.push(r => (r[c] ?? '') <  v);                              return this; }
   is(c, v)        { this._fil.push(r => v === null ? r[c] == null : r[c] === v);         return this; }
   not(c, op, v)   { if (op === 'is' && v === null) this._fil.push(r => r[c] != null);   return this; }
   in(c, vals)     { this._fil.push(r => Array.isArray(vals) && vals.map(String).includes(String(r[c]))); return this; }

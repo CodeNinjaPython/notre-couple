@@ -530,6 +530,8 @@ input::placeholder { color: var(--faint); font-weight: 400; }
   backdrop-filter: blur(4px);
 }
 .sheet-backdrop.open { opacity: 1; pointer-events: all; }
+/* Verrouille le défilement de l'arrière-plan quand une feuille est ouverte (confort iOS). */
+body:has(.sheet-backdrop.open) { overflow: hidden; }
 .sheet {
   width: 100%; max-width: 440px;
   background: var(--surface);
