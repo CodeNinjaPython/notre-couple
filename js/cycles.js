@@ -25,9 +25,11 @@ export async function getCycleHistory(limit = 8) {
 
 export async function startPeriod(dateStr) {
   const start = dateStr || localDateStr();
+  // La RLS exige user_id = auth.uid() — sans ça l'insert est rejeté (« action non autorisée »).
+  const { data: { user } } = await supabase.auth.getUser();
   const { data, error } = await supabase
     .from('cycles')
-    .insert({ period_start: start })
+    .insert({ period_start: start, user_id: user?.id })
     .select()
     .single();
   if (error) throw error;

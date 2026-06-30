@@ -759,35 +759,17 @@ function renderCycleControls() {
   }
 
   btn.onclick = async () => {
-    btn.disabled = true;
-    try {
-      if (btn.dataset.action === 'start') {
-        await startPeriod();
-      } else {
-        await endPeriod(state.currentCycle.id);
-      }
-      await reloadDataAndRenderToday();   // recalcule anneau, prédiction, etc.
-    } catch (e) {
-      showToast(friendlyError(e), 'error');
-    } finally {
-      btn.disabled = false;
-    }
-  };
-
-  // Saisir une date de début de règles précise (rétro-datage).
-  const dateBtn = document.getElementById('btn-cycle-date');
-  if (dateBtn) {
-    dateBtn.style.display = hasOpenCycle ? 'none' : 'block';   // pas pertinent si un cycle est déjà ouvert
-    dateBtn.onclick = async () => {
+    if (btn.dataset.action === 'start') {
+      // Un seul bouton : on demande la date (par défaut aujourd'hui) puis on enregistre.
       const res = await formDialog({
         title: 'Début des règles',
-        message: 'Quel jour tes règles ont-elles commencé ?',
+        message: 'Quel jour tes règles ont-elles commencé ? (par défaut : aujourd\'hui)',
         fields: [{ name: 'date', label: 'Date de début', type: 'date', value: localDateStr(), required: true }],
         confirmLabel: 'Enregistrer',
       });
       if (!res?.date) return;
       if (res.date > localDateStr()) { showToast('La date ne peut pas être dans le futur.', 'error'); return; }
-      dateBtn.disabled = true;
+      btn.disabled = true;
       try {
         await startPeriod(res.date);
         await reloadDataAndRenderToday();
@@ -795,10 +777,20 @@ function renderCycleControls() {
       } catch (e) {
         showToast(friendlyError(e), 'error');
       } finally {
-        dateBtn.disabled = false;
+        btn.disabled = false;
       }
-    };
-  }
+    } else {
+      btn.disabled = true;
+      try {
+        await endPeriod(state.currentCycle.id);
+        await reloadDataAndRenderToday();
+      } catch (e) {
+        showToast(friendlyError(e), 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  };
 }
 
 // --- Who toggle ------------------------------------------------------------
