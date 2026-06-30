@@ -23,11 +23,11 @@ export async function getCycleHistory(limit = 8) {
   return data || [];
 }
 
-export async function startPeriod() {
-  const today = localDateStr();
+export async function startPeriod(dateStr) {
+  const start = dateStr || localDateStr();
   const { data, error } = await supabase
     .from('cycles')
-    .insert({ period_start: today })
+    .insert({ period_start: start })
     .select()
     .single();
   if (error) throw error;

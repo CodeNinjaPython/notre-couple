@@ -15,7 +15,7 @@ import { cachedQuery, invalidateCache } from './query-cache.js';
 import { initCollapsibles } from './collapse.js';
 import { Cycle, predictNextPeriodAdvanced } from './cycle-model.js';
 import { renderCycleRing, renderRingLegend } from './ring-chart.js';
-import { toast as showToast, confirmDialog, friendlyError } from './ui-feedback.js';
+import { toast as showToast, confirmDialog, formDialog, friendlyError } from './ui-feedback.js';
 import { getPregnancyMilestone } from './pregnancy-milestones.js';
 import { skeletonFill } from './skeleton.js';
 import { getCycleCoaching } from './cycle-coaching.js';
@@ -762,23 +762,43 @@ function renderCycleControls() {
     btn.disabled = true;
     try {
       if (btn.dataset.action === 'start') {
-        state.currentCycle = await startPeriod();
-        state.cycleDay = 1;
-        state.phaseName = 'Menstruelle';
+        await startPeriod();
       } else {
         await endPeriod(state.currentCycle.id);
-        state.currentCycle = { ...state.currentCycle, period_end: localDateStr() };
       }
-      renderHeader();
-      renderCycleControls();
-      renderTip();
-      await renderChart();
+      await reloadDataAndRenderToday();   // recalcule anneau, prédiction, etc.
     } catch (e) {
-      console.error(e);
+      showToast(friendlyError(e), 'error');
     } finally {
       btn.disabled = false;
     }
   };
+
+  // Saisir une date de début de règles précise (rétro-datage).
+  const dateBtn = document.getElementById('btn-cycle-date');
+  if (dateBtn) {
+    dateBtn.style.display = hasOpenCycle ? 'none' : 'block';   // pas pertinent si un cycle est déjà ouvert
+    dateBtn.onclick = async () => {
+      const res = await formDialog({
+        title: 'Début des règles',
+        message: 'Quel jour tes règles ont-elles commencé ?',
+        fields: [{ name: 'date', label: 'Date de début', type: 'date', value: localDateStr(), required: true }],
+        confirmLabel: 'Enregistrer',
+      });
+      if (!res?.date) return;
+      if (res.date > localDateStr()) { showToast('La date ne peut pas être dans le futur.', 'error'); return; }
+      dateBtn.disabled = true;
+      try {
+        await startPeriod(res.date);
+        await reloadDataAndRenderToday();
+        showToast('Début des règles enregistré.');
+      } catch (e) {
+        showToast(friendlyError(e), 'error');
+      } finally {
+        dateBtn.disabled = false;
+      }
+    };
+  }
 }
 
 // --- Who toggle ------------------------------------------------------------
