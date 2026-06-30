@@ -350,6 +350,11 @@ export async function loadAndEditSession(sessionId, st) {
     });
     document.getElementById('session-ejaculation').value = details.ejaculation || 'inconnu';
     const wp = document.getElementById('session-watched-porn'); if (wp) wp.checked = !!details.watched_porn;
+    (details.porn_examples || []).forEach(tag => {
+      document.querySelector(`#porn-examples .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
+    });
+    const pornField = document.getElementById('porn-examples-field');
+    if (pornField) pornField.style.display = details.watched_porn ? '' : 'none';
 
     // Restaurer les sélections solo + contexte (les grilles ont été rendues par openFullSessionSheet).
     const restoreTags = (sel, tags) => (tags || []).forEach(t =>
@@ -431,13 +436,14 @@ export function openFullSessionSheet(st) {
   const prelimDetails = document.getElementById('prelim-details');
   if (prelimDetails) { prelimDetails.classList.remove('open'); }
 
-  // Réinitialiser orgasmes (sliders à 0)
-  ['orgasm-range-me', 'orgasm-range-partner'].forEach(id => {
-    const r = document.getElementById(id); if (r) r.value = 0;
-  });
-  ['orgasm-val-me', 'orgasm-val-partner'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = '0';
-  });
+  // Réinitialiser mon orgasme (slider à 0). On ne renseigne plus celui du partenaire.
+  const orgMe = document.getElementById('orgasm-range-me'); if (orgMe) orgMe.value = 0;
+  const orgMeVal = document.getElementById('orgasm-val-me'); if (orgMeVal) orgMeVal.textContent = '0';
+
+  // Réinitialiser les exemples « films olé olé » + masquer le bloc.
+  document.querySelectorAll('#porn-examples .act-tag-btn.sel').forEach(b => b.classList.remove('sel'));
+  const pornField = document.getElementById('porn-examples-field');
+  if (pornField) pornField.style.display = 'none';
 
   // Réinitialiser le nouveau champ select
   const ejacEl = document.getElementById('session-ejaculation');
@@ -450,14 +456,10 @@ export function openFullSessionSheet(st) {
   sheet.classList.remove('is-solo');
 
 
-  // Mettre à jour les noms partenaires
+  // Mettre à jour mon nom sur le slider d'orgasme.
   if (st?.me) {
-    const myName = st.me.display_name || 'Moi';
-    const partnerName = st.partner?.display_name || 'Partenaire';
-    const orgLabelMe      = document.getElementById('orgasm-label-me');
-    const orgLabelPartner = document.getElementById('orgasm-label-partner');
-    if (orgLabelMe)      orgLabelMe.textContent      = myName;
-    if (orgLabelPartner) orgLabelPartner.textContent = partnerName;
+    const orgLabelMe = document.getElementById('orgasm-label-me');
+    if (orgLabelMe) orgLabelMe.textContent = st.me.display_name || 'Moi';
   }
 
   // Remplir le sélecteur de positions
@@ -674,6 +676,7 @@ async function saveFullSession(st) {
     protection_partner:   [...document.querySelectorAll('#session-protection-partner .sel')].map(b => b.dataset.tag),
     ejaculation:          document.getElementById('session-ejaculation')?.value || 'inconnu',
     watched_porn:         document.getElementById('session-watched-porn')?.checked ?? false,
+    porn_examples:        [...document.querySelectorAll('#porn-examples .act-tag-btn.sel')].map(b => b.dataset.tag),
     solo:                 isSolo,
     // Solo (par genre) + contexte commun
     solo_practices:       collectTags('#session-solo-practices'),
@@ -690,9 +693,8 @@ async function saveFullSession(st) {
   const prelimIntEl = document.querySelector('.prelim-chip.sel');
   const prelimInt   = prelimIntEl ? parseInt(prelimIntEl.dataset.intensity) : null;
 
-  // Orgasmes par partenaire (sliders 0-10, déclaratifs)
-  const myOrgasms = parseInt(document.getElementById('orgasm-range-me')?.value)      || 0;
-  const ptOrgasms = parseInt(document.getElementById('orgasm-range-partner')?.value) || 0;
+  // Mon orgasme uniquement (slider 0-10, déclaratif). Le partenaire renseigne le sien.
+  const myOrgasms = parseInt(document.getElementById('orgasm-range-me')?.value) || 0;
 
   const btn = document.getElementById('btn-session-save');
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
@@ -707,7 +709,7 @@ async function saveFullSession(st) {
       note,
       prelim_min:    prelimOn ? (prelimDur || null) : null,
       prelim_intensity: prelimOn ? (prelimInt || null) : null,
-      partner_orgasm:   ptOrgasms || null,
+      partner_orgasm:   null, // le partenaire renseigne son propre ressenti (jamais l'autre)
       details, // NOTE: nécessite une colonne 'details' de type JSONB sur la table 'intimate_sessions'
     };
 
@@ -987,6 +989,15 @@ export function initSessionSheetListeners() {
     const sheet = document.getElementById('session-sheet');
     if (sheet) {
       sheet.classList.toggle('is-solo', e.target.checked);
+    }
+  });
+
+  // Films olé olé : révèle les exemples (couple comme solo).
+  document.getElementById('session-watched-porn')?.addEventListener('change', (e) => {
+    const field = document.getElementById('porn-examples-field');
+    if (field) field.style.display = e.target.checked ? '' : 'none';
+    if (!e.target.checked) {
+      document.querySelectorAll('#porn-examples .act-tag-btn.sel').forEach(b => b.classList.remove('sel'));
     }
   });
 }
