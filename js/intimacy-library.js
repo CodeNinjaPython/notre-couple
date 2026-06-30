@@ -11,14 +11,21 @@ const E = '#E84375'; // elle
 const B = '#4278C4'; // lui
 const SW = '1.8';    // stroke-width commun
 
+// Traits arrondis (linecap/linejoin) → rendu « sketch filaire » continu.
 const svg = (body) =>
-  `<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
+  `<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round">${body}</g></svg>`;
 
-// Primitives : corps (ellipse) + tête (cercle)
-const body  = (cx, cy, rx, ry, rot, col) =>
-  `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${rot} ${cx} ${cy})" stroke="${col}" stroke-width="${SW}"/>`;
+// Corps : capsule (forme de stade) au lieu d'une ellipse → lit comme un
+// torse/membre continu, plus « dessiné » que des ovales disjoints.
+const body  = (cx, cy, rx, ry, rot, col) => {
+  const sx = rx - ry; // demi-longueur de la partie droite
+  if (sx <= 0)
+    return `<circle cx="${cx}" cy="${cy}" r="${rx}" transform="rotate(${rot} ${cx} ${cy})" stroke="${col}" stroke-width="${SW}"/>`;
+  const x1 = cx - sx, x2 = cx + sx, yt = cy - ry, yb = cy + ry;
+  return `<path d="M ${x1} ${yt} L ${x2} ${yt} A ${ry} ${ry} 0 0 1 ${x2} ${yb} L ${x1} ${yb} A ${ry} ${ry} 0 0 1 ${x1} ${yt} Z" transform="rotate(${rot} ${cx} ${cy})" stroke="${col}" stroke-width="${SW}"/>`;
+};
 const head  = (cx, cy, col) =>
-  `<circle cx="${cx}" cy="${cy}" r="4.5" stroke="${col}" stroke-width="${SW}"/>`;
+  `<circle cx="${cx}" cy="${cy}" r="4.2" stroke="${col}" stroke-width="${SW}"/>`;
 
 // ─── Bibliothèque de 40 positions ─────────────────────────────────────────
 
