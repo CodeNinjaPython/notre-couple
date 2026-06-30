@@ -21,7 +21,7 @@ import {
   renderOrgasmByPhase, renderHealthAlerts,
 } from './intimacy-stats.js';
 import { renderLibidoParPhase } from './kinks.js';
-import { renderLibrary, getSuggestions, getDateNightIdeas, PHASES_LABELS, POSITIONS } from './intimacy-library.js';
+import { renderLibrary, getSuggestions, getDateNightIdeas, PHASES_LABELS, POSITIONS, posThumb } from './intimacy-library.js';
 import { DailyLog } from './cycle-model.js';
 import { hasPIN, isLocked, showLockScreen, initQuickHide, initPINSettings } from './pin-lock.js';
 import { notifyLibidosAligned } from './notifications.js';
@@ -514,7 +514,7 @@ function showPositionDetails(posId, loggedTodaySet) {
   const detailContent = document.getElementById('pos-detail-content');
   if (detailContent) {
     detailContent.innerHTML = `
-      <div class="pos-detail-svg">${pos.svg}</div>
+      <div class="pos-detail-svg">${posThumb(pos)}</div>
       <h4>${escapeHtml(pos.label)}</h4>
       <p class="desc">${escapeHtml(pos.desc)}</p>
       <div class="pos-detail-tags">
@@ -690,7 +690,7 @@ async function renderSuggestions() {
         <div class="suggestion-label">Suggérées pour vous</div>
         <div class="suggestion-positions">
           ${positions.map(p => `<div class="suggestion-pos">
-            <div class="suggestion-pos-svg">${p.svg}</div>
+            <div class="suggestion-pos-svg">${posThumb(p)}</div>
             <span>${p.label}</span>
             <span class="suggestion-reason">${p.reason}</span>
           </div>`).join('')}

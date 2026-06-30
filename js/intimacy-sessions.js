@@ -5,7 +5,7 @@
  */
 import { supabase } from './supabase.js';
 import { localDateStr, fmtDate, diffDays } from './date-utils.js';
-import { POSITIONS } from './intimacy-library.js';
+import { POSITIONS, posThumb } from './intimacy-library.js';
 import { toast, confirmDialog, friendlyError } from './ui-feedback.js';
 import { syncSessionToDailyLog } from './session-bridge.js';
 import { formatTag } from './labels.js';
@@ -510,7 +510,7 @@ function renderPositionPicker() {
   const defaultHtml = POSITIONS.map(p =>
     `<button type="button" class="pos-pick-btn" data-id="${p.id}"
       aria-label="${p.label}" title="${p.label}">
-      <div class="pos-pick-svg">${p.svg}</div>
+      <div class="pos-pick-svg">${posThumb(p)}</div>
       <span class="pos-pick-label">${p.label}</span>
     </button>`
   ).join('');

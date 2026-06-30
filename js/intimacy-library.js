@@ -1,491 +1,280 @@
 /**
  * intimacy-library.js — Bibliothèque offline de positions + suggestions contextuelles.
- * Tout le contenu est embarqué en JS (aucun appel API, fonctionne hors-ligne).
- * SVG minimalistes line-art : silhouettes abstraites, style haut de gamme.
- * Charte : rose (#E84375) = elle · bleu (#4278C4) = lui.
+ * Bibliothèque illustrée (84 positions Kamasutra) rangée en 3 niveaux : confortable,
+ * sportive, acrobatique. Chaque position porte une image (icons/positions/…).
+ * Aucun appel API : fonctionne hors-ligne (images servies en statique).
  */
 import { localDateStr } from './date-utils.js';
 
-// ─── SVG builder : formes abstraites (ellipse + cercle) ────────────────────
-const E = '#E84375'; // elle
-const B = '#4278C4'; // lui
-const SW = '1.8';    // stroke-width commun
+// Rendu visuel d'une position : <img> si illustration, sinon ancien SVG (fallback).
+export function posThumb(p) {
+  if (p?.img) return `<img class="pos-thumb" src="${p.img}" alt="" loading="lazy">`;
+  return p?.svg || '';
+}
 
-// Traits arrondis (linecap/linejoin) → rendu « sketch filaire » continu.
-const svg = (body) =>
-  `<svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-linejoin="round">${body}</g></svg>`;
-
-// Corps : capsule (forme de stade) au lieu d'une ellipse → lit comme un
-// torse/membre continu, plus « dessiné » que des ovales disjoints.
-const body  = (cx, cy, rx, ry, rot, col) => {
-  const sx = rx - ry; // demi-longueur de la partie droite
-  if (sx <= 0)
-    return `<circle cx="${cx}" cy="${cy}" r="${rx}" transform="rotate(${rot} ${cx} ${cy})" stroke="${col}" stroke-width="${SW}"/>`;
-  const x1 = cx - sx, x2 = cx + sx, yt = cy - ry, yb = cy + ry;
-  return `<path d="M ${x1} ${yt} L ${x2} ${yt} A ${ry} ${ry} 0 0 1 ${x2} ${yb} L ${x1} ${yb} A ${ry} ${ry} 0 0 1 ${x1} ${yt} Z" transform="rotate(${rot} ${cx} ${cy})" stroke="${col}" stroke-width="${SW}"/>`;
-};
-const head  = (cx, cy, col) =>
-  `<circle cx="${cx}" cy="${cy}" r="4.2" stroke="${col}" stroke-width="${SW}"/>`;
-
-// ─── Bibliothèque de 40 positions ─────────────────────────────────────────
+// ─── Bibliothèque de 84 positions illustrées ───────────────────────────────
 
 export const POSITIONS = [
-  // ── Face à face couché ──────────────────────────────────────────────────
-  {
-    id: 'missionary', label: 'Missionnaire',
-    desc: 'Contact visuel, proximité émotionnelle maximale.',
-    intensity: 1, comfort: 1, category: 'face-a-face',
-    phases: ['folliculaire', 'ovulation'],
-    svg: svg(
-      head(12,20,E) + body(30,25,18,7,0,E) +
-      head(48,38,B) + body(30,35,18,7,0,B)
-    ),
-  },
-  {
-    id: 'missionary_legs_up', label: 'Jambes levées',
-    desc: 'Variante missionnaire, pénétration plus profonde.',
-    intensity: 2, comfort: 2, category: 'face-a-face',
-    phases: ['ovulation', 'folliculaire'],
-    svg: svg(
-      head(12,30,E) + body(28,32,16,7,0,E) +
-      `<line x1="20" y1="28" x2="30" y2="14" stroke="${E}" stroke-width="${SW}"/>` +
-      head(48,28,B) + body(32,28,16,7,0,B)
-    ),
-  },
-  {
-    id: 'missionary_pillow', label: 'Missionnaire + coussin',
-    desc: 'Coussin sous les hanches, angle confortable.',
-    intensity: 1, comfort: 1, category: 'face-a-face',
-    phases: ['menstruelle', 'folliculaire'],
-    svg: svg(
-      head(12,24,E) + body(30,28,17,7,0,E) +
-      `<rect x="18" y="30" width="24" height="5" rx="2" stroke="${E}" stroke-width="1"/>` +
-      head(48,36,B) + body(30,38,17,7,0,B)
-    ),
-  },
-  {
-    id: 'face_hug', label: 'Face à face enlacé',
-    desc: 'Allongés face à face, mouvements lents et doux.',
-    intensity: 1, comfort: 1, category: 'face-a-face',
-    phases: ['menstruelle', 'luteale'],
-    svg: svg(
-      head(18,18,E) + body(26,28,10,6,-20,E) +
-      head(42,18,B) + body(34,28,10,6,20,B)
-    ),
-  },
-
-  // ── Côté à côté / cuillère ──────────────────────────────────────────────
-  {
-    id: 'spoon', label: 'Cuillère',
-    desc: 'Intimate et reposant, idéal pour les moments doux.',
-    intensity: 1, comfort: 1, category: 'cote-a-cote',
-    phases: ['menstruelle', 'luteale'],
-    svg: svg(
-      head(14,24,E) + body(30,28,16,7,0,E) +
-      head(10,32,B) + body(28,36,16,7,0,B)
-    ),
-  },
-  {
-    id: 'reverse_spoon', label: 'Cuillère inversée',
-    desc: 'Elle enveloppe, il se laisse aller.',
-    intensity: 1, comfort: 1, category: 'cote-a-cote',
-    phases: ['menstruelle', 'folliculaire'],
-    svg: svg(
-      head(46,24,E) + body(30,28,16,7,0,E) +
-      head(50,32,B) + body(32,36,16,7,0,B)
-    ),
-  },
-  {
-    id: 'tandem', label: 'Tandem',
-    desc: 'Côte à côte, même direction, rythme commun.',
-    intensity: 2, comfort: 2, category: 'cote-a-cote',
-    phases: ['folliculaire', 'ovulation'],
-    svg: svg(
-      head(14,22,E) + body(30,26,16,6,-15,E) +
-      head(12,36,B) + body(30,38,16,6,-10,B)
-    ),
-  },
-
-  // ── Elle au-dessus ──────────────────────────────────────────────────────
-  {
-    id: 'cowgirl', label: 'Cavalière',
-    desc: 'Elle choisit le rythme et la profondeur.',
-    intensity: 2, comfort: 1, category: 'elle-dessus',
-    phases: ['folliculaire', 'ovulation'],
-    svg: svg(
-      head(30,10,E) + body(30,22,7,14,0,E) +
-      head(46,38,B) + body(30,42,18,7,0,B)
-    ),
-  },
-  {
-    id: 'reverse_cowgirl', label: 'Cavalière inversée',
-    desc: 'Elle lui tourne le dos, contrôle total du mouvement.',
-    intensity: 2, comfort: 2, category: 'elle-dessus',
-    phases: ['ovulation', 'folliculaire'],
-    svg: svg(
-      head(30,10,B) + body(30,22,7,14,0,E) +
-      head(14,38,B) + body(30,42,18,7,0,B)
-    ),
-  },
-  {
-    id: 'cowgirl_leaning', label: 'Cavalière penchée',
-    desc: 'Elle se penche en avant pour plus de contact.',
-    intensity: 2, comfort: 1, category: 'elle-dessus',
-    phases: ['ovulation'],
-    svg: svg(
-      body(24,20,14,6,-30,E) + head(14,12,E) +
-      head(46,38,B) + body(30,42,18,7,0,B)
-    ),
-  },
-  {
-    id: 'amazon', label: 'Amazone',
-    desc: 'Elle contrôle le rythme en position verticale.',
-    intensity: 3, comfort: 2, category: 'elle-dessus',
-    phases: ['ovulation'],
-    svg: svg(
-      head(30,8,E) + body(30,20,6,12,0,E) +
-      head(14,40,B) + body(30,44,16,8,20,B)
-    ),
-  },
-
-  // ── Par derrière ────────────────────────────────────────────────────────
-  {
-    id: 'doggy', label: 'À quatre pattes',
-    desc: 'Pénétration profonde, grande liberté de mouvement.',
-    intensity: 2, comfort: 2, category: 'par-derriere',
-    phases: ['folliculaire', 'ovulation'],
-    svg: svg(
-      head(16,20,E) + body(30,26,16,7,15,E) +
-      `<line x1="16" y1="26" x2="16" y2="38" stroke="${E}" stroke-width="${SW}"/>` +
-      head(48,30,B) + body(34,34,12,7,-5,B)
-    ),
-  },
-  {
-    id: 'doggy_low', label: 'À quatre pattes bas',
-    desc: 'Elle baisse les épaules — confort et douceur.',
-    intensity: 1, comfort: 2, category: 'par-derriere',
-    phases: ['luteale', 'menstruelle'],
-    svg: svg(
-      head(16,28,E) + body(30,30,16,6,5,E) +
-      head(48,26,B) + body(36,30,12,6,-10,B)
-    ),
-  },
-  {
-    id: 'spoon_penetration', label: 'Cuillère intime',
-    desc: 'Cuillère avec pénétration, très doux.',
-    intensity: 1, comfort: 1, category: 'par-derriere',
-    phases: ['menstruelle', 'luteale'],
-    svg: svg(
-      head(14,22,E) + body(29,27,15,6,0,E) +
-      head(12,34,B) + body(31,37,15,6,0,B)
-    ),
-  },
-  {
-    id: 'standing_rear', label: 'Debout par derrière',
-    desc: 'Debout, elle s\'appuie, prise dès la nuque.',
-    intensity: 2, comfort: 2, category: 'par-derriere',
-    phases: ['ovulation', 'folliculaire'],
-    svg: svg(
-      head(24,10,E) + body(24,26,6,16,0,E) +
-      head(36,12,B) + body(36,28,6,16,0,B)
-    ),
-  },
-
-  // ── Assis / semi-assis ──────────────────────────────────────────────────
-  {
-    id: 'lotus', label: 'Lotus',
-    desc: 'Assis face à face, mouvements de bascule lents.',
-    intensity: 1, comfort: 2, category: 'assis',
-    phases: ['menstruelle', 'luteale'],
-    svg: svg(
-      head(22,14,E) + body(22,26,9,12,0,E) +
-      head(38,14,B) + body(38,26,9,12,0,B) +
-      `<line x1="22" y1="38" x2="38" y2="38" stroke="${E}" stroke-width="1" stroke-dasharray="3"/>`,
-    ),
-  },
-  {
-    id: 'lap_dance', label: 'Sur les genoux',
-    desc: 'Elle assise sur lui, assis tous les deux.',
-    intensity: 1, comfort: 1, category: 'assis',
-    phases: ['luteale', 'menstruelle'],
-    svg: svg(
-      head(30,10,E) + body(30,22,7,12,0,E) +
-      head(46,26,B) + body(32,36,16,8,10,B)
-    ),
-  },
-  {
-    id: 'edge_of_bed', label: 'Bord du lit',
-    desc: 'Elle allongée au bord, lui debout ou à genoux.',
-    intensity: 2, comfort: 1, category: 'assis',
-    phases: ['folliculaire', 'ovulation'],
-    svg: svg(
-      head(12,28,E) + body(28,30,16,7,0,E) +
-      `<line x1="4" y1="34" x2="44" y2="34" stroke="#ccc" stroke-width="2"/>` +
-      head(48,22,B) + body(44,30,6,12,0,B)
-    ),
-  },
-  {
-    id: 'seated_face', label: 'Assis face à face (chaise)',
-    desc: 'Elle sur ses genoux en le regardant, contrôle partagé.',
-    intensity: 1, comfort: 2, category: 'assis',
-    phases: ['folliculaire', 'luteale'],
-    svg: svg(
-      head(26,10,E) + body(26,22,7,12,0,E) +
-      head(34,26,B) + body(34,36,7,14,0,B) +
-      `<rect x="24" y="44" width="20" height="4" rx="2" stroke="#ccc" stroke-width="1"/>`
-    ),
-  },
-
-  // ── Debout ──────────────────────────────────────────────────────────────
-  {
-    id: 'standing_face', label: 'Debout face à face',
-    desc: 'Debout, contre un mur ou non.',
-    intensity: 2, comfort: 2, category: 'debout',
-    phases: ['ovulation', 'folliculaire'],
-    svg: svg(
-      head(22,10,E) + body(22,26,6,16,0,E) +
-      head(38,10,B) + body(38,26,6,16,0,B)
-    ),
-  },
-  {
-    id: 'standing_lift', label: 'Portée debout',
-    desc: 'Il la soulève, elle s\'enroule autour de lui.',
-    intensity: 3, comfort: 3, category: 'debout',
-    phases: ['ovulation'],
-    svg: svg(
-      head(30,12,E) + body(28,26,8,14,15,E) +
-      head(34,8,B) + body(34,28,6,20,0,B)
-    ),
-  },
-  {
-    id: 'bent_over', label: 'Penchée en avant',
-    desc: 'Elle se penche sur un meuble, lui derrière.',
-    intensity: 2, comfort: 2, category: 'debout',
-    phases: ['folliculaire', 'ovulation'],
-    svg: svg(
-      head(12,20,E) + body(24,28,14,6,-25,E) +
-      `<rect x="4" y="30" width="28" height="4" rx="1" stroke="#ccc" stroke-width="1"/>` +
-      head(46,20,B) + body(42,30,6,14,0,B)
-    ),
-  },
-
-  // ── Positions douces / menstruelle ──────────────────────────────────────
-  {
-    id: 'spooning_gentle', label: 'Cuillère douce',
-    desc: 'Pas de pénétration nécessaire, chaleur et contact.',
-    intensity: 1, comfort: 1, category: 'douceur',
-    phases: ['menstruelle', 'luteale'],
-    svg: svg(
-      head(14,22,E) + body(30,26,15,6,5,E) +
-      head(10,30,B) + body(30,34,15,6,5,B) +
-      `<line x1="20" y1="26" x2="20" y2="34" stroke="${B}" stroke-width="1" stroke-dasharray="2"/>`
-    ),
-  },
-  {
-    id: 'head_lap', label: 'Câlin sur les genoux',
-    desc: 'Elle allongée, tête sur ses genoux — connexion et douceur.',
-    intensity: 1, comfort: 1, category: 'douceur',
-    phases: ['menstruelle', 'luteale'],
-    svg: svg(
-      head(12,30,E) + body(30,32,18,6,0,E) +
-      head(50,18,B) + body(50,30,6,12,0,B) +
-      body(40,36,10,6,30,B)
-    ),
-  },
-  {
-    id: 'massage_position', label: 'Massage intime',
-    desc: 'Allongée sur le ventre, massage du dos puis plus.',
-    intensity: 1, comfort: 1, category: 'douceur',
-    phases: ['menstruelle', 'luteale', 'folliculaire'],
-    svg: svg(
-      head(12,28,E) + body(30,30,18,7,0,E) +
-      `<ellipse cx="30" cy="20" rx="16" ry="5" stroke="${B}" stroke-width="1.2" stroke-dasharray="3"/>`
-    ),
-  },
-
-  // ── Variations / intermédiaires ─────────────────────────────────────────
-  {
-    id: 'pretzel', label: 'Bretzel',
-    desc: 'Elle sur le côté, jambes croisées — profondeur et contact.',
-    intensity: 2, comfort: 2, category: 'variations',
-    phases: ['folliculaire', 'ovulation'],
-    svg: svg(
-      head(14,20,E) + body(26,26,13,6,-10,E) +
-      `<ellipse cx="30" cy="34" rx="12" ry="5" stroke="${E}" stroke-width="1.2" transform="rotate(15 30 34)"/>` +
-      head(46,28,B) + body(42,36,10,6,5,B)
-    ),
-  },
-  {
-    id: 'scissors', label: 'Ciseaux',
-    desc: 'Jambes entrecroisées, rythme lent et profond.',
-    intensity: 2, comfort: 2, category: 'variations',
-    phases: ['folliculaire', 'luteale'],
-    svg: svg(
-      head(12,20,E) + body(30,24,16,6,20,E) +
-      head(48,40,B) + body(30,36,16,6,-20,B)
-    ),
-  },
-  {
-    id: 'butterfly', label: 'Papillon',
-    desc: 'Elle sur le bord, bassin surélevé par un coussin.',
-    intensity: 2, comfort: 1, category: 'variations',
-    phases: ['ovulation', 'folliculaire'],
-    svg: svg(
-      head(12,28,E) + body(28,30,15,7,0,E) +
-      `<line x1="20" y1="26" x2="26" y2="16" stroke="${E}" stroke-width="${SW}"/>` +
-      `<line x1="36" y1="26" x2="30" y2="16" stroke="${E}" stroke-width="${SW}"/>` +
-      head(48,24,B) + body(44,30,6,12,0,B)
-    ),
-  },
-  {
-    id: 'cat', label: 'CAT (Coital Alignment)',
-    desc: 'Missionnaire décalé pour la stimulation clitoridienne.',
-    intensity: 1, comfort: 1, category: 'variations',
-    phases: ['luteale', 'folliculaire'],
-    svg: svg(
-      head(14,22,E) + body(30,26,16,7,0,E) +
-      head(46,30,B) + body(32,36,16,7,5,B)
-    ),
-  },
-  {
-    id: 'x_position', label: 'Position X',
-    desc: 'Jambes en X, contact profond, rythme lent.',
-    intensity: 2, comfort: 2, category: 'variations',
-    phases: ['ovulation'],
-    svg: svg(
-      head(12,26,E) + body(28,30,14,6,15,E) +
-      head(48,26,B) + body(34,30,14,6,-15,B) +
-      `<line x1="28" y1="36" x2="34" y2="36" stroke="${E}" stroke-width="1" stroke-dasharray="2"/>`
-    ),
-  },
-  {
-    id: 'doggy_lying', label: 'À plat ventre',
-    desc: 'Elle allongée sur le ventre, lui sur elle — profond et doux.',
-    intensity: 2, comfort: 2, category: 'par-derriere',
-    phases: ['folliculaire', 'luteale'],
-    svg: svg(
-      head(12,28,E) + body(30,30,18,7,0,E) +
-      head(48,20,B) + body(30,22,17,7,0,B)
-    ),
-  },
-
-  // ── Positions avancées / acrobatiques ───────────────────────────────────
-  {
-    id: 'standing_split', label: 'Jambe levée debout',
-    desc: 'Debout, une jambe levée sur son épaule.',
-    intensity: 3, comfort: 3, category: 'avancees',
-    phases: ['ovulation'],
-    svg: svg(
-      head(22,10,E) + body(22,24,6,14,0,E) +
-      `<line x1="22" y1="36" x2="36" y2="20" stroke="${E}" stroke-width="${SW}"/>` +
-      head(38,12,B) + body(38,28,6,16,0,B)
-    ),
-  },
-  {
-    id: 'reverse_lotus', label: 'Lotus inversé',
-    desc: 'Elle face aux pieds, assis en tailleur.',
-    intensity: 2, comfort: 3, category: 'avancees',
-    phases: ['folliculaire', 'ovulation'],
-    svg: svg(
-      head(22,36,E) + body(22,26,9,12,0,E) +
-      head(38,10,B) + body(38,22,9,12,0,B)
-    ),
-  },
-  {
-    id: 'wheelbarrow', label: 'Brouette',
-    desc: 'Elle portée par les hanches, bras au sol.',
-    intensity: 3, comfort: 3, category: 'avancees',
-    phases: ['ovulation'],
-    svg: svg(
-      body(24,34,16,6,-15,E) + head(10,26,E) +
-      `<line x1="10" y1="30" x2="10" y2="44" stroke="${E}" stroke-width="${SW}"/>` +
-      head(46,24,B) + body(42,34,6,12,0,B)
-    ),
-  },
-  {
-    id: 'suspended', label: 'Suspendue',
-    desc: 'Elle dans les bras de lui, debout — force et confiance.',
-    intensity: 3, comfort: 3, category: 'avancees',
-    phases: ['ovulation'],
-    svg: svg(
-      head(28,10,E) + body(24,24,10,14,15,E) +
-      head(36,12,B) + body(36,28,6,18,0,B) +
-      `<line x1="36" y1="20" x2="28" y2="22" stroke="${B}" stroke-width="${SW}"/>`
-    ),
-  },
-
-  // ── Jeux / préliminaires ────────────────────────────────────────────────
-  {
-    id: 'sixty_nine', label: 'Soixante-neuf',
-    desc: 'Partage simultané du plaisir oral.',
-    intensity: 1, comfort: 2, category: 'preliminaires',
-    phases: ['folliculaire', 'ovulation', 'luteale'],
-    svg: svg(
-      head(12,20,E) + body(30,26,17,6,5,E) +
-      head(48,40,B) + body(30,36,17,6,-5,B)
-    ),
-  },
-  {
-    id: 'massage_full', label: 'Massage corps entier',
-    desc: 'Prélude doux, connexion par le toucher.',
-    intensity: 1, comfort: 1, category: 'preliminaires',
-    phases: ['menstruelle', 'luteale', 'folliculaire'],
-    svg: svg(
-      head(30,14,E) + body(30,32,8,17,0,E) +
-      `<ellipse cx="14" cy="28" rx="8" ry="4" transform="rotate(-30 14 28)" stroke="${B}" stroke-width="1.5"/>` +
-      `<ellipse cx="46" cy="28" rx="8" ry="4" transform="rotate(30 46 28)" stroke="${B}" stroke-width="1.5"/>`
-    ),
-  },
-
-  // ── Positions spécifiques phases ────────────────────────────────────────
-  {
-    id: 'gentle_hip', label: 'Bascule du bassin',
-    desc: 'Très doux, idéal en cas de crampes légères.',
-    intensity: 1, comfort: 1, category: 'douceur',
-    phases: ['menstruelle'],
-    svg: svg(
-      head(14,24,E) + body(28,30,14,7,0,E) +
-      head(48,36,B) + body(32,38,14,7,0,B) +
-      `<path d="M24,34 Q30,40 36,34" stroke="${E}" stroke-width="1.5" fill="none"/>`
-    ),
-  },
-  {
-    id: 'energy_spike', label: 'Impulsion',
-    desc: 'Rythme soutenu, pic d\'énergie — idéal à l\'ovulation.',
-    intensity: 3, comfort: 2, category: 'elle-dessus',
-    phases: ['ovulation'],
-    svg: svg(
-      head(30,8,E) + body(30,20,7,12,0,E) +
-      `<path d="M24,18 L30,8 L36,18" stroke="${E}" stroke-width="${SW}" fill="none"/>` +
-      head(46,36,B) + body(30,40,18,7,0,B)
-    ),
-  },
-  {
-    id: 'tender_wrap', label: 'Enveloppé·e',
-    desc: 'Elle l\'entoure de ses jambes, contact maximal.',
-    intensity: 1, comfort: 1, category: 'face-a-face',
-    phases: ['luteale', 'menstruelle'],
-    svg: svg(
-      head(22,16,E) + body(26,28,10,12,0,E) +
-      `<ellipse cx="34" cy="38" rx="12" ry="5" transform="rotate(20 34 38)" stroke="${E}" stroke-width="1.2"/>` +
-      head(38,18,B) + body(34,30,9,12,0,B)
-    ),
-  },
+  { id: 'confortable_l_alignement_parfait', label: 'L’alignement parfait', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-alignement-parfait.jpeg' },
+  { id: 'confortable_l_approche_du_tigre', label: 'L’approche du tigre', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-approche-du-tigre.jpeg' },
+  { id: 'confortable_l_etoile_de_mer', label: 'L’étoile de mer', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-etoile-de-mer.jpeg' },
+  { id: 'confortable_l_herboriste', label: 'L’herboriste', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-herboriste.jpeg' },
+  { id: 'confortable_l_union_de_l_indra', label: 'L’union de l’Indra', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-de-l-Indra.jpeg' },
+  { id: 'confortable_l_union_de_l_aigle', label: 'L’union de l’aigle', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-de-l-aigle.jpeg' },
+  { id: 'confortable_l_union_de_l_huitre', label: 'L’union de l’huître', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-de-l-huitre.jpeg' },
+  { id: 'confortable_l_union_de_la_pie', label: 'L’union de la pie', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-de-la-pie.jpeg' },
+  { id: 'confortable_l_union_de_la_pieuvre', label: 'L’union de la pieuvre', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-de-la-pieuvre.jpeg' },
+  { id: 'confortable_l_union_de_la_tortue', label: 'L’union de la tortue', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-de-la-tortue.jpeg' },
+  { id: 'confortable_l_union_du_chat', label: 'L’union du chat', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-du-chat.jpeg' },
+  { id: 'confortable_l_union_du_lotus', label: 'L’union du lotus', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-du-lotus.jpeg' },
+  { id: 'confortable_l_union_du_tigre', label: 'L’union du tigre', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/L-union-du-tigre.jpeg' },
+  { id: 'confortable_la_balle_gagnante', label: 'La balle gagnante', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-balle-gagnante.jpeg' },
+  { id: 'confortable_la_cravate_de_notaire', label: 'La cravate de notaire', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-cravate-de-notaire.jpeg' },
+  { id: 'confortable_la_deesse_au_cheveux_longs', label: 'La déesse au cheveux longs', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-deesse-au-cheveux-longs.jpeg' },
+  { id: 'confortable_la_langue_de_chat', label: 'La langue de chat', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-langue-de-chat.jpeg' },
+  { id: 'confortable_la_mysterieuse_entrevue', label: 'La mystérieuse entrevue', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-mysterieuse-entrevue.jpeg' },
+  { id: 'confortable_la_position_de_l_arc_en_ciel', label: 'La position de l’arc en ciel', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-position-de-l-arc-en-ciel.jpeg' },
+  { id: 'confortable_la_position_de_l_epicurien', label: 'La position de l’épicurien', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-position-de-l-epicurien.jpeg' },
+  { id: 'confortable_la_position_de_l_indolent', label: 'La position de l’indolent', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-position-de-l-indolent.jpeg' },
+  { id: 'confortable_la_position_de_la_courtisane', label: 'La position de la courtisane', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-position-de-la-courtisane.jpeg' },
+  { id: 'confortable_la_position_du_noeud_coulant', label: 'La position du nœud coulant', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-position-du-noeud-coulant.jpeg' },
+  { id: 'confortable_la_posture_de_la_balance', label: 'La posture de la balance', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-posture-de-la-balance.jpeg' },
+  { id: 'confortable_la_posture_de_la_balancoire', label: 'La posture de la balançoire', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-posture-de-la-balancoire.jpeg' },
+  { id: 'confortable_la_posture_des_cuilleres', label: 'La posture des cuillères', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/La-posture-des-cuilleres.jpeg' },
+  { id: 'confortable_le_69', label: 'Le soixante-neuf', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/Le-69.jpeg' },
+  { id: 'confortable_le_cache_cache', label: 'Le cache-cache', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/Le-cache-cache.jpeg' },
+  { id: 'confortable_le_missionnaire', label: 'Le missionnaire', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/Le-missionnaire.jpeg' },
+  { id: 'confortable_le_reveur_ardent', label: 'Le rêveur ardent', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/Le-reveur-ardent.jpeg' },
+  { id: 'confortable_le_tape_cul', label: 'Le tape-cul', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/Le-tape-cul.jpeg' },
+  { id: 'confortable_le_vol_des_mouettes', label: 'Le vol des mouettes', desc: 'Position confortable et accessible, idéale pour la douceur.',
+    intensity: 1, comfort: 1, category: 'confortable',
+    phases: ['menstruelle', 'luteale', 'folliculaire'], img: 'icons/positions/Positions%20kamasutra%20confortables/Le-vol-des-mouettes.jpeg' },
+  { id: 'sportive_l_arbre_a_fruits', label: 'L’arbre à fruits', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/L-arbre-a-fruits.jpeg' },
+  { id: 'sportive_l_union_de_l_abeille', label: 'L’union de l’abeille', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/L-union-de-l-abeille.jpeg' },
+  { id: 'sportive_l_union_de_l_elephant', label: 'L’union de l’éléphant', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/L-union-de-l-elephant.jpeg' },
+  { id: 'sportive_l_union_de_la_deesse', label: 'L’union de la déesse', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/L-union-de-la-deesse.jpeg' },
+  { id: 'sportive_l_union_de_la_grenouille', label: 'L’union de la grenouille', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/L-union-de-la-grenouille.jpeg' },
+  { id: 'sportive_l_union_des_amants', label: 'L’union des amants', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/L-union-des-amants.jpeg' },
+  { id: 'sportive_l_union_du_papillon', label: 'L’union du papillon', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/L-union-du-papillon.jpeg' },
+  { id: 'sportive_la_barque', label: 'La barque', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-barque.jpeg' },
+  { id: 'sportive_la_berceuse', label: 'La berceuse', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-berceuse.jpeg' },
+  { id: 'sportive_la_levrette', label: 'La levrette', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-levrette.jpeg' },
+  { id: 'sportive_la_position_de_l_antilope', label: 'La position de l’antilope', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-position-de-l-antilope.jpeg' },
+  { id: 'sportive_la_position_de_l_homme_debout', label: 'La position de l’homme debout', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-position-de-l-homme-debout.jpeg' },
+  { id: 'sportive_la_position_de_la_grenouille_a_la_nage', label: 'La position de la grenouille à la nage', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-position-de-la-grenouille-a-la-nage.jpeg' },
+  { id: 'sportive_la_position_du_cheval_au_galop', label: 'La position du cheval au galop', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-position-du-cheval-au-galop.jpeg' },
+  { id: 'sportive_la_position_du_neophyte', label: 'La position du néophyte', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-position-du-neophyte.jpeg' },
+  { id: 'sportive_la_posture_de_l_enclume', label: 'La posture de l’enclume', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-posture-de-l-enclume.jpeg' },
+  { id: 'sportive_la_posture_de_la_lune', label: 'La posture de la Lune', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-posture-de-la-Lune.jpeg' },
+  { id: 'sportive_la_posture_du_roseau', label: 'La posture du roseau', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/La-posture-du-roseau.jpeg' },
+  { id: 'sportive_le_l', label: 'Le L', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Le-L.jpeg' },
+  { id: 'sportive_le_cerf_en_rut', label: 'Le cerf en rut', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Le-cerf-en-rut.jpeg' },
+  { id: 'sportive_le_cheval_inverse', label: 'Le cheval inversé', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Le-cheval-inverse.jpeg' },
+  { id: 'sportive_le_chevauchement', label: 'Le chevauchement', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Le-chevauchement.jpeg' },
+  { id: 'sportive_le_marteau_piqueur', label: 'Le marteau piqueur', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Le-marteau-piqueur.jpeg' },
+  { id: 'sportive_le_moulin_a_vent', label: 'Le moulin à vent', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Le-moulin-a-vent.jpeg' },
+  { id: 'sportive_le_tendre_amant', label: 'Le tendre amant', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Le-tendre-amant.jpeg' },
+  { id: 'sportive_les_nageurs', label: 'Les nageurs', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Les-nageurs.jpeg' },
+  { id: 'sportive_position_d_andromaque', label: 'Position d’Andromaque', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Position-d-Andromaque.jpeg' },
+  { id: 'sportive_posture_de_la_charrue', label: 'Posture de la charrue', desc: 'Position dynamique, un peu d’effort pour beaucoup d’intensité.',
+    intensity: 2, comfort: 2, category: 'sportive',
+    phases: ['folliculaire', 'ovulation'], img: 'icons/positions/Positions%20kamasutra%20sportives/Posture-de-la-charrue.jpeg' },
+  { id: 'acrobatique_l_etreinte_du_panda', label: 'L’étreinte du panda', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/L-etreinte-du-panda.jpeg' },
+  { id: 'acrobatique_l_offrande_secrete', label: 'L’offrande secrète', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/L-offrande-secrete.jpeg' },
+  { id: 'acrobatique_l_union_du_loup', label: 'L’union du loup', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/L-union-du-loup.jpeg' },
+  { id: 'acrobatique_l_union_du_scorpion', label: 'L’union du scorpion', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/L-union-du-scorpion.jpeg' },
+  { id: 'acrobatique_l_union_suspendue', label: 'L’union suspendue', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/L-union-suspendue.jpeg' },
+  { id: 'acrobatique_la_brouette_thailandaise', label: 'La brouette thaïlandaise', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-brouette-thailandaise.jpeg' },
+  { id: 'acrobatique_la_brouette', label: 'La brouette', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-brouette.jpeg' },
+  { id: 'acrobatique_la_chaise_magique', label: 'La chaise magique', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-chaise-magique.jpeg' },
+  { id: 'acrobatique_la_culbute', label: 'La culbute', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-culbute.jpeg' },
+  { id: 'acrobatique_la_danse_du_missionnaire', label: 'La danse du missionnaire', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-danse-du-missionnaire.jpeg' },
+  { id: 'acrobatique_la_fleur_beante', label: 'La fleur béante', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-fleur-beante.jpeg' },
+  { id: 'acrobatique_la_position_de_l_amazone', label: 'La position de l’Amazone', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-position-de-l-Amazone.jpeg' },
+  { id: 'acrobatique_la_position_de_l_acrobate', label: 'La position de l’acrobate', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-position-de-l-acrobate.jpeg' },
+  { id: 'acrobatique_la_position_de_l_artilleur', label: 'La position de l’artilleur', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-position-de-l-artilleur.jpeg' },
+  { id: 'acrobatique_la_position_de_l_equerre', label: 'La position de l’équerre', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-position-de-l-equerre.jpeg' },
+  { id: 'acrobatique_la_position_de_la_bete_a_deux_tetes', label: 'La position de la bête à deux têtes', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-position-de-la-bete-a-deux-tetes.jpeg' },
+  { id: 'acrobatique_la_position_de_la_tigresse', label: 'La position de la tigresse', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-position-de-la-tigresse.jpeg' },
+  { id: 'acrobatique_la_position_des_chimpanzes', label: 'La position des chimpanzés', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-position-des-chimpanzes.jpeg' },
+  { id: 'acrobatique_la_posture_de_la_tige', label: 'La posture de la tige', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/La-posture-de-la-tige.jpeg' },
+  { id: 'acrobatique_le_charmeur_de_serpent', label: 'Le charmeur de serpent', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/Le-charmeur-de-serpent.jpeg' },
+  { id: 'acrobatique_le_collier_de_venus', label: 'Le collier de Vénus', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/Le-collier-de-Venus.jpeg' },
+  { id: 'acrobatique_le_grand_ecart', label: 'Le grand écart', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/Le-grand-ecart.jpeg' },
+  { id: 'acrobatique_le_lateral', label: 'Le latéral', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/Le-lateral.jpeg' },
+  { id: 'acrobatique_le_petit_pont', label: 'Le petit pont', desc: 'Position acrobatique, pour les jours pleins d’énergie.',
+    intensity: 3, comfort: 3, category: 'acrobatique',
+    phases: ['ovulation'], img: 'icons/positions/Positions%20kamasutra%20acrobatiques/Le-petit-pont.jpeg' },
 ];
 
-// ─── Catégories de filtres ─────────────────────────────────────────────────
+// ─── Catégories (3 niveaux de difficulté = les 3 dossiers d'images) ────────
 
 export const CATEGORIES = {
-  'face-a-face':    { label: '😊 Face à face', color: 'var(--elle)' },
-  'cote-a-cote':   { label: '🌙 Côté à côté', color: 'var(--lui)' },
-  'elle-dessus':   { label: '👑 Elle au-dessus', color: 'var(--elle)' },
-  'par-derriere':  { label: '🌊 Par derrière', color: 'var(--lui)' },
-  'assis':         { label: '🪑 Assis', color: 'var(--violet)' },
-  'debout':        { label: '🌟 Debout', color: 'var(--violet)' },
-  'douceur':       { label: '💗 Douceur', color: 'var(--elle)' },
-  'variations':    { label: '🔄 Variations', color: 'var(--lui)' },
-  'preliminaires': { label: '✨ Préliminaires', color: 'var(--gold)' },
-  'avancees':      { label: '⚡ Avancées', color: 'var(--red)' },
+  'confortable': { label: '💗 Confortables', color: 'var(--elle)' },
+  'sportive':    { label: '⚡ Sportives',    color: 'var(--lui)' },
+  'acrobatique': { label: '🤸 Acrobatiques', color: 'var(--violet)' },
 };
 
 export const PHASES_LABELS = {
@@ -509,35 +298,27 @@ export function filterPositions({ category, intensity, phase, comfort } = {}) {
 
 // ─── Suggestions contextuelles (phase × humeur partenaire) ─────────────────
 
-const SUGGESTIONS = {
-  menstruelle: {
-    lui_high:  ['Massage corps entier', 'Câlin sur les genoux', 'Cuillère douce'],
-    lui_low:   ['Cuillère douce', 'Câlin sur les genoux'],
-    generic:   ['Bascule du bassin', 'Cuillère douce', 'Massage intime', 'Cuillère intime'],
-  },
-  folliculaire: {
-    lui_high:  ['Cavalière', 'Missionnaire', 'À quatre pattes'],
-    lui_low:   ['Cuillère', 'Face à face enlacé', 'Lotus'],
-    generic:   ['Missionnaire', 'Cavalière', 'Cuillère', 'Assis face à face'],
-  },
-  ovulation: {
-    lui_high:  ['Cavalière', 'Debout face à face', 'À quatre pattes', 'Impulsion'],
-    lui_low:   ['Cavalière', 'Missionnaire', 'Papillon'],
-    generic:   ['Cavalière', 'Missionnaire jambes levées', 'Impulsion', 'Portée debout'],
-  },
-  luteale: {
-    lui_high:  ['Cuillère', 'Face à face enlacé', 'Enveloppé·e'],
-    lui_low:   ['Cuillère douce', 'Câlin sur les genoux', 'Massage intime'],
-    generic:   ['Cuillère', 'Enveloppé·e', 'Lotus', 'Face à face enlacé'],
-  },
-};
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export function getSuggestions(phase, luiMood) {
-  const group = SUGGESTIONS[phase] || SUGGESTIONS.folliculaire;
-  const labels = luiMood >= 4 ? group.lui_high
-               : luiMood <= 2 ? group.lui_low
-               : group.generic;
-  return POSITIONS.filter(p => labels.includes(p.label)).slice(0, 3);
+  let pool = POSITIONS.filter(p => p.phases.includes(phase));
+  if (!pool.length) pool = POSITIONS.slice();
+  // Humeur haute → on privilégie l'intensité ; humeur basse → le confort.
+  if (luiMood >= 4) {
+    const hi = pool.filter(p => p.intensity >= 2);
+    if (hi.length) pool = hi;
+  } else if (luiMood <= 2) {
+    const lo = pool.filter(p => p.comfort === 1);
+    if (lo.length) pool = lo;
+  }
+  return shuffle(pool).slice(0, 3);
 }
 
 // ─── Rendu de la bibliothèque ──────────────────────────────────────────────
@@ -559,7 +340,7 @@ export function renderLibrary(container, filter = {}, loggedToday = new Set()) {
 
     return `<div class="pos-card ${isLogged ? 'pos-card--logged' : ''}" data-id="${p.id}" role="button" tabindex="0"
       aria-label="${p.label} — ${p.desc}">
-      <div class="pos-svg">${p.svg}</div>
+      <div class="pos-svg">${posThumb(p)}</div>
       <div class="pos-info">
         <div class="pos-label">${p.label}</div>
         <div class="pos-desc">${p.desc}</div>
