@@ -423,6 +423,17 @@
         </div>
       </div>
 
+      <!-- ③bis Conseils de phase (bien-être holistique, collapsible) -->
+      <div class="card collapsible-section" id="coaching-card" style="display:none" data-default-open="false">
+        <button type="button" class="collapsible-header" aria-expanded="false">
+          <h2>Conseils du jour</h2>
+          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body">
+          <div id="coaching-body"></div>
+        </div>
+      </div>
+
       <!-- ④ Prédiction (collapsible, ouverte si dispo) -->
       <div class="card card-soft collapsible-section" id="prediction-card" style="display:none" data-default-open="true">
         <button type="button" class="collapsible-header" aria-expanded="true">
@@ -1492,6 +1503,18 @@
           <button type="button" class="mode-tab" data-mode="pregnancy">🤰 Grossesse</button>
         </div>
         <p id="mode-desc" style="font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6"></p>
+      </div>
+
+      <!-- Contraception (adapte les conseils de phase) -->
+      <div class="card" id="contraception-card">
+        <h2>Contraception</h2>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 12px;line-height:1.6">
+          Adapte les « Conseils du jour » : un cycle bloqué hormonalement n'a pas de vrai pic d'ovulation.
+        </p>
+        <div class="field">
+          <select id="settings-contraception" style="width:100%"></select>
+        </div>
+        <p id="contraception-desc" style="font-size:13px;color:var(--muted);margin-top:10px;line-height:1.6"></p>
       </div>
 
       <!-- Export & données -->

@@ -18,6 +18,7 @@ import { renderCycleRing, renderRingLegend } from './ring-chart.js';
 import { toast as showToast, confirmDialog, friendlyError } from './ui-feedback.js';
 import { getPregnancyMilestone } from './pregnancy-milestones.js';
 import { skeletonFill } from './skeleton.js';
+import { getCycleCoaching } from './cycle-coaching.js';
 
 const PHASES_DATA = {
   Menstruelle: {
@@ -214,6 +215,7 @@ export async function reloadDataAndRenderToday() {
   renderMetrics();
   renderInsight();
   renderTip();
+  renderCoaching();
   renderPrediction();
   await renderEvents();
 }
@@ -510,6 +512,50 @@ function renderMeteoMemo() {
       }
     }
   } catch (_) { /* notifications indisponibles */ }
+}
+
+// Conseils de phase — bien-être holistique (sport/nutrition/productivité/sommeil/peau)
+// adapté au profil de contraception. Visible pour la personne qui suit son cycle.
+function renderCoaching() {
+  const card = document.getElementById('coaching-card');
+  const body = document.getElementById('coaching-body');
+  if (!card || !body) return;
+
+  // Réservé au suivi du cycle (mode rythmes/conception), pas en grossesse.
+  if (!state.me?.tracks_cycle || getCycleMode() === 'pregnancy') {
+    card.style.display = 'none';
+    return;
+  }
+
+  const c = getCycleCoaching(state.phaseName);
+  if (!c) { card.style.display = 'none'; return; }
+
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const domainsHTML = c.domains.map(d => `
+    <div class="coaching-domain">
+      <div class="coaching-domain-head"><span aria-hidden="true">${d.icon}</span>${esc(d.title)}</div>
+      <ul class="coaching-tips">${d.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    </div>`).join('');
+
+  const profileHTML = c.profileConseils?.length ? `
+    <div class="coaching-profile">
+      <div class="coaching-domain-head"><span aria-hidden="true">💊</span>Contraception · ${esc(c.profileLabel)}</div>
+      <ul class="coaching-tips">${c.profileConseils.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    </div>` : '';
+
+  const noteHTML = c.note ? `<p class="coaching-note">${esc(c.note)}</p>` : '';
+
+  body.innerHTML = `
+    <div class="coaching-phase">${esc(c.phaseLabel)}</div>
+    ${noteHTML}
+    ${domainsHTML}
+    <div class="coaching-domain coaching-libido">
+      <div class="coaching-domain-head"><span aria-hidden="true">💞</span>Libido</div>
+      <p class="coaching-libido-txt">${esc(c.libido)}</p>
+    </div>
+    ${profileHTML}`;
+  card.style.display = 'block';
 }
 
 // --- Header ----------------------------------------------------------------

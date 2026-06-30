@@ -5,6 +5,7 @@ import { getMyMembership, getPartnerMembership } from './pairing.js';
 import { initCollapsibles } from './collapse.js';
 import { renderHistoryChart } from './ring-chart.js';
 import { getCycleMode, setCycleMode } from './onboarding.js';
+import { CONTRACEPTION_OPTIONS, getContraception, setContraception, getContraceptionProfile } from './cycle-coaching.js';
 import {
   computeSyncScore, computeWeeklyTrends, computeEventsByPhase,
   computeConflictsByPhase, detectCycleAnomalies, predictPeriodDuration,
@@ -581,6 +582,23 @@ function renderSettings(me, partner) {
       renderModeTabs();
     });
   });
+
+  // Contraception (adapte les conseils de phase)
+  const contraSel  = document.getElementById('settings-contraception');
+  const contraDesc = document.getElementById('contraception-desc');
+  if (contraSel) {
+    contraSel.innerHTML = CONTRACEPTION_OPTIONS
+      .map(o => `<option value="${o.id}">${o.label}</option>`).join('');
+    contraSel.value = getContraception();
+    const updateContraDesc = () => {
+      if (contraDesc) contraDesc.textContent = getContraceptionProfile(contraSel.value).analyse;
+    };
+    updateContraDesc();
+    contraSel.addEventListener('change', () => {
+      setContraception(contraSel.value);
+      updateContraDesc();
+    });
+  }
 
   // Bouton install PWA
   const installBtn = document.getElementById('btn-install');

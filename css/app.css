@@ -2375,6 +2375,18 @@ nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
 .meteo-etat { font-size: 12.5px; font-weight: 600; color: var(--lui); margin-top: 2px; }
 .meteo-tip { font-size: 13px; line-height: 1.55; color: var(--muted); font-weight: 500; margin: 11px 0 0; }
 
+/* Conseils de phase (bien-être holistique) */
+.coaching-phase { font-size: 13px; font-weight: 800; color: var(--elle); margin-bottom: 4px; }
+.coaching-note { font-size: 12.5px; line-height: 1.55; color: var(--muted); font-weight: 500; margin: 0 0 12px; }
+.coaching-domain { margin-top: 14px; }
+.coaching-domain:first-of-type { margin-top: 6px; }
+.coaching-domain-head { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 700; color: var(--text); }
+.coaching-tips { margin: 6px 0 0; padding-left: 20px; }
+.coaching-tips li { font-size: 13px; line-height: 1.5; color: var(--muted); font-weight: 500; margin-bottom: 4px; }
+.coaching-libido { border-top: 1px solid var(--elle-dim); padding-top: 12px; margin-top: 16px; }
+.coaching-libido-txt { font-size: 13px; line-height: 1.55; color: var(--muted); font-weight: 500; margin: 6px 0 0; }
+.coaching-profile { border-top: 1px solid var(--elle-dim); padding-top: 12px; margin-top: 16px; }
+
 .solo-banner {
   flex-direction: column; gap: 14px;
   border: 1.5px solid var(--lui-mid); background: var(--lui-light);
