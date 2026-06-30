@@ -292,6 +292,15 @@ body[data-cur="lui"] .chip.sel {
   box-shadow: var(--sh-lui), 0 0 0 1px var(--lui-mid) inset;
 }
 .scalechip { font-family: "DM Mono", monospace; font-size: 14px; font-weight: 600; }
+/* Boutons ronds emoji + label (humeur / énergie) */
+.facechip {
+  aspect-ratio: auto;
+  flex-direction: column; gap: 3px;
+  padding: 9px 3px; border-radius: 16px; line-height: 1.05;
+}
+.facechip-e { font-size: 21px; }
+.facechip-l { font-size: 9.5px; font-weight: 700; color: var(--muted); letter-spacing: .01em; }
+.facechip.sel .facechip-l { color: inherit; }
 
 /* ─── Insight ─────────────────────────────────────────────────────────── */
 .insight { background: linear-gradient(135deg, #FEF0F5, #EDE9FF); border-color: rgba(232,67,117,.18); }

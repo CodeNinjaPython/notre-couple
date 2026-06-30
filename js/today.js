@@ -57,10 +57,19 @@ const PHASES_DATA = {
     }
   },
 };
+// Faces = emoji + label chaleureux pour les boutons ronds (humeur / énergie).
+const FACES_MOOD = [
+  { e: '😣', l: 'Difficile' }, { e: '😔', l: 'Maussade' }, { e: '😐', l: 'Neutre' },
+  { e: '🙂', l: 'Bien' }, { e: '😊', l: 'Rayonnant' },
+];
+const FACES_ENERGY = [
+  { e: '🪫', l: 'Vidé' }, { e: '🔋', l: 'Bas' }, { e: '⚡', l: 'Moyen' },
+  { e: '🔥', l: 'Plein' }, { e: '🚀', l: 'Survolté' },
+];
 const METRICS = {
   elle: [
-    { id: 'mood',     label: 'Humeur',      type: 'enum',    opts: ['😣','😔','😐','🙂','😊'] },
-    { id: 'energy',   label: 'Énergie',     type: 'scale' },
+    { id: 'mood',     label: 'Humeur',      type: 'enum',    opts: ['😣','😔','😐','🙂','😊'], faces: FACES_MOOD },
+    { id: 'energy',   label: 'Énergie',     type: 'scale',   faces: FACES_ENERGY },
     { id: 'flow',     label: 'Flux',        type: 'enum',    opts: ['·','◦','●','◆'] },
     { id: 'cramps',   label: 'Crampes',     type: 'scale' },
     { id: 'libido',   label: 'Libido',      type: 'scale' },
@@ -69,8 +78,8 @@ const METRICS = {
     { id: 'note',     label: 'Note du jour',type: 'text' },
   ],
   lui: [
-    { id: 'mood',     label: 'Humeur',      type: 'enum',    opts: ['😣','😔','😐','🙂','😊'] },
-    { id: 'energy',   label: 'Énergie',     type: 'scale' },
+    { id: 'mood',     label: 'Humeur',      type: 'enum',    opts: ['😣','😔','😐','🙂','😊'], faces: FACES_MOOD },
+    { id: 'energy',   label: 'Énergie',     type: 'scale',   faces: FACES_ENERGY },
     { id: 'stress',   label: 'Stress',      type: 'scale' },
     { id: 'libido',   label: 'Libido',      type: 'scale' },
     { id: 'sleep',    label: 'Sommeil',     type: 'scale' },
@@ -78,6 +87,13 @@ const METRICS = {
     { id: 'note',     label: 'Note du jour',type: 'text' },
   ],
 };
+
+// Retourne la « face » (emoji+label) correspondant à une valeur sauvegardée.
+function faceFor(metric, value) {
+  if (!metric.faces || value == null) return null;
+  const pos = metric.type === 'scale' ? Number(value) - 1 : Number(value);
+  return metric.faces[pos] || null;
+}
 const EVENT_TYPES = {
   intimacy:   { icon: '❤️', label: 'Intimité' },
   conflict:   { icon: '💬', label: 'Tension' },
@@ -175,8 +191,9 @@ export async function reloadDataAndRenderToday() {
   state.currentCycle = cycle;
 
   if (cycle) {
-    const diff = Math.floor((Date.now() - new Date(cycle.period_start)) / 864e5);
-    state.cycleDay = diff + 1;
+    // diffDays() compare en heure locale (T12:00) → pas de décalage d'un jour lié
+    // au fuseau. On part de logDate pour refléter le jour consulté, pas seulement aujourd'hui.
+    state.cycleDay = diffDays(state.logDate, cycle.period_start) + 1;
     state.phaseName = getPhase(state.cycleDay);
   } else {
     state.cycleDay = null;
@@ -727,8 +744,9 @@ async function handleMetricClick(event) {
   chip.closest('.chips').querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
   chip.classList.add('sel');
 
-  const displayValue = (metric.type === 'enum' || metric.type === 'boolean')
-    ? (metric.opts[value] ?? value)
+  const face = faceFor(metric, value);
+  const displayValue = face ? face.e
+    : (metric.type === 'enum' || metric.type === 'boolean') ? (metric.opts[value] ?? value)
     : value;
   chip.closest('.metric').querySelector('.val').textContent = displayValue;
 
@@ -750,6 +768,7 @@ async function handleMetricClick(event) {
  */
 function getMetricDisplayValue(metric, value) {
   if (value == null) return '—';
+  if (metric.faces) { const f = faceFor(metric, value); return f ? f.e : '—'; }
   if (metric.type === 'enum' || metric.type === 'boolean') return metric.opts[value] ?? value;
   if (metric.type === 'bbt')  return value ? `${value}°C` : '—';
   if (metric.type === 'text') return value ? String(value).slice(0, 22) + (String(value).length > 22 ? '…' : '') : '—';
@@ -774,6 +793,12 @@ function getMetricChipsHTML(metric, savedValue) {
     ? metric.opts : Array.from({ length: 5 }, (_, i) => i + 1);
   return options.map((opt, i) => {
     const value = (metric.type === 'enum' || metric.type === 'boolean') ? i : opt;
+    // Boutons ronds emoji + label (humeur / énergie)
+    if (metric.faces) {
+      const f = metric.faces[i] || { e: opt, l: '' };
+      return `<button type="button" class="chip facechip${isSelected(value)}" data-id="${metric.id}" data-v="${value}">
+        <span class="facechip-e">${f.e}</span><span class="facechip-l">${f.l}</span></button>`;
+    }
     const chipClass = metric.type === 'scale' ? 'chip scalechip' : 'chip';
     return `<div class="${chipClass}${isSelected(value)}" data-id="${metric.id}" data-v="${value}">${opt}</div>`;
   }).join('');
