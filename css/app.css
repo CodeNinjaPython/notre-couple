@@ -1789,15 +1789,44 @@ body.dark .card-primary { border-color: var(--elle); }
   animation: ring-day-pulse 2.4s ease-in-out infinite;
 }
 
-/* Segments interactifs : tap/clic révèle les infos du jour dans la légende */
-.ring-seg {
-  cursor: pointer;
-  transition: opacity .15s ease, stroke-width .15s ease;
-  outline: none;
+/* Scène de l'anneau : permet de superposer le contenu central HTML au SVG */
+.ring-stage {
+  position: relative;
+  width: min(290px, 84vw);
+  aspect-ratio: 1 / 1;
+  margin: 6px auto 0;
 }
-.ring-seg:hover { opacity: 1 !important; }
-.ring-seg:focus-visible { opacity: 1 !important; }
-.ring-seg--active { opacity: 1 !important; }
+.ring-stage .cycle-ring { width: 100%; height: 100%; max-width: none; }
+
+/* Contenu central : date + prédiction + bascule fertile */
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 0 19%;
+  pointer-events: none;            /* on laisse les taps atteindre l'anneau… */
+}
+.ring-center-top {
+  font-size: 14px; color: var(--muted); margin-bottom: 8px;
+}
+.ring-center-top strong { color: var(--text); font-weight: 700; }
+.ring-center-main {
+  font-size: 21px; font-weight: 800; line-height: 1.18; color: var(--text);
+  letter-spacing: -.01em;
+}
+.ring-center-toggle {
+  pointer-events: auto;            /* …sauf le bouton de bascule */
+  margin-top: 12px; border: none; background: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 600;
+  color: var(--lui);
+}
+.ring-center-toggle svg { transition: transform .2s ease; }
+.ring-center-toggle.open svg { transform: rotate(180deg); }
+
+/* Segments invisibles cliquables (tap/clavier → légende) */
+.ring-seg { cursor: pointer; outline: none; }
+.ring-seg--active { stroke: var(--elle) !important; opacity: .25 !important; }
 
 /* Légende dynamique sous l'anneau (jour sélectionné) */
 .ring-caption {

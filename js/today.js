@@ -401,6 +401,20 @@ function renderRingChart() {
     Object.keys(state.savedValues).length ? [day] : []
   );
 
+  // Contenu central façon « prédiction » (date du jour + prochaines règles + bascule fertile).
+  const fmtCourt = (s) => s ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
+  const p = state.prediction;
+  const centerTop  = `Aujourd'hui, ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+  let centerMain = phaseName ? `Vous êtes en phase ${phaseName.toLowerCase()}` : `Jour ${day}`;
+  let centerToggleLabel = '', centerAlt = '';
+  if (p?.nextPeriodDate) {
+    centerMain = `Vos prochaines règles sont le ${fmtCourt(p.nextPeriodDate)}`;
+    if (p.fertileStart && p.ovulationDate) {
+      centerToggleLabel = 'Jour fertile probable';
+      centerAlt = `Fenêtre fertile : ${fmtCourt(p.fertileStart)} → ${fmtCourt(p.ovulationDate)}`;
+    }
+  }
+
   renderCycleRing(ring, {
     totalDays,
     currentDay:   day,
@@ -410,6 +424,10 @@ function renderRingChart() {
     ovulationDay: fertile.ovulation,
     phaseName,
     loggedDays:   loggedSet,
+    centerTop,
+    centerMain,
+    centerToggleLabel,
+    centerAlt,
   });
 
   renderRingLegend(legend);
