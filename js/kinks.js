@@ -15,8 +15,19 @@ import { diffDays } from './date-utils.js';
 const CATEGORIES = {
   atmosphere:    '✨ Atmosphère',
   pratiques:     '💑 Pratiques',
+  oral:          '👅 Oral',
+  digital:       '🖐️ Manuel & digital',
+  corps:         '🔥 Corps & fétiches',
+  bdsm:          '⛓️ BDSM & intensité',
+  fluides:       '💦 Fluides',
+  jouets:        '🎛️ Jouets & tech',
+  scenarios:     '🎭 Scénarios & rôle',
+  rythme:        '🎚️ Rythme & style',
+  media:         '🎬 Médias & partage',
+  sensations:    '🪶 Sensations',
   lieux:         '🗺️ Lieux',
   communication: '💬 Communication',
+  aftercare:     '🤗 Aftercare',
   jeux:          '🎲 Jeux',
 };
 
