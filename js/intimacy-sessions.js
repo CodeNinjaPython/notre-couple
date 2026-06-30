@@ -352,9 +352,12 @@ export function openFullSessionSheet(st) {
   const prelimDetails = document.getElementById('prelim-details');
   if (prelimDetails) { prelimDetails.classList.remove('open'); }
 
-  // Réinitialiser orgasmes (tout à 0 = "—" sélectionné par défaut)
-  document.querySelectorAll('.orgasm-chip').forEach(c => {
-    c.classList.toggle('sel', c.dataset.val === '0');
+  // Réinitialiser orgasmes (sliders à 0)
+  ['orgasm-range-me', 'orgasm-range-partner'].forEach(id => {
+    const r = document.getElementById(id); if (r) r.value = 0;
+  });
+  ['orgasm-val-me', 'orgasm-val-partner'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '0';
   });
 
   // Réinitialiser le nouveau champ select
@@ -511,7 +514,16 @@ function initCustomAdders() {
   }
 }
 
-// Affiche une ligne de notation (/10 + douleur + trop profond) par position sélectionnée.
+// Critères de notation adaptés au type de pratique. Les valeurs sont
+// rétrocompatibles : le 1er drapeau est stocké dans `pain`, le 2e dans `too_deep`.
+function ratingFlags(pos, id) {
+  const hay = `${id} ${pos?.label || ''} ${pos?.category || ''}`.toLowerCase();
+  if (/massage/.test(hay))                              return { f1: 'Trop fort', f2: 'Détente' };
+  if (/oral|fellation|cunni|bouche|langue/.test(hay))  return { f1: 'Trop rapide', f2: 'Doux' };
+  return { f1: 'Douleur', f2: 'Trop profond' };
+}
+
+// Affiche une ligne de notation (/10 + 2 drapeaux adaptés) par position sélectionnée.
 function syncRatingRows() {
   const wrap = document.getElementById('position-ratings');
   if (!wrap) return;
@@ -523,13 +535,14 @@ function syncRatingRows() {
     const r = ratingState[id] || (ratingState[id] = { score: 0, pain: false, too_deep: false });
     const rawName = pos?.label || (id.startsWith('custom:') ? `✨ ${id.replace('custom:', '')}` : id);
     const displayName = escapeHtml(rawName);
+    const flags = ratingFlags(pos, id);
     return `<div class="pos-rate-row" data-id="${escapeHtml(id)}">
       <div class="pos-rate-name">${displayName}</div>
       <div class="pos-rate-controls">
         <input type="range" class="pos-rate-score" min="0" max="10" value="${r.score}" aria-label="Note sur 10 — ${displayName}">
         <span class="pos-rate-val">${r.score ? r.score + '/10' : '—'}</span>
-        <button type="button" class="pos-rate-flag ${r.pain ? 'on' : ''}" data-flag="pain" aria-pressed="${r.pain}">Douleur</button>
-        <button type="button" class="pos-rate-flag ${r.too_deep ? 'on' : ''}" data-flag="too_deep" aria-pressed="${r.too_deep}">Trop profond</button>
+        <button type="button" class="pos-rate-flag ${r.pain ? 'on' : ''}" data-flag="pain" aria-pressed="${r.pain}">${flags.f1}</button>
+        <button type="button" class="pos-rate-flag ${r.too_deep ? 'on' : ''}" data-flag="too_deep" aria-pressed="${r.too_deep}">${flags.f2}</button>
       </div>
     </div>`;
   }).join('');
@@ -585,11 +598,9 @@ async function saveFullSession(st) {
   const prelimIntEl = document.querySelector('.prelim-chip.sel');
   const prelimInt   = prelimIntEl ? parseInt(prelimIntEl.dataset.intensity) : null;
 
-  // Orgasmes par partenaire (déclaratifs, consentis ensemble)
-  const myOrgasmVal = document.querySelector('.orgasm-chip.sel[data-partner="me"]')?.dataset.val;
-  const ptOrgasmVal = document.querySelector('.orgasm-chip.sel[data-partner="partner"]')?.dataset.val;
-  const myOrgasms   = myOrgasmVal ? parseInt(myOrgasmVal)      : 0;
-  const ptOrgasms   = ptOrgasmVal ? parseInt(ptOrgasmVal)      : 0;
+  // Orgasmes par partenaire (sliders 0-10, déclaratifs)
+  const myOrgasms = parseInt(document.getElementById('orgasm-range-me')?.value)      || 0;
+  const ptOrgasms = parseInt(document.getElementById('orgasm-range-partner')?.value) || 0;
 
   const btn = document.getElementById('btn-session-save');
   if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
@@ -873,14 +884,11 @@ export function initSessionSheetListeners() {
     })
   );
 
-  // Orgasmes : sélection unique par partenaire
-  document.querySelectorAll('.orgasm-chip').forEach(b =>
-    b.addEventListener('click', () => {
-      const partner = b.dataset.partner;
-      document.querySelectorAll(`.orgasm-chip[data-partner="${partner}"]`).forEach(x => x.classList.remove('sel'));
-      b.classList.add('sel');
-    })
-  );
+  // Orgasmes : sliders 0-10, met à jour l'affichage de la valeur
+  document.querySelectorAll('.orgasm-range').forEach(r => {
+    const valEl = document.getElementById(r.id.replace('range', 'val'));
+    r.addEventListener('input', () => { if (valEl) valEl.textContent = r.value; });
+  });
 
   // Moment solo : toggle -> adapter l'affichage du wizard
   document.getElementById('session-solo')?.addEventListener('change', (e) => {

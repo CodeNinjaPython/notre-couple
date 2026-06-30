@@ -2002,6 +2002,11 @@ body.dark .card-primary { border-color: var(--elle); }
   font-size: 13px; font-weight: 700; color: var(--muted);
   width: 72px; flex-shrink: 0;
 }
+.orgasm-range { flex: 1; min-width: 0; accent-color: var(--elle); height: 28px; }
+.orgasm-range-val {
+  font-family: "DM Mono", monospace; font-size: 15px; font-weight: 700;
+  color: var(--elle); width: 26px; text-align: center; flex-shrink: 0;
+}
 .orgasm-chips { display: flex; gap: 6px; }
 .orgasm-chip {
   min-width: 44px; min-height: 44px; /* A11Y */

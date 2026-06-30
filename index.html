@@ -999,16 +999,18 @@
             <div class="field">
               <label>Lieu</label>
               <div class="loc-grid">
+                <!-- Contextes larges -->
+                <button type="button" class="loc-btn" data-loc="maison">🏠 Maison</button>
+                <button type="button" class="loc-btn" data-loc="hotel">🏨 Hôtel</button>
+                <button type="button" class="loc-btn" data-loc="voiture">🚗 Voiture</button>
+                <button type="button" class="loc-btn" data-loc="voyage">✈️ Voyage</button>
+                <button type="button" class="loc-btn" data-loc="autre">📍 Autre</button>
+                <!-- Pièces / endroits précis -->
                 <button type="button" class="loc-btn" data-loc="chambre">🛏️ Chambre</button>
                 <button type="button" class="loc-btn" data-loc="lit">🛌 Lit</button>
+                <button type="button" class="loc-btn" data-loc="canapé">🛋️ Canapé</button>
                 <button type="button" class="loc-btn" data-loc="salle de bain">🚿 Salle de bain</button>
                 <button type="button" class="loc-btn" data-loc="douche">💧 Douche</button>
-                <button type="button" class="loc-btn" data-loc="canapé">🛋️ Canapé</button>
-                <button type="button" class="loc-btn" data-loc="voiture">🚗 Voiture</button>
-                <button type="button" class="loc-btn" data-loc="maison">🏠 Maison</button>
-                <button type="button" class="loc-btn" data-loc="voyage">✈️ Voyage</button>
-                <button type="button" class="loc-btn" data-loc="hotel">🏨 Hôtel</button>
-                <button type="button" class="loc-btn" data-loc="autre">📍 Autre</button>
               </div>
             </div>
           </div>
@@ -1123,19 +1125,13 @@
               <div class="orgasm-per-partner">
                 <div class="orgasm-partner-row">
                   <span class="orgasm-partner-name" id="orgasm-label-me">Moi</span>
-                  <div class="orgasm-chips" role="group" aria-labelledby="orgasm-label-me">
-                    <button type="button" class="orgasm-chip sel" data-partner="me" data-val="0" aria-label="Aucun">—</button>
-                    <button type="button" class="orgasm-chip" data-partner="me" data-val="1" aria-label="1 orgasme">1</button>
-                    <button type="button" class="orgasm-chip" data-partner="me" data-val="2" aria-label="2 orgasmes ou plus">2+</button>
-                  </div>
+                  <input type="range" class="orgasm-range" id="orgasm-range-me" min="0" max="10" value="0" step="1" aria-labelledby="orgasm-label-me">
+                  <span class="orgasm-range-val" id="orgasm-val-me">0</span>
                 </div>
                 <div class="orgasm-partner-row couple-only">
                   <span class="orgasm-partner-name" id="orgasm-label-partner">Partenaire</span>
-                  <div class="orgasm-chips" role="group" aria-labelledby="orgasm-label-partner">
-                    <button type="button" class="orgasm-chip sel" data-partner="partner" data-val="0" aria-label="Aucun">—</button>
-                    <button type="button" class="orgasm-chip" data-partner="partner" data-val="1" aria-label="1 orgasme">1</button>
-                    <button type="button" class="orgasm-chip" data-partner="partner" data-val="2" aria-label="2 orgasmes ou plus">2+</button>
-                  </div>
+                  <input type="range" class="orgasm-range" id="orgasm-range-partner" min="0" max="10" value="0" step="1" aria-labelledby="orgasm-label-partner">
+                  <span class="orgasm-range-val" id="orgasm-val-partner">0</span>
                 </div>
               </div>
               <p style="font-size:11px;color:var(--faint);font-family:'DM Mono',monospace;margin-top:6px;line-height:1.6">
