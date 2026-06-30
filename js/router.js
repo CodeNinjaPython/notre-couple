@@ -2,6 +2,7 @@
 const NAV_VIEWS = ['today', 'calendar', 'intime', 'nous'];
 const viewInits = {};
 let currentView = null;
+let vtActive = false;   // une View Transition est-elle en cours ?
 
 export function registerView(name, initFn) {
   viewInits[name] = initFn;
@@ -37,6 +38,9 @@ export function navigate(name, params = {}) {
   else if (currentView === 'settings') direction = 'slide-down';
   else if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx)
     direction = toIdx > fromIdx ? 'slide-left' : 'slide-right';
+  // L'écran de connexion est un changement de contexte complet : pas de
+  // View Transition (un overlay figé y bloquerait les clics → bouton « mort »).
+  if (name === 'auth') direction = 'none';
   document.documentElement.dataset.transitionDirection = direction;
 
   currentView = name;
@@ -86,9 +90,14 @@ export function navigate(name, params = {}) {
   };
 
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  if (document.startViewTransition && direction !== 'none' && !reduceMotion) {
+  // Re-entrance : si une transition est déjà en cours (ex. double navigate au
+  // logout), on échange sans transition pour ne pas laisser d'overlay figé qui
+  // intercepterait les clics.
+  if (document.startViewTransition && direction !== 'none' && !reduceMotion && !vtActive) {
+    vtActive = true;
     const vt = document.startViewTransition(swapDom);
     vt.updateCallbackDone.then(runInit, runInit);
+    vt.finished.finally(() => { vtActive = false; });
   } else {
     swapDom();
     runInit();

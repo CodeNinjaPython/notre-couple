@@ -506,8 +506,9 @@ function renderSettings(me, partner) {
   });
 
   btnSignout?.addEventListener('click', async () => {
+    // onAuthChange (SIGNED_OUT) route déjà vers 'auth' — pas de navigate en double
+    // (ça déclenchait deux transitions et un overlay figé bloquant les clics).
     await signOut();
-    navigate('auth');
   });
 
   // Changer l'adresse e-mail
