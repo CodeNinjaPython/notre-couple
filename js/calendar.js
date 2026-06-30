@@ -132,11 +132,13 @@ function renderMonthGrid() {
     let dots = '';
     const journal = entry?.journal;
     if (entry) {
-      // Flux (rouge) — flux menstruel OU spotting (saignements), depuis journal ou ancien 'flow'
+      // Flux (rouge) — règles, depuis journal ou ancien 'flow'
       const hasFlux = (journal?.fluxMenstruel && journal.fluxMenstruel !== 'aucun')
-                   || (journal?.spotting)
                    || (entry.flow != null);
-      if (hasFlux) dots += '<span class="cal-dot cal-dot-flux" title="Flux / saignements"></span>';
+      if (hasFlux) dots += '<span class="cal-dot cal-dot-flux" title="Flux"></span>';
+
+      // Spotting (saignements légers) — distinct du flux, n'entre pas dans le calcul du cycle.
+      if (journal?.spotting) dots += '<span class="cal-dot cal-dot-spotting" title="Spotting (saignements légers)"></span>';
 
       // Douleurs (bleu)
       const hasDouleurs = (journal?.douleursPelviennes?.length || journal?.douleursCorps?.length)
