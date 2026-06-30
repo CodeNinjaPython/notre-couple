@@ -128,14 +128,14 @@ const EXCITATION = [
 const SOLO_ELLE = {
   practices: [
     ['clitoridienne', '💧 Clitoridienne', [['doigts','✋ Doigts'],['vibro','🔮 Vibromasseur'],['ondes_air','💨 Ondes d\'air'],['douche','🚿 Pommeau de douche']]],
-    ['penetration_vaginale', '🍑 Pénétration vaginale', [['doigts','✋ Doigts'],['sextoy','🍆 Sextoy / godemichet'],['objet','📦 Autre objet'],['fruit_legume','🥒 Fruit / légume']]],
-    ['humping', '🛏️ Humping', [['coussin','🛋️ Coussin'],['oreiller','🛌 Oreiller'],['objet','📦 Objet']]],
+    ['penetration_vaginale', '🍑 Pénétration vaginale', [['doigts','✋ Doigts'],['sextoy','🍆 Sextoy / godemichet'],['fruit_legume','🥒 Fruit / légume'],['objet','📦 Autre objet']]],
+    ['humping', '🛏️ Humping', [['traversin','🛋️ Traversin'],['oreiller','🛌 Oreiller'],['objet','📦 Objet']]],
     ['anal', '🍑 Anal', [['doigt','✋ Doigt'],['plug','🍑 Plug'],['sextoy','🍆 Sextoy']]],
     ['mammaire', '🤱 Mammaire'], ['multi_zones', '✨ Multi-zones'],
   ],
   accessories: [
     ['vibromasseur', '🔮 Vibromasseur'], ['ondes_air', '💨 Ondes d\'air (Satisfyer…)'],
-    ['dildo', '🍆 Godemichet'], ['plug_anal', '🍑 Plug anal'], ['huile_massage', '💧 Huile / Gel'],
+    ['dildo', '🍆 Godemichet'], ['plug_anal', '🍑 Plug anal'], ['huile_massage', '💧 Huile / Gel'], ['lubrifiant', '💧 Lubrifiant'],
   ],
   excitation: EXCITATION,
 };
