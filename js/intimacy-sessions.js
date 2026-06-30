@@ -38,16 +38,63 @@ const PROTECTION_LUI = [
   ['retrait', '⬅️ Retrait'], ['sans_penetration', '🚫 Sans pénétration'],
 ];
 
-// Génère la grille de protection adaptée au genre dans le conteneur donné.
-function renderProtectionGrid(containerId, tracksCycle) {
+// Génère une grille de tags multi-select (act-tag-btn) dans un conteneur.
+function renderTagGrid(containerId, opts) {
   const c = document.getElementById(containerId);
   if (!c) return;
-  const opts = tracksCycle ? PROTECTION_ELLE : PROTECTION_LUI;
   c.innerHTML = opts.map(([tag, label]) =>
     `<button type="button" class="act-tag-btn" data-tag="${tag}">${label}</button>`).join('');
   c.querySelectorAll('.act-tag-btn').forEach(b =>
     b.addEventListener('click', () => b.classList.toggle('sel')));
 }
+const renderProtectionGrid = (containerId, tracksCycle) =>
+  renderTagGrid(containerId, tracksCycle ? PROTECTION_ELLE : PROTECTION_LUI);
+
+// Options solo par genre (Elle ♀ / Lui ♂) + tags de contexte communs.
+const SOLO_ELLE = {
+  practices: [
+    ['clitoridienne', '💧 Clitoridienne'], ['penetration_vaginale', '🍑 Pénétration vaginale'],
+    ['humping', '🛏️ Humping'], ['anal', '🍑 Anal'], ['mammaire', '🤱 Mammaire'], ['multi_zones', '✨ Multi-zones'],
+  ],
+  accessories: [
+    ['vibromasseur', '🔮 Vibromasseur'], ['ondes_air', '💨 Ondes d\'air (Satisfyer…)'],
+    ['dildo', '🍆 Godemichet'], ['plug_anal', '🍑 Plug anal'], ['huile_massage', '💧 Huile / Gel'],
+  ],
+  excitation: [
+    ['fantasme', '💭 Fantasme'], ['video', '🎬 Vidéo'], ['audio', '🎧 Audio érotique'], ['lecture', '📖 Lecture'],
+  ],
+};
+const SOLO_LUI = {
+  practices: [
+    ['masturbation_manuelle', '✋ Masturbation manuelle'], ['friction', '🛏️ Frottement'],
+    ['anal_prostatique', '🍑 Anal / Prostatique'], ['edging', '⏳ Edging'], ['oral_accessoire', '👄 Oral (accessoire)'],
+  ],
+  accessories: [
+    ['gaine', '🧴 Gaine (Fleshlight…)'], ['masturbateur_auto', '🔌 Masturbateur auto'],
+    ['cockring', '💍 Anneau pénien'], ['plug_prostate', '🍑 Stim. prostate'], ['lubrifiant', '💧 Lubrifiant'],
+  ],
+  excitation: [
+    ['fantasme', '💭 Fantasme'], ['video', '🎬 Vidéo'], ['audio', '🎧 Audio érotique'], ['lecture', '📖 Lecture / Images'],
+  ],
+};
+const CONTEXT_MOMENT   = [['reveil', '🌅 Au réveil'], ['journee', '☀️ En journée'], ['avant_dormir', '🌙 Avant de dormir'], ['nuit', '🌃 En pleine nuit']];
+const CONTEXT_AMBIANCE = [['douche', '🚿 Douche / Bain'], ['lit', '🛏️ Lit'], ['canape', '🛋️ Canapé'], ['voyage', '✈️ Voyage']];
+const CONTEXT_RAPIDITE = [['quickie', '⚡ Quickie'], ['longue', '🕯️ Longue / Sensorielle']];
+
+// Remplit toutes les grilles solo + contexte selon le genre du membre courant.
+function renderSoloGrids(tracksCycle) {
+  const set = tracksCycle ? SOLO_ELLE : SOLO_LUI;
+  renderTagGrid('session-solo-practices', set.practices);
+  renderTagGrid('session-solo-accessories', set.accessories);
+  renderTagGrid('session-solo-excitation', set.excitation);
+  renderTagGrid('session-context-moment', CONTEXT_MOMENT);
+  renderTagGrid('session-context-ambiance', CONTEXT_AMBIANCE);
+  renderTagGrid('session-context-rapidite', CONTEXT_RAPIDITE);
+}
+
+// Collecte les data-tag sélectionnés d'un conteneur.
+const collectTags = (sel) =>
+  [...document.querySelectorAll(`${sel} .act-tag-btn.sel`)].map(b => b.dataset.tag);
 
 // Garde en mémoire la session en cours d'édition pour la sauvegarde.
 // `null` si c'est une nouvelle session.
@@ -303,7 +350,16 @@ export async function loadAndEditSession(sessionId, st) {
     });
     document.getElementById('session-ejaculation').value = details.ejaculation || 'inconnu';
     const wp = document.getElementById('session-watched-porn'); if (wp) wp.checked = !!details.watched_porn;
-    const stoy = document.getElementById('session-solo-toys'); if (stoy) stoy.checked = !!details.solo_toys;
+
+    // Restaurer les sélections solo + contexte (les grilles ont été rendues par openFullSessionSheet).
+    const restoreTags = (sel, tags) => (tags || []).forEach(t =>
+      document.querySelector(`${sel} .act-tag-btn[data-tag="${attrSel(t)}"]`)?.classList.add('sel'));
+    restoreTags('#session-solo-practices',   details.solo_practices);
+    restoreTags('#session-solo-accessories', details.solo_accessories);
+    restoreTags('#session-solo-excitation',  details.solo_excitation);
+    restoreTags('#session-context-moment',   details.context_moment);
+    restoreTags('#session-context-ambiance', details.context_ambiance);
+    restoreTags('#session-context-rapidite', details.context_rapidite);
 
     // Positions + marqueur solo (stockés dans session_activities.tags)
     const allTags = session.session_activities?.[0]?.tags || [];
@@ -388,7 +444,7 @@ export function openFullSessionSheet(st) {
   if (ejacEl) ejacEl.value = 'inconnu';
 
   // Réinitialiser solo / films olé olé
-  ['session-solo', 'session-watched-porn', 'session-solo-toys'].forEach(id => {
+  ['session-solo', 'session-watched-porn'].forEach(id => {
     const c = document.getElementById(id); if (c) c.checked = false;
   });
   sheet.classList.remove('is-solo');
@@ -410,6 +466,9 @@ export function openFullSessionSheet(st) {
   // Protections adaptées au genre : « Moi » = mon rôle, « Partenaire » = l'autre.
   renderProtectionGrid('session-protection-me', !!st?.me?.tracks_cycle);
   renderProtectionGrid('session-protection-partner', !!st?.partner?.tracks_cycle);
+
+  // Options solo (pratiques/accessoires/excitation) selon le genre + contexte.
+  renderSoloGrids(!!st?.me?.tracks_cycle);
 
   sheet.classList.add('open');
   sheet.removeAttribute('aria-hidden');
@@ -615,8 +674,14 @@ async function saveFullSession(st) {
     protection_partner:   [...document.querySelectorAll('#session-protection-partner .sel')].map(b => b.dataset.tag),
     ejaculation:          document.getElementById('session-ejaculation')?.value || 'inconnu',
     watched_porn:         document.getElementById('session-watched-porn')?.checked ?? false,
-    solo_toys:            document.getElementById('session-solo-toys')?.checked ?? false,
     solo:                 isSolo,
+    // Solo (par genre) + contexte commun
+    solo_practices:       collectTags('#session-solo-practices'),
+    solo_accessories:     collectTags('#session-solo-accessories'),
+    solo_excitation:      collectTags('#session-solo-excitation'),
+    context_moment:       collectTags('#session-context-moment'),
+    context_ambiance:     collectTags('#session-context-ambiance'),
+    context_rapidite:     collectTags('#session-context-rapidite'),
   };
 
   // Préliminaires
