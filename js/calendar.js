@@ -31,14 +31,19 @@ let calState = {
 export async function initCalendar() {
   renderCalendarSkeleton();   // placeholder pendant le chargement des données
 
-  calState.me = await getMyMembership();
-  calState.cycles = await getCycleHistory(12);
-  calState.prediction = predictNextPeriod(calState.cycles);
+  // Les 3 requêtes sont indépendantes → en parallèle (1 aller-retour au lieu de 3).
+  const [me, cycles] = await Promise.all([
+    getMyMembership(),
+    getCycleHistory(12),
+    loadMonthEntries(),
+  ]);
+  calState.me = me;
+  calState.cycles = cycles;
+  calState.prediction = predictNextPeriod(cycles);
 
   document.getElementById('today-date').textContent =
     new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  await loadMonthEntries();
   renderCalendar();
   bindNav();
   bindCycleYear();

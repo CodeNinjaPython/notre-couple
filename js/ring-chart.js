@@ -58,6 +58,15 @@ export function renderCycleRing(container, params = {}) {
     return COLORS.default;
   }
 
+  // ─── Libellé de phase d'un jour (pour l'interaction au tap) ───────────────
+  function segmentPhase(day) {
+    if (day <= periodDays)                        return 'Règles';
+    if (day === ovulationDay)                     return 'Ovulation';
+    if (day >= fertileStart && day <= fertileEnd) return 'Fenêtre fertile';
+    if (day > totalDays - 6)                      return 'Lutéale';
+    return 'Folliculaire';
+  }
+
   // ─── Path d'un arc de segment ────────────────────────────────────────────
   function arcPath(dayIndex) {
     const startAngle = (dayIndex / totalDays) * TAU - TAU / 4 + GAP_RAD / 2;
@@ -85,9 +94,13 @@ export function renderCycleRing(container, params = {}) {
       stroke-width="${sw}"
       stroke-linecap="round"
       opacity="${opacity}"
-      ${isCurrent ? 'class="ring-day-current"' : ''}
-      role="img"
-      aria-label="Jour ${day}${isCurrent ? ' (aujourd\'hui)' : ''}"/>`;
+      class="ring-seg${isCurrent ? ' ring-day-current' : ''}"
+      data-day="${day}"
+      data-phase="${segmentPhase(day)}"
+      data-logged="${loggedDays.has(day) ? '1' : '0'}"
+      tabindex="0"
+      role="button"
+      aria-label="Jour ${day} · ${segmentPhase(day)}${isCurrent ? ' (aujourd\'hui)' : ''}"/>`;
   }
 
   // ─── Pastille du jour actuel ──────────────────────────────────────────────
@@ -146,7 +159,34 @@ export function renderCycleRing(container, params = {}) {
     ${phaseText}
   </svg>`;
 
-  container.innerHTML = svg;
+  // Légende interactive : se met à jour quand on tape un jour de l'anneau.
+  const defaultCaption = `Jour ${currentDay} · ${phaseName || segmentPhase(currentDay)} · aujourd'hui`;
+  container.innerHTML = svg +
+    `<div class="ring-caption" id="ring-caption" aria-live="polite">${defaultCaption}</div>`;
+
+  // ─── Interaction : tap/clavier sur un segment → infos du jour ──────────────
+  const caption = container.querySelector('#ring-caption');
+  const select = (seg) => {
+    if (!seg) return;
+    container.querySelectorAll('.ring-seg.ring-seg--active')
+      .forEach(s => s.classList.remove('ring-seg--active'));
+    seg.classList.add('ring-seg--active');
+    const day    = seg.dataset.day;
+    const phase  = seg.dataset.phase;
+    const logged = seg.dataset.logged === '1';
+    const isCur  = Number(day) === currentDay;
+    if (caption) {
+      caption.textContent = `Jour ${day} · ${phase}`
+        + (isCur ? " · aujourd'hui" : '')
+        + (logged ? ' · données saisies ✓' : '');
+    }
+  };
+  container.querySelectorAll('.ring-seg').forEach(seg => {
+    seg.addEventListener('click', () => select(seg));
+    seg.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(seg); }
+    });
+  });
 }
 
 // ─── Légende de l'anneau ──────────────────────────────────────────────────

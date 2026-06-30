@@ -1327,22 +1327,80 @@ body.demo-mode .demo-badge {
 .match-label  { font-size: 14px; font-weight: 600; color: var(--text); }
 .match-scores { font-family: "DM Mono", monospace; font-size: 12px; color: var(--elle); }
 
-/* Kinks slider */
-.kink-category { margin-bottom: 18px; }
-.kink-cat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--faint); margin-bottom: 10px; }
-.kink-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+/* ── Mes désirs — privé (accordéon + recherche + échelle cœurs) ───────────── */
+.kink-toolbar {
+  display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
+}
+.kink-progress {
+  font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted);
+}
+.kink-progress-count { color: var(--elle); font-weight: 700; }
+.kink-search-wrap { position: relative; display: flex; align-items: center; }
+.kink-search-ico {
+  position: absolute; left: 12px; color: var(--faint); pointer-events: none;
+}
+.kink-search {
+  width: 100%; padding: 10px 12px 10px 34px;
+  border: 1.5px solid var(--line); border-radius: 12px;
+  background: var(--surface2); color: var(--text);
+  font-family: "DM Sans", sans-serif; font-size: 14px; outline: none;
+  transition: border-color .15s;
+}
+.kink-search:focus { border-color: var(--elle-mid); }
+
+.kink-category {
+  border: 1px solid var(--line); border-radius: 14px;
+  margin-bottom: 10px; overflow: hidden; background: var(--surface);
+}
+.kink-cat-header {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 13px 14px; cursor: pointer;
+  background: none; border: none; text-align: left;
+}
+.kink-cat-label {
+  font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--text);
+}
+.kink-cat-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.kink-cat-badge {
+  min-width: 20px; height: 20px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--elle); color: #fff; border-radius: 10px;
+  font-family: "DM Mono", monospace; font-size: 11px; font-weight: 700;
+}
+.kink-cat-chevron { color: var(--faint); transition: transform .2s ease; }
+.kink-category.open .kink-cat-chevron { transform: rotate(180deg); }
+.kink-cat-body { display: none; padding: 0 14px 8px; }
+.kink-category.open .kink-cat-body { display: block; }
+
+.kink-row {
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+  padding: 12px 0; border-top: 1px solid var(--line);
+}
 .kink-row:first-of-type { border-top: none; }
-.kink-label { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
-.kink-slider-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.kink-slider {
-  width: 80px; -webkit-appearance: none; appearance: none;
-  height: 4px; background: var(--line); border-radius: 2px; outline: none; cursor: pointer;
+.kink-row-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kink-label { font-size: 14px; font-weight: 500; color: var(--text); }
+.kink-hint {
+  font-size: 11px; font-weight: 700; color: var(--elle);
+  text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0;
 }
-.kink-slider::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 16px; height: 16px;
-  background: var(--elle); border-radius: 50%; cursor: pointer;
+.kink-scale { display: flex; gap: 6px; }
+.kink-heart {
+  flex: 1; min-height: 40px; border: 1.5px solid var(--line);
+  background: var(--surface2); border-radius: 10px;
+  font-size: 17px; line-height: 1; color: var(--line);
+  cursor: pointer; transition: all .12s; -webkit-tap-highlight-color: transparent;
 }
-.kink-val { font-family: "DM Mono", monospace; font-size: 12px; color: var(--elle); width: 18px; text-align: center; }
+.kink-heart:hover { border-color: var(--elle-mid); }
+.kink-heart.on {
+  color: var(--elle); border-color: var(--elle-mid); background: var(--elle-light);
+}
+.kink-note-input {
+  width: 100%; padding: 8px 11px; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface2); color: var(--text);
+  font-family: "DM Sans", sans-serif; outline: none;
+}
+.kink-note-input:focus { border-color: var(--elle-mid); }
 
 /* Wish-list */
 .wish-item { padding: 12px 0; border-top: 1.5px solid var(--line); }
@@ -1729,6 +1787,26 @@ body.dark .card-primary { border-color: var(--elle); }
 }
 .ring-day-current {
   animation: ring-day-pulse 2.4s ease-in-out infinite;
+}
+
+/* Segments interactifs : tap/clic révèle les infos du jour dans la légende */
+.ring-seg {
+  cursor: pointer;
+  transition: opacity .15s ease, stroke-width .15s ease;
+  outline: none;
+}
+.ring-seg:hover { opacity: 1 !important; }
+.ring-seg:focus-visible { opacity: 1 !important; }
+.ring-seg--active { opacity: 1 !important; }
+
+/* Légende dynamique sous l'anneau (jour sélectionné) */
+.ring-caption {
+  text-align: center;
+  margin-top: 10px;
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 1.2em;
 }
 
 /* Légende de l'anneau */
@@ -2359,6 +2437,53 @@ nav button, .who button, .kink-key, .challenge-check, .ev-react-btn {
 .chip-toggle input { width: 17px; height: 17px; accent-color: var(--elle); }
 .chip-toggle:has(input:checked) { border-color: var(--elle); background: var(--elle-light); color: var(--elle); }
 
+/* Intro du Cadre (section Intimité) */
+.cadre-intro {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 16px 18px; margin-bottom: 14px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(124,92,252,.25);
+  background: linear-gradient(135deg, rgba(124,92,252,.08), var(--surface));
+}
+.cadre-intro-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+.cadre-intro-title {
+  font-size: 14px; font-weight: 800; color: var(--violet); margin-bottom: 4px;
+}
+.cadre-intro-text {
+  font-size: 12.5px; line-height: 1.6; color: var(--muted); margin: 0;
+}
+
+/* Alerte besoin du partenaire (destinataire) — proéminente, en haut d'Aujourd'hui */
+@keyframes pna-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 67, 117, .28); }
+  50%       { box-shadow: 0 0 0 8px rgba(232, 67, 117, 0); }
+}
+.partner-need-alert {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; margin-bottom: 14px;
+  border-radius: 18px;
+  border: 1.5px solid var(--elle-mid);
+  background: linear-gradient(135deg, var(--elle-light), var(--surface));
+  animation: pna-pulse 2.2s ease-in-out infinite;
+}
+.partner-need-alert .pna-icon { font-size: 30px; line-height: 1; flex-shrink: 0; }
+.partner-need-alert .pna-body { flex: 1; min-width: 0; }
+.partner-need-alert .pna-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--elle);
+}
+.partner-need-alert .pna-need {
+  font-size: 16px; font-weight: 700; color: var(--text); margin-top: 2px;
+}
+.partner-need-alert .pna-ack {
+  flex-shrink: 0; border: none; cursor: pointer;
+  background: var(--elle); color: #fff;
+  font-family: "DM Sans"; font-size: 13px; font-weight: 700;
+  padding: 10px 14px; border-radius: 12px; transition: filter .15s;
+}
+.partner-need-alert .pna-ack:hover { filter: brightness(1.05); }
+.partner-need-alert .pna-ack:disabled { opacity: .5; cursor: default; }
+
 /* #6 — SOS besoin */
 .sos-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); margin-bottom: 10px; }
 .sos-btns { display: flex; gap: 8px; }
@@ -2730,6 +2855,24 @@ header { position: relative; }
 }
 
 /* Position Detail Sheet styles */
+/* Barre de navigation entre positions (fiche détail) */
+.pos-detail-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin: 2px 0 6px;
+}
+.pos-nav-btn {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border: 1.5px solid var(--line); border-radius: 50%;
+  background: var(--surface2); color: var(--text);
+  font-size: 22px; line-height: 1; cursor: pointer;
+  transition: all .15s;
+}
+.pos-nav-btn:hover:not(:disabled) { border-color: var(--elle-mid); color: var(--elle); background: var(--elle-light); }
+.pos-nav-btn:disabled { opacity: .35; cursor: default; }
+.pos-detail-counter {
+  font-family: "DM Mono", monospace; font-size: 12px; color: var(--muted);
+}
+
 #pos-detail-content {
   padding: 10px 5px;
   font-family: "DM Sans", sans-serif;

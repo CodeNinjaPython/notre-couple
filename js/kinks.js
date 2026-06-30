@@ -8,7 +8,7 @@
  * - Personne ne découvre l'intérêt de l'autre en avançant seul.
  */
 import { supabase } from './supabase.js';
-import { getIntimacyState, initKinkSliderGradients, escapeHtml } from './intimacy.js';
+import { getIntimacyState, escapeHtml } from './intimacy.js';
 import { toast, confirmDialog, formDialog, friendlyError } from './ui-feedback.js';
 import { diffDays } from './date-utils.js';
 
@@ -51,6 +51,16 @@ export async function initKinks() {
 // ---------------------------------------------------------------------------
 // Liste des kinks avec slider de désir (vue privée)
 // ---------------------------------------------------------------------------
+// Libellés de niveau de désir (0 = pas pour moi … 5 = j'adore).
+const DESIRE_HINTS = ['', 'Curieux·se', 'Tenté·e', 'Ça m\'attire', 'J\'aime beaucoup', 'J\'adore'];
+
+// Échelle « cœurs » 1-5 (re-cliquer le niveau courant remet à 0).
+function scaleHtml(val) {
+  return [1, 2, 3, 4, 5].map(n =>
+    `<button type="button" class="kink-heart${n <= val ? ' on' : ''}" data-val="${n}"
+       aria-label="Niveau ${n} — ${DESIRE_HINTS[n]}" aria-pressed="${n <= val}">♥</button>`).join('');
+}
+
 async function renderKinkList(st) {
   const wrap = document.getElementById('kink-list');
   if (!wrap) return;
@@ -62,7 +72,7 @@ async function renderKinkList(st) {
 
   const kinks   = kinksRes.data  || [];
   const ratings = ratingsRes.data || [];
-  
+
   // Remplir localKinkRatings
   localKinkRatings = Object.fromEntries(ratings.map(r => [r.kink_id, r]));
 
@@ -73,74 +83,138 @@ async function renderKinkList(st) {
     byCat[k.category].push(k);
   });
 
-  wrap.innerHTML = Object.entries(byCat).map(([cat, items]) => `
-    <div class="kink-category">
-      <div class="kink-cat-label">${CATEGORIES[cat] || cat}</div>
-      ${items.map(k => {
-        const r = localKinkRatings[k.id];
-        const val = r?.desire ?? 0;
-        return `<div class="kink-row" data-kink="${k.id}" style="display: flex; flex-direction: column; align-items: stretch; gap: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <span class="kink-label">${k.label}</span>
-            <div class="kink-slider-wrap">
-              <input type="range" class="kink-slider" min="0" max="5" value="${val}"
-                data-kink="${k.id}" aria-label="${k.label} — désir 0 à 5">
-              <span class="kink-val">${val > 0 ? val : '—'}</span>
+  const ratedCount = kinks.filter(k => (localKinkRatings[k.id]?.desire ?? 0) > 0).length;
+
+  // En-tête : progression + recherche.
+  const header = `
+    <div class="kink-toolbar">
+      <div class="kink-progress" id="kink-progress">
+        <span class="kink-progress-count">${ratedCount}</span> / ${kinks.length} désirs explorés
+      </div>
+      <div class="kink-search-wrap">
+        <svg class="kink-search-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="kink-search" class="kink-search" placeholder="Rechercher un désir…" aria-label="Rechercher un désir">
+      </div>
+    </div>`;
+
+  // Catégories en accordéon : ouvertes si elles contiennent déjà un désir noté.
+  const body = Object.entries(byCat).map(([cat, items]) => {
+    const catRated = items.filter(k => (localKinkRatings[k.id]?.desire ?? 0) > 0).length;
+    const open = catRated > 0;
+    return `
+    <div class="kink-category${open ? ' open' : ''}" data-cat="${cat}">
+      <button type="button" class="kink-cat-header" aria-expanded="${open}">
+        <span class="kink-cat-label">${CATEGORIES[cat] || cat}</span>
+        <span class="kink-cat-meta">
+          <span class="kink-cat-badge"${catRated ? '' : ' hidden'}>${catRated}</span>
+          <svg class="kink-cat-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </span>
+      </button>
+      <div class="kink-cat-body">
+        ${items.map(k => {
+          const r = localKinkRatings[k.id];
+          const val = r?.desire ?? 0;
+          return `<div class="kink-row" data-kink="${k.id}" data-label="${escapeHtml(k.label.toLowerCase())}">
+            <div class="kink-row-head">
+              <span class="kink-label">${k.label}</span>
+              <span class="kink-hint" data-kink="${k.id}">${val > 0 ? DESIRE_HINTS[val] : ''}</span>
             </div>
-          </div>
-          <div class="kink-note-container" style="width: 100%; display: ${val > 0 ? 'block' : 'none'};">
-            <input type="text" class="kink-note-input" data-kink="${k.id}" placeholder="Note privée (ex: scénarios, limites, idées...)" value="${escapeHtml(r?.note || '')}" style="width: 100%; padding: 6px 10px; font-size: 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text);">
-          </div>
-        </div>`;
-      }).join('')}
-    </div>`
-  ).join('');
+            <div class="kink-scale" role="group" aria-label="${escapeHtml(k.label)} — niveau de désir">
+              ${scaleHtml(val)}
+            </div>
+            <input type="text" class="kink-note-input" data-kink="${k.id}"
+              placeholder="Note privée (scénario, limite, idée…)"
+              value="${escapeHtml(r?.note || '')}" style="display:${val > 0 ? 'block' : 'none'}">
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
 
-  // Événements slider et note
+  wrap.innerHTML = header + body;
+
   const timers = {};
-  
-  // Événements slider (debounce 600ms)
-  wrap.querySelectorAll('.kink-slider').forEach(slider => {
-    slider.addEventListener('input', () => {
-      const kinkId = slider.dataset.kink;
-      const val    = parseInt(slider.value);
-      slider.nextElementSibling.textContent = val > 0 ? val : '—';
-      
-      const noteContainer = slider.closest('.kink-row').querySelector('.kink-note-container');
-      if (noteContainer) {
-        noteContainer.style.display = val > 0 ? 'block' : 'none';
-      }
-      
-      const r = localKinkRatings[kinkId] || (localKinkRatings[kinkId] = { desire: 0, shared: false });
-      r.desire = val;
-      r.shared = val > 0;
-      if (val === 0) {
-        r.note = null;
-        const noteInput = slider.closest('.kink-row').querySelector('.kink-note-input');
-        if (noteInput) noteInput.value = '';
-      }
-      
-      clearTimeout(timers[kinkId]);
-      timers[kinkId] = setTimeout(() => saveKinkRating(kinkId, r), 600);
+
+  // Mise à jour de la progression globale + badge de catégorie.
+  const refreshCounts = () => {
+    const total = kinks.length;
+    const rated = kinks.filter(k => (localKinkRatings[k.id]?.desire ?? 0) > 0).length;
+    const pc = document.querySelector('#kink-progress .kink-progress-count');
+    if (pc) pc.textContent = rated;
+    wrap.querySelectorAll('.kink-category').forEach(catEl => {
+      const items = byCat[catEl.dataset.cat] || [];
+      const n = items.filter(k => (localKinkRatings[k.id]?.desire ?? 0) > 0).length;
+      const badge = catEl.querySelector('.kink-cat-badge');
+      if (badge) { badge.textContent = n; badge.hidden = n === 0; }
+    });
+  };
+
+  // Accordéon : déplier/replier une catégorie.
+  wrap.querySelectorAll('.kink-cat-header').forEach(h => {
+    h.addEventListener('click', () => {
+      const cat = h.closest('.kink-category');
+      const open = cat.classList.toggle('open');
+      h.setAttribute('aria-expanded', String(open));
     });
   });
 
-  // Événements note (debounce 800ms)
-  wrap.querySelectorAll('.kink-note-input').forEach(input => {
-    input.addEventListener('input', () => {
-      const kinkId = input.dataset.kink;
-      const noteVal = input.value.trim();
-      
-      const r = localKinkRatings[kinkId] || (localKinkRatings[kinkId] = { desire: 0, shared: false });
-      r.note = noteVal || null;
-      
-      clearTimeout(timers[kinkId + '-note']);
-      timers[kinkId + '-note'] = setTimeout(() => saveKinkRating(kinkId, r), 800);
+  // Échelle de désir (délégation).
+  wrap.addEventListener('click', (e) => {
+    const heart = e.target.closest('.kink-heart');
+    if (!heart) return;
+    const row    = heart.closest('.kink-row');
+    const kinkId = row.dataset.kink;
+    const n      = parseInt(heart.dataset.val);
+    const r = localKinkRatings[kinkId] || (localKinkRatings[kinkId] = { desire: 0, shared: false });
+    const newVal = (n === r.desire) ? 0 : n;   // re-clic sur le niveau courant = remise à zéro
+    r.desire  = newVal;
+    r.shared  = newVal > 0;
+
+    // Refléter visuellement
+    row.querySelectorAll('.kink-heart').forEach(b => {
+      const on = parseInt(b.dataset.val) <= newVal;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
     });
+    const hint = row.querySelector('.kink-hint');
+    if (hint) hint.textContent = newVal > 0 ? DESIRE_HINTS[newVal] : '';
+    const note = row.querySelector('.kink-note-input');
+    if (note) {
+      note.style.display = newVal > 0 ? 'block' : 'none';
+      if (newVal === 0) { note.value = ''; r.note = null; }
+    }
+
+    refreshCounts();
+    clearTimeout(timers[kinkId]);
+    timers[kinkId] = setTimeout(() => saveKinkRating(kinkId, r), 500);
   });
 
-  // Gradients dès le rendu
-  initKinkSliderGradients();
+  // Note privée (debounce 800ms, délégation).
+  wrap.addEventListener('input', (e) => {
+    const input = e.target.closest('.kink-note-input');
+    if (!input) return;
+    const kinkId = input.dataset.kink;
+    const r = localKinkRatings[kinkId] || (localKinkRatings[kinkId] = { desire: 0, shared: false });
+    r.note = input.value.trim() || null;
+    clearTimeout(timers[kinkId + '-note']);
+    timers[kinkId + '-note'] = setTimeout(() => saveKinkRating(kinkId, r), 800);
+  });
+
+  // Recherche : filtre les lignes et ouvre les catégories qui contiennent un résultat.
+  const search = document.getElementById('kink-search');
+  search?.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    wrap.querySelectorAll('.kink-category').forEach(catEl => {
+      let visible = 0;
+      catEl.querySelectorAll('.kink-row').forEach(row => {
+        const match = !q || row.dataset.label.includes(q);
+        row.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      catEl.style.display = visible ? '' : 'none';
+      if (q) catEl.classList.toggle('open', visible > 0);
+    });
+  });
 }
 
 async function saveKinkRating(kinkId, r) {

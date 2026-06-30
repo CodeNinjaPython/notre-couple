@@ -534,6 +534,22 @@ function showPositionDetails(posId, loggedTodaySet) {
     };
   }
 
+  // Navigation entre cartes : on suit l'ordre exact affiché dans la grille filtrée.
+  const grid  = document.getElementById('library-grid');
+  const order = grid ? [...grid.querySelectorAll('.pos-card')].map(c => c.dataset.id) : [];
+  const idx   = order.indexOf(posId);
+  const counter = document.getElementById('pos-detail-counter');
+  const prevBtn = document.getElementById('btn-pos-prev');
+  const nextBtn = document.getElementById('btn-pos-next');
+  if (counter) counter.textContent = order.length ? `${idx + 1} / ${order.length}` : '';
+  const goTo = (delta) => {
+    if (!order.length) return;
+    const nextId = order[(idx + delta + order.length) % order.length];
+    showPositionDetails(nextId, loggedTodaySet);
+  };
+  if (prevBtn) { prevBtn.disabled = order.length < 2; prevBtn.onclick = () => goTo(-1); }
+  if (nextBtn) { nextBtn.disabled = order.length < 2; nextBtn.onclick = () => goTo(1); }
+
   const sheet = document.getElementById('position-detail-sheet');
   if (sheet) {
     sheet.classList.add('open');
@@ -542,7 +558,31 @@ function showPositionDetails(posId, loggedTodaySet) {
     const closeSheet = () => {
       sheet.classList.remove('open');
       sheet.setAttribute('aria-hidden', 'true');
+      document.removeEventListener('keydown', onKey);
     };
+    // Flèches clavier ← / → pour naviguer, Échap pour fermer.
+    const onKey = (e) => {
+      if (e.key === 'ArrowLeft')  goTo(-1);
+      else if (e.key === 'ArrowRight') goTo(1);
+      else if (e.key === 'Escape') closeSheet();
+    };
+    document.addEventListener('keydown', onKey);
+
+    // Swipe horizontal (mobile) pour passer d'une position à l'autre.
+    const panel = sheet.querySelector('.sheet');
+    if (panel && !panel._posSwipeBound) {
+      panel._posSwipeBound = true;
+      let x0 = null;
+      panel.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+      panel.addEventListener('touchend', (e) => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        if (Math.abs(dx) > 60) (panel._posGoTo || (() => {}))(dx < 0 ? 1 : -1);
+        x0 = null;
+      }, { passive: true });
+    }
+    if (panel) panel._posGoTo = goTo;
+
     document.getElementById('btn-close-pos-detail').onclick = closeSheet;
     document.getElementById('btn-close-pos-sheet').onclick = closeSheet;
     sheet.onclick = (e) => { if (e.target === sheet) closeSheet(); };
@@ -827,7 +867,12 @@ async function renderSafewords() {
     const { data, error } = await supabase.from('safewords').select('*').eq('couple_id', st.coupleId);
     if (error) throw error;
     const addBtn = '<button type="button" id="btn-add-safeword" class="btn-inline">+ Ajouter</button>';
-    el.innerHTML = (data?.length ? data.map(sw => `<div class="safeword-chip"><strong>${sw.word}</strong>${sw.meaning ? ` — ${sw.meaning}` : ''}</div>`).join('') : '<p class="intime-empty">Aucun safeword enregistré.</p>') + addBtn;
+    // Quand la liste est vide, on propose le système « feu tricolore » en 1 tap (référence universelle).
+    const presetBtn = data?.length ? '' :
+      '<button type="button" id="btn-safeword-preset" class="btn-inline" style="margin-left:8px">🚦 Système feu tricolore</button>';
+    el.innerHTML = (data?.length
+      ? data.map(sw => `<div class="safeword-chip"><strong>${sw.word}</strong>${sw.meaning ? ` — ${sw.meaning}` : ''}</div>`).join('')
+      : '<p class="intime-empty">Aucun safeword enregistré.</p>') + addBtn + presetBtn;
     document.getElementById('btn-add-safeword')?.addEventListener('click', async () => {
       const res = await formDialog({
         title: 'Ajouter un safeword',
@@ -839,6 +884,22 @@ async function renderSafewords() {
       if (!res) return;
       try { await supabase.from('safewords').insert({ couple_id: st.coupleId, word: res.word, meaning: res.meaning || null }); await renderSafewords(); }
       catch (e) { toast(friendlyError(e), 'error'); }
+    });
+    document.getElementById('btn-safeword-preset')?.addEventListener('click', async () => {
+      const ok = await confirmDialog({
+        title: 'Système feu tricolore',
+        message: 'Ajouter les trois safewords universels : Vert (tout va bien), Orange (ralentis / on approche d\'une limite) et Rouge (stop immédiat) ?',
+        confirmLabel: 'Ajouter',
+      });
+      if (!ok) return;
+      try {
+        await supabase.from('safewords').insert([
+          { couple_id: st.coupleId, word: 'Vert',   meaning: 'Tout va bien, continue' },
+          { couple_id: st.coupleId, word: 'Orange', meaning: 'Ralentis, on approche d\'une limite' },
+          { couple_id: st.coupleId, word: 'Rouge',  meaning: 'Stop immédiat' },
+        ]);
+        await renderSafewords();
+      } catch (e) { toast(friendlyError(e), 'error'); }
     });
   } catch (e) { el.innerHTML = '<div class="msg error">Impossible de charger les safewords.</div>'; }
 }

@@ -160,7 +160,7 @@ export async function initToday() {
 
   // Realtime : rafraîchir les moments en temps réel
   if (state.coupleId) {
-    subscribeToEvents(state.coupleId, () => renderEvents());
+    subscribeToEvents(state.coupleId, () => { renderEvents(); renderPartnerNeedAlert(); });
     subscribeToPartnerLogs(state.coupleId, async () => {
       showToast('Ton partenaire vient de saisir sa journée.');
       showNotification('Notre cycle', 'Ton partenaire a saisi sa journée.');
@@ -233,6 +233,7 @@ export async function reloadDataAndRenderToday() {
   renderCoaching();
   renderPrediction();
   await renderEvents();
+  await renderPartnerNeedAlert();
   updateAppBadge();
 }
 
@@ -477,9 +478,11 @@ function initNeedButtons() {
         if (error) throw error;
         showToast(`${EVENT_TYPES[type]?.icon || '💛'} Signal envoyé à ${state.partner.display_name || 'ton partenaire'}`);
         // Push au partenaire (#12, best-effort si abonné).
+        const myName = state.me?.display_name || 'Ton/ta partenaire';
+        const needLabel = (EVENT_TYPES[type]?.label || 'Un besoin').toLowerCase();
         import('./push.js').then(({ sendPushToPartner }) =>
-          sendPushToPartner(state.partner.user_id, 'Notre cycle',
-            `${EVENT_TYPES[type]?.icon || '💛'} ${state.partner.display_name ? '' : ''}${EVENT_TYPES[type]?.label || 'Un besoin'} de ${state.me?.display_name || 'ton partenaire'}`));
+          sendPushToPartner(state.partner.user_id, '💛 Un besoin pour toi',
+            `${EVENT_TYPES[type]?.icon || '💛'} ${myName} a exprimé un ${needLabel}.`));
         await renderEvents();
       } catch (e) {
         showToast(friendlyError(e), 'error');
@@ -488,6 +491,67 @@ function initNeedButtons() {
       }
     };
   });
+}
+
+// Types d'événements qui sont des « besoins » à signaler fortement au partenaire.
+const NEED_TYPES = ['reconfort', 'presence', 'espace'];
+const NEED_NOTIFIED_KEY = 'nc-need-notified';
+
+// Bannière proéminente : un besoin signalé par le partenaire aujourd'hui, non encore
+// pris en compte (sans ma réaction). C'est ce qui « signale suffisamment » le destinataire.
+async function renderPartnerNeedAlert() {
+  const el = document.getElementById('partner-need-alert');
+  if (!el) return;
+  if (!state.coupleId || !state.partner || !state.me) { el.style.display = 'none'; return; }
+
+  const { data } = await supabase
+    .from('couple_events')
+    .select('id, event_type, created_by, reactions, created_at')
+    .eq('couple_id', state.coupleId)
+    .eq('created_by', state.partner.user_id)
+    .eq('event_date', localDateStr())
+    .in('event_type', NEED_TYPES)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  const ev = data?.[0];
+  // On masque si rien, ou si j'ai déjà répondu (réaction de ma part = « pris en compte »).
+  if (!ev || (ev.reactions && ev.reactions[state.me.user_id])) {
+    el.style.display = 'none';
+    return;
+  }
+
+  const info = EVENT_TYPES[ev.event_type] || EVENT_TYPES.other;
+  const name = state.partner.display_name || 'Ton/ta partenaire';
+  el.innerHTML = `
+    <div class="pna-icon" aria-hidden="true">${info.icon}</div>
+    <div class="pna-body">
+      <div class="pna-title">${name} a un besoin</div>
+      <div class="pna-need">${info.label}</div>
+    </div>
+    <button type="button" class="pna-ack" data-id="${ev.id}">Je suis là 💛</button>`;
+  el.style.display = 'flex';
+
+  el.querySelector('.pna-ack')?.addEventListener('click', async () => {
+    const btn = el.querySelector('.pna-ack');
+    if (btn) btn.disabled = true;
+    await likeEvent(ev.id, '💛');     // ma réaction = accusé de réception (le partenaire le voit)
+    el.style.display = 'none';
+    showToast('Réponse envoyée 💛');
+    // Notifie en retour le partenaire que son signal a été pris en compte (best-effort).
+    import('./push.js').then(({ sendPushToPartner }) =>
+      sendPushToPartner(state.partner.user_id, '💛 Bien reçu',
+        `${state.me?.display_name || 'Ton/ta partenaire'} est là pour toi.`));
+  }, { once: true });
+
+  // Notification locale une seule fois par signal (si pas déjà notifié sur cet appareil).
+  try {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted'
+        && localStorage.getItem(NEED_NOTIFIED_KEY) !== ev.id) {
+      localStorage.setItem(NEED_NOTIFIED_KEY, ev.id);
+      showNotification('💛 Un besoin pour toi', `${name} : ${info.label}`, 'partner-need');
+    }
+  } catch (_) { /* notifications indisponibles */ }
 }
 
 // #5 — Météo-mémo : état d'elle, glanceable pour le partenaire.

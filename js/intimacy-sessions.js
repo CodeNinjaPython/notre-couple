@@ -129,13 +129,13 @@ const SOLO_ELLE = {
   practices: [
     ['clitoridienne', '💧 Clitoridienne', [['doigts','✋ Doigts'],['vibro','🔮 Vibromasseur'],['ondes_air','💨 Ondes d\'air'],['douche','🚿 Pommeau de douche']]],
     ['penetration_vaginale', '🍑 Pénétration vaginale', [['doigts','✋ Doigts'],['sextoy','🍆 Sextoy / godemichet'],['fruit_legume','🥒 Fruit / légume'],['objet','📦 Autre objet']]],
-    ['humping', '🛏️ Humping', [['traversin','🛋️ Traversin'],['oreiller','🛌 Oreiller'],['objet','📦 Objet']]],
+    ['humping', '🛏️ Humping', [['traversin','🛋️ Traversin'],['peluche','🧸 Peluche'],['oreiller','🛌 Oreiller'],['objet','📦 Objet']]],
     ['anal', '🍑 Anal', [['doigt','✋ Doigt'],['plug','🍑 Plug'],['sextoy','🍆 Sextoy']]],
     ['mammaire', '🤱 Mammaire'], ['multi_zones', '✨ Multi-zones'],
   ],
   accessories: [
     ['vibromasseur', '🔮 Vibromasseur'], ['ondes_air', '💨 Ondes d\'air (Satisfyer…)'],
-    ['dildo', '🍆 Godemichet'], ['plug_anal', '🍑 Plug anal'], ['huile_massage', '💧 Huile / Gel'], ['lubrifiant', '💧 Lubrifiant'],
+    ['dildo', '🍆 Godemichet'], ['plug_anal', '🍑 Plug anal'], ['huile_massage', '💧 Huile'], ['lubrifiant', '💧 Lubrifiant'],
   ],
   excitation: EXCITATION,
 };
@@ -153,7 +153,7 @@ const SOLO_LUI = {
   excitation: EXCITATION,
 };
 const CONTEXT_MOMENT   = [['reveil', '🌅 Au réveil'], ['journee', '☀️ En journée'], ['avant_dormir', '🌙 Avant de dormir'], ['nuit', '🌃 En pleine nuit']];
-const CONTEXT_AMBIANCE = [['douche', '🚿 Douche / Bain'], ['lit', '🛏️ Lit'], ['canape', '🛋️ Canapé'], ['voyage', '✈️ Voyage']];
+// (Le lieu/ambiance solo est saisi via le sélecteur « Lieu » de l'étape 1 — pas de doublon ici.)
 const CONTEXT_RAPIDITE = [['quickie', '⚡ Quickie'], ['longue', '🕯️ Longue / Sensorielle']];
 
 // Remplit toutes les grilles solo + contexte selon le genre du membre courant.
@@ -163,7 +163,6 @@ function renderSoloGrids(tracksCycle) {
   renderTagGrid('session-solo-accessories', set.accessories);
   renderTagGrid('session-solo-excitation', set.excitation);
   renderTagGrid('session-context-moment', CONTEXT_MOMENT);
-  renderTagGrid('session-context-ambiance', CONTEXT_AMBIANCE);
   renderTagGrid('session-context-rapidite', CONTEXT_RAPIDITE);
 }
 
@@ -473,7 +472,6 @@ export async function loadAndEditSession(sessionId, st) {
     restoreCascade('#session-solo-excitation',  details.solo_excitation);
     restoreTags('#session-solo-accessories', details.solo_accessories);
     restoreTags('#session-context-moment',   details.context_moment);
-    restoreTags('#session-context-ambiance', details.context_ambiance);
     restoreTags('#session-context-rapidite', details.context_rapidite);
 
     // Positions + marqueur solo (stockés dans session_activities.tags)
@@ -789,7 +787,6 @@ async function saveFullSession(st) {
     solo_accessories:     collectTags('#session-solo-accessories'),
     solo_excitation:      collectTags('#session-solo-excitation'),
     context_moment:       collectTags('#session-context-moment'),
-    context_ambiance:     collectTags('#session-context-ambiance'),
     context_rapidite:     collectTags('#session-context-rapidite'),
   };
 
