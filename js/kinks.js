@@ -52,7 +52,12 @@ export async function initKinks() {
 // Liste des kinks avec slider de désir (vue privée)
 // ---------------------------------------------------------------------------
 // Libellés de niveau de désir (0 = pas pour moi … 5 = j'adore).
-const DESIRE_HINTS = ['', 'Curieux·se', 'Tenté·e', 'Ça m\'attire', 'J\'aime beaucoup', 'J\'adore'];
+const DESIRE_HINTS = ['', 'Curieux·se', 'J\'aimerais', 'Ça m\'attire', 'J\'aime beaucoup', 'J\'adore'];
+
+// Normalise une chaîne pour la recherche : minuscules + suppression des accents.
+function normalizeSearch(s) {
+  return String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
 
 // Échelle « cœurs » 1-5 (re-cliquer le niveau courant remet à 0).
 function scaleHtml(val) {
@@ -114,7 +119,7 @@ async function renderKinkList(st) {
         ${items.map(k => {
           const r = localKinkRatings[k.id];
           const val = r?.desire ?? 0;
-          return `<div class="kink-row" data-kink="${k.id}" data-label="${escapeHtml(k.label.toLowerCase())}">
+          return `<div class="kink-row" data-kink="${k.id}" data-label="${escapeHtml(normalizeSearch(k.label))}">
             <div class="kink-row-head">
               <span class="kink-label">${k.label}</span>
               <span class="kink-hint" data-kink="${k.id}">${val > 0 ? DESIRE_HINTS[val] : ''}</span>
@@ -203,7 +208,7 @@ async function renderKinkList(st) {
   // Recherche : filtre les lignes et ouvre les catégories qui contiennent un résultat.
   const search = document.getElementById('kink-search');
   search?.addEventListener('input', () => {
-    const q = search.value.trim().toLowerCase();
+    const q = normalizeSearch(search.value.trim());
     wrap.querySelectorAll('.kink-category').forEach(catEl => {
       let visible = 0;
       catEl.querySelectorAll('.kink-row').forEach(row => {

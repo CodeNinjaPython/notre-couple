@@ -627,6 +627,36 @@ function renderSettings(me, partner) {
       window.location.reload();
     });
   }
+
+  // Réinitialiser le cadre intime : safewords, limites et aftercare.
+  const resetCadreBtn = document.getElementById('btn-reset-cadre');
+  if (resetCadreBtn) {
+    resetCadreBtn.addEventListener('click', async () => {
+      const ok = await confirmDialog({
+        title: 'Réinitialiser le cadre intime ?',
+        message: 'Tes safewords, tes limites et tes préférences d\'aftercare seront effacés. '
+               + 'Tes moments, désirs et statistiques ne sont pas touchés. Irréversible.',
+        confirmLabel: 'Réinitialiser',
+        danger: true,
+      });
+      if (!ok) return;
+      resetCadreBtn.disabled = true;
+      try {
+        const me = await getMyMembership();
+        // Limites : propres à l'utilisateur. Safewords : partagés au couple.
+        await Promise.all([
+          me?.user_id   ? supabase.from('consent_limits').delete().eq('user_id', me.user_id) : Promise.resolve(),
+          me?.couple_id ? supabase.from('safewords').delete().eq('couple_id', me.couple_id)   : Promise.resolve(),
+        ]);
+        localStorage.removeItem('nc-aftercare');
+        toast('Cadre intime réinitialisé.');
+      } catch (e) {
+        toast(friendlyError(e), 'error');
+      } finally {
+        resetCadreBtn.disabled = false;
+      }
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------

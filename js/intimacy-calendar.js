@@ -73,10 +73,17 @@ export async function refreshIntimacyCalendar() {
 async function loadSessions() {
   cal.byDate = {};
   if (!cal.coupleId) return;
-  const { data } = await supabase.from('intimate_sessions')
-    .select('id, session_date, note, duration_min, created_by, session_feedback(orgasms), session_activities(tags)')
-    .eq('couple_id', cal.coupleId)
-    .order('session_date', { ascending: false });
+  // Les deux sources (sessions structurées + journal quotidien) sont indépendantes
+  // → on les charge en parallèle plutôt qu'en série.
+  const [{ data }, { data: journals }] = await Promise.all([
+    supabase.from('intimate_sessions')
+      .select('id, session_date, note, duration_min, created_by, session_feedback(orgasms), session_activities(tags)')
+      .eq('couple_id', cal.coupleId)
+      .order('session_date', { ascending: false }),
+    supabase.from('log_entries')
+      .select('log_date, user_id, value')
+      .eq('category_id', 'journal'),
+  ]);
 
   for (const s of (data || [])) {
     if (!s.session_date) continue;
@@ -99,10 +106,6 @@ async function loadSessions() {
   // Données sexuelles du journal (import Clue / saisie quotidienne) → pseudo-moments,
   // pour que la sexualité apparaisse aussi dans l'agenda Intime (lecture seule :
   // pas d'id de session, donc ni édition ni suppression depuis ici).
-  const { data: journals } = await supabase.from('log_entries')
-    .select('log_date, user_id, value')
-    .eq('category_id', 'journal');
-
   for (const r of (journals || [])) {
     const j = r.value?.v ?? r.value;
     if (!j) continue;
@@ -255,7 +258,8 @@ function renderYearGrid() {
     for (let d = 1; d <= daysInMonth; d++) {
       const ds = `${yearShown}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       let cls = 'yr-cell';
-      if (periodDays.has(ds)) cls += ' period';
+      // La vue année Intime n'affiche que les moments intimes (les règles restent
+      // sur le calendrier de cycle). Pas de marqueur « period » ici.
       if (intimacyDays.has(ds)) cls += ' intimacy';
       if (ds === today) cls += ' today';
       cells += `<span class="${cls}"></span>`;
