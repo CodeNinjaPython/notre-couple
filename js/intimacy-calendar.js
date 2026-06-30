@@ -94,6 +94,36 @@ async function loadSessions() {
     e.orgasm = e.orgasm || orgasms > 0;
     e.sessions.push({ ...s, tags, orgasms, solo });
   }
+
+  // Données sexuelles du journal (import Clue / saisie quotidienne) → pseudo-moments,
+  // pour que la sexualité apparaisse aussi dans l'agenda Intime (lecture seule :
+  // pas d'id de session, donc ni édition ni suppression depuis ici).
+  const { data: journals } = await supabase.from('log_entries')
+    .select('log_date, user_id, value')
+    .eq('category_id', 'journal');
+
+  for (const r of (journals || [])) {
+    const j = r.value?.v ?? r.value;
+    if (!j) continue;
+    const hasCouple = j.rapports && j.rapports !== 'pas_sexe';
+    const prat      = Array.isArray(j.libidoPratiques) ? j.libidoPratiques : [];
+    const hasSolo   = prat.includes('masturbation');
+    const orgasms   = j.orgasme ? 1 : 0;
+    if (!hasCouple && !hasSolo && !orgasms) continue;
+
+    const e = cal.byDate[r.log_date] || (cal.byDate[r.log_date] =
+      { count: 0, couple: false, soloElle: false, soloLui: false, orgasm: false, sessions: [] });
+
+    if (hasSolo) {
+      if (r.user_id === cal.elleId) e.soloElle = true; else e.soloLui = true;
+      e.sessions.push({ id: null, fromJournal: true, created_by: r.user_id, solo: true, orgasms, tags: [], note: null });
+    }
+    if (hasCouple || (orgasms && !hasSolo)) {
+      e.couple = true;
+      e.sessions.push({ id: null, fromJournal: true, created_by: r.user_id, solo: false, orgasms, tags: [], note: null });
+    }
+    e.orgasm = e.orgasm || orgasms > 0;
+  }
 }
 
 function renderGrid() {
@@ -157,15 +187,18 @@ function showDay(dateStr) {
       const meta = [who];
       if (s.duration_min) meta.push(`${s.duration_min} min`);
       if (s.orgasms) meta.push(`${s.orgasms} orgasme${s.orgasms > 1 ? 's' : ''}`);
+      if (s.fromJournal) meta.push('journal');
       const tagStr = (s.tags || []).filter(t => t !== 'solo').slice(0, 8)
         .map(t => `<span class="intime-tag">${escapeHtml(t)}</span>`).join('');
-      return `<div class="intime-cal-session" data-id="${s.id}">
-        <div class="intime-cal-session-head">
-          <div class="intime-cal-session-meta">${meta.join(' · ')}</div>
+      // Les pseudo-moments du journal n'ont pas d'id de session → pas d'actions.
+      const actions = s.fromJournal ? '' : `
           <div class="intime-cal-session-actions">
             <button type="button" class="cal-sess-edit" data-id="${s.id}" aria-label="Modifier ce moment">✏️</button>
             <button type="button" class="cal-sess-del" data-id="${s.id}" aria-label="Supprimer ce moment">×</button>
-          </div>
+          </div>`;
+      return `<div class="intime-cal-session"${s.id ? ` data-id="${s.id}"` : ''}>
+        <div class="intime-cal-session-head">
+          <div class="intime-cal-session-meta">${meta.join(' · ')}</div>${actions}
         </div>
         ${s.note ? `<div class="intime-cal-session-note">${escapeHtml(s.note)}</div>` : ''}
         ${tagStr ? `<div class="intime-cal-tags">${tagStr}</div>` : ''}

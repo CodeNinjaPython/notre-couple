@@ -132,10 +132,11 @@ function renderMonthGrid() {
     let dots = '';
     const journal = entry?.journal;
     if (entry) {
-      // Flux (rouge) — depuis journal ou ancien 'flow'
+      // Flux (rouge) — flux menstruel OU spotting (saignements), depuis journal ou ancien 'flow'
       const hasFlux = (journal?.fluxMenstruel && journal.fluxMenstruel !== 'aucun')
+                   || (journal?.spotting)
                    || (entry.flow != null);
-      if (hasFlux) dots += '<span class="cal-dot cal-dot-flux" title="Flux"></span>';
+      if (hasFlux) dots += '<span class="cal-dot cal-dot-flux" title="Flux / saignements"></span>';
 
       // Douleurs (bleu)
       const hasDouleurs = (journal?.douleursPelviennes?.length || journal?.douleursCorps?.length)
@@ -147,13 +148,23 @@ function renderMonthGrid() {
                       || (entry.mood != null);
       if (hasEmotion) dots += '<span class="cal-dot cal-dot-emotions" title="Humeur"></span>';
 
-      // Sexualité (vert)
-      const hasSexu = journal?.rapports && journal.rapports !== 'pas_sexe';
-      if (hasSexu) dots += '<span class="cal-dot cal-dot-sexu" title="Sexualité"></span>';
+      // (La sexualité n'est plus affichée ici : elle vit dans l'onglet Intimité,
+      //  qui lit aussi les données sexuelles du journal — voir intimacy-calendar.js.)
 
       // Énergie/Sommeil (ambre)
       if (journal?.niveauEnergie || entry.energy != null)
         dots += '<span class="cal-dot cal-dot-energie" title="Énergie"></span>';
+
+      // Autres symptômes (glaire, sommeil, digestion, peau, cheveux, social, urine…)
+      // — surtout présents via l'import Clue, sinon ces jours n'auraient aucun point.
+      const hasAutres = !!(journal && (
+        journal.glaireCervicale || journal.transit || journal.protectionType ||
+        journal.dureeSommeil ||
+        journal.symptomesSommeil?.length || journal.fringales?.length ||
+        journal.etatPeau?.length || journal.etatCheveux?.length ||
+        journal.urineSymptomes?.length || journal.vieSociale?.length
+      ));
+      if (hasAutres) dots += '<span class="cal-dot cal-dot-symptomes" title="Autres symptômes"></span>';
     }
 
     let phaseBg = '';
