@@ -8,6 +8,7 @@ import { localDateStr, fmtDate, diffDays } from './date-utils.js';
 import { POSITIONS } from './intimacy-library.js';
 import { toast, confirmDialog, friendlyError } from './ui-feedback.js';
 import { syncSessionToDailyLog } from './session-bridge.js';
+import { formatTag } from './labels.js';
 
 // Échappe le texte saisi par l'utilisateur avant injection dans innerHTML / attributs.
 function escapeHtml(s) {
@@ -126,7 +127,7 @@ export async function renderRecentSessions(st) {
       const partnerFb = s.session_feedback?.find(f => f.user_id !== st.me?.user_id && f.shared);
       const sat      = myFb?.satisfaction ? `${myFb.satisfaction}/10` : '—';
       const partnerSat = partnerFb?.satisfaction ? ` · ${partnerFb.satisfaction}/10` : '';
-      const tags     = (s.activity_tags || []).map(t => `<span class="session-tag">${t}</span>`).join('');
+      const tags     = (s.activity_tags || []).map(t => `<span class="session-tag">${escapeHtml(formatTag(t))}</span>`).join('');
 
       return `<div class="session-card" data-id="${s.id}">
         <div class="session-meta">

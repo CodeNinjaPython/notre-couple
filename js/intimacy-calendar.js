@@ -7,6 +7,7 @@
 import { supabase } from './supabase.js';
 import { localDateStr } from './date-utils.js';
 import { loadAndEditSession, deleteSession } from './intimacy-sessions.js';
+import { formatTag } from './labels.js';
 
 const MONTH_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -189,7 +190,7 @@ function showDay(dateStr) {
       if (s.orgasms) meta.push(`${s.orgasms} orgasme${s.orgasms > 1 ? 's' : ''}`);
       if (s.fromJournal) meta.push('journal');
       const tagStr = (s.tags || []).filter(t => t !== 'solo').slice(0, 8)
-        .map(t => `<span class="intime-tag">${escapeHtml(t)}</span>`).join('');
+        .map(t => `<span class="intime-tag">${escapeHtml(formatTag(t))}</span>`).join('');
       // Les pseudo-moments du journal n'ont pas d'id de session → pas d'actions.
       const actions = s.fromJournal ? '' : `
           <div class="intime-cal-session-actions">

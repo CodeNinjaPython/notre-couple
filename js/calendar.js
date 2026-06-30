@@ -191,7 +191,14 @@ function renderMonthGrid() {
 
   // Tap on a day → show detail
   grid.querySelectorAll('.cal-cell[data-date]').forEach(cell => {
-    cell.addEventListener('click', () => { showDayDetail(cell.dataset.date); mountDayForm(cell.dataset.date); });
+    cell.addEventListener('click', () => {
+      const ds = cell.dataset.date;
+      showDayDetail(ds);
+      mountDayForm(ds);
+      // Le tracker de symptômes suit aussi le jour sélectionné (au lieu de toujours aujourd'hui).
+      const symptWrap = document.getElementById('symptom-tracker');
+      if (symptWrap && calState.me) renderSymptomTracker(symptWrap, { me: calState.me, partner: null }, ds);
+    });
   });
 }
 

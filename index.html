@@ -546,24 +546,15 @@
         </div>
       </div>
 
-      <!-- Saisie du jour — DailyLog (collapsible, ouverte) -->
+      <!-- Saisie unifiée : DailyLog + symptômes détaillés (collapsible, ouverte) -->
       <div class="card collapsible-section" data-default-open="true">
         <button type="button" class="collapsible-header" aria-expanded="true">
-          <h2 id="daily-log-title">Saisie du jour</h2>
+          <h2 id="daily-log-title">Saisir aujourd'hui</h2>
           <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <div class="collapsible-body">
           <div id="daily-log-form"></div>
-        </div>
-      </div>
-
-      <!-- Symptômes Clue (collapsible, fermée par défaut) -->
-      <div class="card collapsible-section" data-default-open="false">
-        <button type="button" class="collapsible-header" aria-expanded="false">
-          <h2>Symptômes détaillés</h2>
-          <svg class="collapsible-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-        </button>
-        <div class="collapsible-body">
+          <div class="saisie-sep"><span>Symptômes détaillés</span></div>
           <p style="font-size:12px;color:var(--faint);font-family:'DM Mono',monospace;margin-bottom:14px;line-height:1.6">
             Privé · non partagé avec votre partenaire.
           </p>

@@ -4,6 +4,7 @@
  *   2. renderLogCategoryAccordion() — accordéon dynamique avec grille de cards
  *   3. renderCalendarDaySummary()  — panneau résumé pour un jour du calendrier
  */
+import { formatTag } from './labels.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. SCHÉMA DES CATÉGORIES
@@ -698,7 +699,7 @@ export function renderCalendarDaySummary(container, log, cycleDay, phaseName, da
   items.forEach(({ label, value }) => {
     const catName = _findCatForLabel(label) || 'Autres';
     if (!byCategory[catName]) byCategory[catName] = [];
-    byCategory[catName].push(label ? `${label} : ${value}` : value);
+    byCategory[catName].push(formatTag(value));
   });
 
   const groups = Object.entries(byCategory).map(([cat, vals]) => `
