@@ -359,7 +359,7 @@ export async function renderRecentSessions(st) {
       if (balance) {
         const myName    = st.me?.display_name || 'Moi';
         const theirName = st.partner?.display_name || 'Partenaire';
-        balance.textContent = `Initiative : ${myName} ${myCount}× · ${theirName} ${theirCount}×`;
+        balance.textContent = `${myName} ${myCount}× · ${theirName} ${theirCount}×`;
         balance.style.display = 'block';
       }
     }

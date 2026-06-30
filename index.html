@@ -546,7 +546,8 @@
         <span><i class="cal-legend-dot" style="background:#E53935"></i>Règles</span>
         <span><i class="cal-legend-dot" style="background:#7C5CFC"></i>Ovulation</span>
         <span><i class="cal-legend-dot" style="background:#E84375"></i>Lutéale</span>
-        <span><i class="cal-legend-dot" style="border:1.5px dashed var(--faint);background:transparent"></i>Prévu</span>
+        <span><i class="cal-legend-dot" style="background:rgba(229,57,53,.35);border:1px solid rgba(229,57,53,.5)"></i>Règles prévues</span>
+        <span><i class="cal-legend-dot" style="background:rgba(66,120,196,.35);border:1px solid rgba(66,120,196,.5)"></i>Ovulation prévue</span>
       </div>
 
       <!-- Prédiction (collapsible, ouverte) -->
@@ -790,10 +791,9 @@
         <!-- Fenêtre de désir -->
         <div id="desire-window" style="margin-top:16px"></div>
 
-        <!-- Équilibre + délai neutre -->
+        <!-- Délai neutre (l'équilibre d'initiative est désormais dans Stats) -->
         <div class="intime-meta">
           <span id="days-since" class="meta-chip" style="display:none"></span>
-          <span id="initiation-balance" class="meta-chip" style="display:none"></span>
         </div>
         <!-- Souvenir du jour -->
         <div id="souvenir-du-jour" style="display:none;margin-top:14px"></div>
@@ -923,6 +923,11 @@
 
       <!-- ==================== SECTION STATS ==================== -->
       <div id="intime-section-stats" class="intime-section" hidden>
+        <!-- Initiative (qui propose les moments) -->
+        <div class="card">
+          <h2>Qui prend l'initiative ?</h2>
+          <div id="initiation-balance" class="stat-initiative">Pas encore assez de moments pour le dire.</div>
+        </div>
         <!-- Bilan des positions -->
         <div class="card">
           <h2>Bilan des positions</h2>

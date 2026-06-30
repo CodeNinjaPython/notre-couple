@@ -181,9 +181,11 @@ function renderMonthGrid() {
       const col = PHASES.find(([a,b,l]) => l === phase)?.[3] || '#D9B36A';
       phaseBg = `style="background: ${hexAlpha(col, isFuture ? .06 : .12)}; border-color: ${hexAlpha(col, .25)};"`;
     } else if (pred === 'period') {
-      phaseBg = `style="background: rgba(201,138,106,.06); border-color: rgba(201,138,106,.2);" title="Règles prévues"`;
+      // Prévision des règles : rouge clair.
+      phaseBg = `style="background: rgba(229,57,53,.12); border-color: rgba(229,57,53,.30);" title="Règles prévues"`;
     } else if (pred === 'fertile') {
-      phaseBg = `style="background: rgba(217,179,106,.05); border-color: rgba(217,179,106,.18);" title="Fenêtre fertile probable"`;
+      // Prévision de l'ovulation / fenêtre fertile : bleu clair.
+      phaseBg = `style="background: rgba(66,120,196,.12); border-color: rgba(66,120,196,.30);" title="Ovulation / fenêtre fertile probable"`;
     }
 
     html += `<div class="${cls}" data-date="${dateStr}" ${phaseBg}>

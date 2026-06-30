@@ -111,7 +111,8 @@ let state = {
   cur: 'elle',
   currentCycle: null,
   cycleDay: null, phaseName: null,
-  savedValues: {},
+  savedValues: {},        // ma saisie (modifiable)
+  partnerValues: {},      // ce que le partenaire a partagé (lecture seule)
   coupleId: null,
   prediction: null,
   logDate: localDateStr(),
@@ -243,10 +244,27 @@ function getPhase(day) {
 }
 
 async function loadEntriesForDate(dateStr) {
+  // On charge ma saisie ET celle (partagée) du partenaire, séparées par user_id.
+  // Elle et Lui partagent les mêmes category_id (mood, energy…) : sans cette
+  // séparation, les deux saisies s'écraseraient l'une l'autre.
   const { data } = await supabase
-    .from('log_entries').select('category_id, value').eq('log_date', dateStr);
+    .from('log_entries').select('category_id, value, user_id').eq('log_date', dateStr);
   state.savedValues = {};
-  (data || []).forEach(r => { state.savedValues[r.category_id] = r.value; });
+  state.partnerValues = {};
+  (data || []).forEach(r => {
+    if (r.user_id === state.me?.user_id) state.savedValues[r.category_id] = r.value;
+    else if (state.partner && r.user_id === state.partner.user_id) state.partnerValues[r.category_id] = r.value;
+  });
+}
+
+// Rôle de l'utilisateur connecté (Elle suit le cycle, sinon Lui).
+function myRole() { return state.me?.tracks_cycle ? 'elle' : 'lui'; }
+// Vrai quand l'onglet affiché est celui du partenaire → lecture seule.
+function isPartnerView() { return state.cur !== myRole(); }
+
+function escapeHtmlToday(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 // --- Navigation date (saisie antérieure) -----------------------------------
@@ -807,7 +825,8 @@ function switchPerson(p) {
   document.getElementById('who-toggle')?.querySelectorAll('button')
     .forEach(btn => btn.classList.toggle('on', btn.dataset.p === p));
   const logTitle = document.getElementById('log-title');
-  if (logTitle) logTitle.textContent = `Aujourd'hui — ${p === 'elle' ? 'Elle' : 'Lui'}`;
+  if (logTitle) logTitle.textContent = `Aujourd'hui — ${p === 'elle' ? 'Elle' : 'Lui'}`
+    + (isPartnerView() ? ' (lecture seule)' : '');
   renderMetrics();
   renderInsight();
   const tip = document.getElementById('tip-card');
@@ -889,6 +908,7 @@ function drawChart(elleData, luiData, totalDays, todayIdx) {
  * @param {MouseEvent} event
  */
 async function handleMetricClick(event) {
+  if (isPartnerView()) return;   // la saisie du partenaire est en lecture seule
   const chip = event.target.closest('.chip');
   if (!chip) return;
 
@@ -931,18 +951,19 @@ function getMetricDisplayValue(metric, value) {
   return value;
 }
 
-function getMetricChipsHTML(metric, savedValue) {
+function getMetricChipsHTML(metric, savedValue, readonly = false) {
+  const ro = readonly ? ' disabled' : '';
   if (metric.type === 'bbt') {
     return `<div class="bbt-input-wrap">
       <input type="number" class="bbt-input" data-id="${metric.id}"
         min="35.0" max="38.5" step="0.1" placeholder="36.5"
-        value="${savedValue || ''}" aria-label="Température basale">
+        value="${savedValue || ''}" aria-label="Température basale"${ro}>
       <span class="bbt-unit">°C</span>
     </div>`;
   }
   if (metric.type === 'text') {
     return `<textarea class="note-input" data-id="${metric.id}"
-      placeholder="Écris quelque chose…" rows="2">${savedValue || ''}</textarea>`;
+      placeholder="${readonly ? '—' : 'Écris quelque chose…'}" rows="2"${ro}>${savedValue || ''}</textarea>`;
   }
   const isSelected = (v) => String(savedValue) === String(v) ? ' sel' : '';
   const options = (metric.type === 'enum' || metric.type === 'boolean')
@@ -964,8 +985,26 @@ function renderMetrics() {
   const wrap = document.getElementById('metrics');
   if (!wrap) return;
 
-  wrap.innerHTML = METRICS[state.cur].map(metric => {
-    const savedRaw   = state.savedValues[metric.id];
+  const partnerView = isPartnerView();
+  const values = partnerView ? (state.partnerValues || {}) : state.savedValues;
+
+  // Vue partenaire sans partenaire relié → rien à afficher.
+  if (partnerView && !state.partner) {
+    wrap.removeAttribute('data-readonly');
+    wrap.innerHTML = `<div class="empty-state-inline"><div class="es-icon">🔗</div>
+      <p>Pas encore de partenaire relié.<br>Reliez-vous pour voir sa saisie.</p></div>`;
+    return;
+  }
+
+  if (partnerView) wrap.setAttribute('data-readonly', '1');
+  else wrap.removeAttribute('data-readonly');
+
+  const banner = partnerView
+    ? `<div class="metrics-readonly-note">👀 Lecture seule — ce que ${escapeHtmlToday(state.partner?.display_name || (state.cur === 'elle' ? 'Elle' : 'Lui'))} a partagé. Tu ne modifies que ta propre saisie.</div>`
+    : '';
+
+  wrap.innerHTML = banner + METRICS[state.cur].map(metric => {
+    const savedRaw   = values[metric.id];
     const savedValue = savedRaw != null ? (savedRaw.v ?? savedRaw) : null;
     return `
       <div class="metric">
@@ -973,9 +1012,12 @@ function renderMetrics() {
           <span class="name">${metric.label}</span>
           <span class="val" id="val-${metric.id}">${getMetricDisplayValue(metric, savedValue)}</span>
         </div>
-        <div class="chips">${getMetricChipsHTML(metric, savedValue)}</div>
+        <div class="chips">${getMetricChipsHTML(metric, savedValue, partnerView)}</div>
       </div>`;
   }).join('');
+
+  // En lecture seule (vue partenaire) : aucun écouteur, pas de modification possible.
+  if (partnerView) return;
 
   wrap.removeEventListener('click', handleMetricClick);
   wrap.addEventListener('click', handleMetricClick);
@@ -1014,6 +1056,7 @@ function renderMetrics() {
 }
 
 async function saveEntry(categoryId, value) {
+  if (isPartnerView()) return;   // garde-fou : on n'écrit jamais pour le partenaire
   const { error } = await supabase.from('log_entries').upsert(
     { log_date: state.logDate, category_id: categoryId, value: { v: value }, shared: true },
     { onConflict: 'user_id,log_date,category_id' }

@@ -258,6 +258,18 @@ header { padding: 52px 0 16px; }
 .dot.s { background: var(--lui); }
 
 /* ─── Log metrics (chips) ─────────────────────────────────────────────── */
+/* Vue partenaire : saisie en lecture seule (on voit, on ne modifie pas). */
+.metrics-readonly-note {
+  font-size: 12px; line-height: 1.5; color: var(--muted);
+  background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 12px; margin-bottom: 16px;
+}
+#metrics[data-readonly] .chips { pointer-events: none; opacity: .8; }
+#metrics[data-readonly] .chip:not(.sel),
+#metrics[data-readonly] .facechip:not(.sel) { opacity: .55; }
+
+.stat-initiative { font-size: 14px; color: var(--text); font-weight: 600; }
+
 .metric { margin-bottom: 18px; }
 .metric:last-child { margin-bottom: 0; }
 .metric .ml {
