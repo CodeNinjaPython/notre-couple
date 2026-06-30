@@ -118,11 +118,14 @@ export async function initIntimacy(params = {}) { // This function is now much c
   notifyLibidosAligned();
 
   // Calendrier intime (suivi mensuel de la sexualité)
-  initIntimacyCalendar(st, (date) => {
+  initIntimacyCalendar(st, (date, mode = 'couple') => {
     prepareNewSession();
     openFullSessionSheet(st);
     const dateEl = document.getElementById('session-date-input');
     if (dateEl) dateEl.value = date;
+    // Pré-régler couple/solo selon le bouton cliqué dans le détail du jour.
+    const soloEl = document.getElementById('session-solo');
+    if (soloEl) { soloEl.checked = mode === 'solo'; soloEl.dispatchEvent(new Event('change')); }
   });
 
   // Bibliothèque

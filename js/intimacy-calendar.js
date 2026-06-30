@@ -209,10 +209,14 @@ function showDay(dateStr) {
     body += '<p class="intime-empty">Aucun moment ce jour.</p>';
   }
   if (!future) {
-    body += '<button type="button" class="btn-secondary" id="intime-cal-add" style="margin-top:12px">+ Noter un moment ce jour</button>';
+    body += `<div class="intime-cal-add-actions">
+      <button type="button" class="btn-secondary" id="intime-cal-add-couple">💞 Moment à deux</button>
+      <button type="button" class="btn-secondary" id="intime-cal-add-solo">🙋 Moment solo</button>
+    </div>`;
   }
   detail.innerHTML = body;
-  document.getElementById('intime-cal-add')?.addEventListener('click', () => cal.onAddMoment?.(dateStr));
+  document.getElementById('intime-cal-add-couple')?.addEventListener('click', () => cal.onAddMoment?.(dateStr, 'couple'));
+  document.getElementById('intime-cal-add-solo')?.addEventListener('click', () => cal.onAddMoment?.(dateStr, 'solo'));
 
   // Éditer / supprimer un moment directement depuis le calendrier.
   detail.querySelectorAll('.cal-sess-edit').forEach(b =>

@@ -1913,6 +1913,11 @@ body.dark .card-primary { border-color: var(--elle); }
 .saisie-sep { display: flex; align-items: center; gap: 12px; margin: 22px 0 14px; }
 .saisie-sep::before, .saisie-sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .saisie-sep span { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+/* Deux boutons d'ajout (à deux / solo) dans le détail d'un jour du calendrier intime */
+.intime-cal-add-actions { display: flex; gap: 10px; margin-top: 12px; }
+.intime-cal-add-actions button { flex: 1; }
+/* Le mode couple/solo est fixé par le bouton de lancement → on masque la case redondante dans le wizard */
+.sheet-backdrop .chip-toggle:has(#session-solo) { display: none; }
 .cal-dot-symptomes { background: #8E8CB2; }
 
 /* ─── Tags personnalisés (type 'tags' dans daily-log-ui.js) ──────────── */
