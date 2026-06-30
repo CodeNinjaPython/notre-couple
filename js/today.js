@@ -184,6 +184,21 @@ export async function initToday() {
   }
 }
 
+// Badge PWA (Badging API) : pastille « 1 » sur l'icône tant que je n'ai pas
+// saisi ma journée ; effacée dès qu'une entrée existe pour aujourd'hui.
+async function updateAppBadge() {
+  if (!('setAppBadge' in navigator) || !state.me) return;
+  try {
+    const { data } = await supabase.from('log_entries')
+      .select('category_id')
+      .eq('log_date', localDateStr())
+      .eq('user_id', state.me.user_id)
+      .limit(1);
+    if (data && data.length) navigator.clearAppBadge?.();
+    else navigator.setAppBadge?.(1);
+  } catch (_) { /* badge best-effort, jamais bloquant */ }
+}
+
 export async function reloadDataAndRenderToday() {
   const [cycle, history] = await Promise.all([
     getCurrentCycle(),
@@ -218,6 +233,7 @@ export async function reloadDataAndRenderToday() {
   renderCoaching();
   renderPrediction();
   await renderEvents();
+  updateAppBadge();
 }
 
 function getPhase(day) {
@@ -912,6 +928,8 @@ async function saveEntry(categoryId, value) {
   else {
     showToast('Sauvegardé ✓');
     invalidateCache(`log-entries-${state.logDate}`); // invalide le cache du jour
+    // Saisie du jour → effacer le badge PWA immédiatement.
+    if (state.logDate === localDateStr()) navigator.clearAppBadge?.();
     // Pas de reload complet ici : il reconstruirait #metrics (innerHTML) et
     // détruirait le textarea/BBT en cours de frappe (perte de focus), en plus
     // d'un re-fetch réseau à chaque tap de chip. Les mises à jour ciblées sont

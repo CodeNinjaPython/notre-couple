@@ -2785,3 +2785,32 @@ header { position: relative; }
   border-radius: 10px;
   display: block;
 }
+
+/* ─── Transitions de vue natives (View Transitions API) ─────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: .3s;
+    animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+    animation-fill-mode: both;
+  }
+  /* Onglet suivant (index +) : l'ancienne vue part à gauche, la nouvelle entre par la droite */
+  html[data-transition-direction="slide-left"]::view-transition-old(root) { animation-name: vt-out-left; }
+  html[data-transition-direction="slide-left"]::view-transition-new(root) { animation-name: vt-in-right; }
+  /* Onglet précédent (index -) */
+  html[data-transition-direction="slide-right"]::view-transition-old(root) { animation-name: vt-out-right; }
+  html[data-transition-direction="slide-right"]::view-transition-new(root) { animation-name: vt-in-left; }
+  /* Vers les réglages : la nouvelle vue monte depuis le bas */
+  html[data-transition-direction="slide-up"]::view-transition-old(root) { animation-name: vt-fade-out; }
+  html[data-transition-direction="slide-up"]::view-transition-new(root) { animation-name: vt-in-bottom; }
+  /* Retour des réglages : la nouvelle vue descend depuis le haut */
+  html[data-transition-direction="slide-down"]::view-transition-old(root) { animation-name: vt-fade-out; }
+  html[data-transition-direction="slide-down"]::view-transition-new(root) { animation-name: vt-in-top; }
+}
+@keyframes vt-out-left  { to   { transform: translateX(-100%); } }
+@keyframes vt-in-right  { from { transform: translateX(100%);  } }
+@keyframes vt-out-right { to   { transform: translateX(100%);  } }
+@keyframes vt-in-left   { from { transform: translateX(-100%); } }
+@keyframes vt-in-bottom { from { transform: translateY(100%);  } }
+@keyframes vt-in-top    { from { transform: translateY(-100%); } }
+@keyframes vt-fade-out  { to   { opacity: 0; } }

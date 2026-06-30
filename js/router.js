@@ -27,48 +27,72 @@ export function navigate(name, params = {}) {
   if (currentView === 'intime' && name !== 'intime') {
     import('./intimacy.js').then(m => m.cleanupIntimacy?.());
   }
+
+  // ── Sens de la transition de vue (View Transitions API) ──────────────────
+  // Onglets : glissement horizontal selon l'index. Réglages : vertical.
+  const fromIdx = NAV_VIEWS.indexOf(currentView);
+  const toIdx   = NAV_VIEWS.indexOf(name);
+  let direction = 'none';
+  if (name === 'settings')             direction = 'slide-up';
+  else if (currentView === 'settings') direction = 'slide-down';
+  else if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx)
+    direction = toIdx > fromIdx ? 'slide-left' : 'slide-right';
+  document.documentElement.dataset.transitionDirection = direction;
+
   currentView = name;
 
-  container.innerHTML = '';
-  container.appendChild(tpl.content.cloneNode(true));
+  // Échange synchrone du template — capturé par la View Transition.
+  const swapDom = () => {
+    container.innerHTML = '';
+    container.appendChild(tpl.content.cloneNode(true));
 
-  if (NAV_VIEWS.includes(name)) {
-    nav.classList.add('visible');
-    nav.querySelectorAll('button').forEach(btn => {
-      const active = btn.dataset.nav === name;
-      btn.classList.toggle('on', active);
-      // A11Y : signaler l'onglet courant aux technologies d'assistance
-      if (active) btn.setAttribute('aria-current', 'page');
-      else btn.removeAttribute('aria-current');
-    });
-  } else {
-    nav.classList.remove('visible');
-  }
-
-  // Filet de sécurité : une init de vue qui jette (Supabase down, réseau coupé)
-  // ne doit pas laisser un écran à moitié rendu sans explication.
-  if (viewInits[name]) {
-    Promise.resolve(viewInits[name](params)).catch(err => {
-      console.error(`[router] échec de l'init de la vue "${name}"`, err);
-      import('./ui-feedback.js').then(m => {
-        m.toast(m.friendlyError(err), 'error');
-        container.innerHTML = `
-          <div class="app">
-            <div class="error-card" style="margin: 40px auto; max-width: 400px;">
-              <p>Impossible de charger la page :<br>${m.friendlyError(err)}</p>
-              <button type="button" class="btn-primary" onclick="window.location.reload()" style="margin-top: 10px;">Réessayer</button>
-            </div>
-          </div>
-        `;
+    if (NAV_VIEWS.includes(name)) {
+      nav.classList.add('visible');
+      nav.querySelectorAll('button').forEach(btn => {
+        const active = btn.dataset.nav === name;
+        btn.classList.toggle('on', active);
+        // A11Y : signaler l'onglet courant aux technologies d'assistance
+        if (active) btn.setAttribute('aria-current', 'page');
+        else btn.removeAttribute('aria-current');
       });
-    });
-  }
+    } else {
+      nav.classList.remove('visible');
+    }
+  };
 
-  const subpath = params.section ? `/${params.section}` : '';
-  const newHash = `#${name}${subpath}`;
-  // history.replaceState met à jour l'URL sans ajouter d'entrée à l'historique du navigateur,
-  // ce qui est idéal pour la navigation entre onglets.
-  history.replaceState(null, '', newHash);
+  // Init de la vue (asynchrone) + URL — joué après l'échange du DOM.
+  const runInit = () => {
+    // Filet de sécurité : une init de vue qui jette (Supabase down, réseau coupé)
+    // ne doit pas laisser un écran à moitié rendu sans explication.
+    if (viewInits[name]) {
+      Promise.resolve(viewInits[name](params)).catch(err => {
+        console.error(`[router] échec de l'init de la vue "${name}"`, err);
+        import('./ui-feedback.js').then(m => {
+          m.toast(m.friendlyError(err), 'error');
+          container.innerHTML = `
+            <div class="app">
+              <div class="error-card" style="margin: 40px auto; max-width: 400px;">
+                <p>Impossible de charger la page :<br>${m.friendlyError(err)}</p>
+                <button type="button" class="btn-primary" onclick="window.location.reload()" style="margin-top: 10px;">Réessayer</button>
+              </div>
+            </div>
+          `;
+        });
+      });
+    }
+    const subpath = params.section ? `/${params.section}` : '';
+    // history.replaceState met à jour l'URL sans empiler d'entrée d'historique.
+    history.replaceState(null, '', `#${name}${subpath}`);
+  };
+
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (document.startViewTransition && direction !== 'none' && !reduceMotion) {
+    const vt = document.startViewTransition(swapDom);
+    vt.updateCallbackDone.then(runInit, runInit);
+  } else {
+    swapDom();
+    runInit();
+  }
 }
 
 export function initNavButtons() {
