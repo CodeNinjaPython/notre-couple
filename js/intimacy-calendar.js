@@ -222,15 +222,6 @@ function showDay(dateStr) {
 }
 
 let yearShown = new Date().getFullYear();
-let cyclePeriods = [];
-
-async function loadCyclePeriods() {
-  if (!cal.coupleId) return;
-  const { data } = await supabase.from('cycles')
-    .select('period_start, period_end')
-    .order('period_start', { ascending: false });
-  cyclePeriods = data || [];
-}
 
 function renderYearGrid() {
   const listContainer = document.getElementById('intime-year-months-list');
@@ -239,16 +230,8 @@ function renderYearGrid() {
 
   titleContainer.textContent = String(yearShown);
 
-  const periodDays = new Set();
-  for (const c of cyclePeriods) {
-    if (!c.period_start) continue;
-    const s = new Date(c.period_start + 'T12:00:00');
-    const e = c.period_end ? new Date(c.period_end + 'T12:00:00') : s;
-    for (let d = new Date(s); d <= e; d = new Date(d.getTime() + 864e5)) {
-      periodDays.add(localDateStr(d));
-    }
-  }
-
+  // La vue année de l'Espace Intime n'affiche QUE les moments intimes (doré).
+  // Les règles restent sur le calendrier de cycle (séparation cycle / intime).
   const intimacyDays = new Set(Object.keys(cal.byDate));
   const today = localDateStr();
 
@@ -292,7 +275,6 @@ async function openYearOverlay() {
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
   }
-  await loadCyclePeriods();
   renderYearGrid();
 }
 

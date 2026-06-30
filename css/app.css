@@ -1907,6 +1907,8 @@ body.dark .card-primary { border-color: var(--elle); }
 .cal-dot-sexu     { background: #16A34A; }
 .cal-dot-energie  { background: #D97706; opacity: .6; }
 .cal-dot-spotting { background: #A0522D; }
+.day-detail-actions { display: flex; gap: 10px; margin-top: 18px; }
+.day-detail-actions button { flex: 1; }
 .cal-dot-symptomes { background: #8E8CB2; }
 
 /* ─── Tags personnalisés (type 'tags' dans daily-log-ui.js) ──────────── */

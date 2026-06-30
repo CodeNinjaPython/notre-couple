@@ -7,6 +7,7 @@ import { initCollapsibles } from './collapse.js';
 import { DailyLog, computeCyclePrediction } from './cycle-model.js';
 import { renderLogCategoryAccordion, renderCalendarDaySummary } from './daily-log-ui.js';
 import { getCycleMode } from './onboarding.js';
+import { confirmDialog, toast } from './ui-feedback.js';
 
 const PHASES = [
   [1,  5,  'Menstruelle',  '#E53935'],
@@ -40,6 +41,7 @@ export async function initCalendar() {
   await loadMonthEntries();
   renderCalendar();
   bindNav();
+  bindCycleYear();
 
   // Saisie DailyLog : ne s'affiche qu'au clic d'un jour (la saisie « live »
   // reste sur l'onglet Aujourd'hui). Invite par défaut.
@@ -324,11 +326,13 @@ async function showDayDetail(dateStr) {
   title.textContent = new Date(dateStr + 'T12:00:00')
     .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-  // Chercher le journal DailyLog du jour (category_id = 'journal')
+  // Chercher le journal DailyLog du jour (category_id = 'journal').
+  // Filtrer par user_id : sans ça, Elle + Lui renvoient 2 lignes → maybeSingle échoue.
   let log = null;
   try {
     const { data } = await supabase.from('log_entries')
-      .select('*').eq('log_date', dateStr).eq('category_id', 'journal').maybeSingle();
+      .select('*').eq('user_id', calState.me.user_id)
+      .eq('log_date', dateStr).eq('category_id', 'journal').maybeSingle();
     if (data) log = DailyLog.fromDB(data);
   } catch (_) {}
 
@@ -338,6 +342,39 @@ async function showDayDetail(dateStr) {
   const phaseName  = pred?.phaseDuCycle     ?? null;
 
   renderCalendarDaySummary(body, log, cycleDay, phaseName, dateStr);
+
+  // Actions : Modifier (aller au formulaire de saisie) / Supprimer (effacer le journal du jour).
+  const actions = document.createElement('div');
+  actions.className = 'day-detail-actions';
+  actions.innerHTML = `
+    <button type="button" class="btn-secondary" id="btn-day-edit">✏️ Modifier</button>
+    <button type="button" class="btn-secondary btn-danger" id="btn-day-delete"${log ? '' : ' disabled'}>🗑️ Supprimer</button>`;
+  body.appendChild(actions);
+
+  document.getElementById('btn-day-edit')?.addEventListener('click', () => {
+    detail.classList.remove('open');
+    document.getElementById('daily-log-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, { once: true });
+
+  document.getElementById('btn-day-delete')?.addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: 'Supprimer la saisie du jour ?',
+      message: 'Le journal (symptômes, humeur, notes…) de ce jour sera effacé. Irréversible.',
+      confirmLabel: 'Supprimer', danger: true,
+    });
+    if (!ok) return;
+    try {
+      const { error } = await supabase.from('log_entries').delete()
+        .eq('user_id', calState.me.user_id).eq('log_date', dateStr).eq('category_id', 'journal');
+      if (error) throw error;
+      toast('Saisie supprimée.');
+      detail.classList.remove('open');
+      await loadMonthEntries();
+      renderCalendar();
+    } catch (e) {
+      toast(e.message || 'Échec de la suppression', 'error');
+    }
+  }, { once: true });
 
   detail.classList.add('open');
   document.getElementById('btn-detail-close')?.addEventListener('click', () => {
@@ -358,6 +395,79 @@ function bindNav() {
     await loadMonthEntries();
     renderCalendar();
   });
+}
+
+// ── Vue année du cycle (overlay) : uniquement les règles, en rouge ──────────
+let cycleYearShown = new Date().getFullYear();
+
+function buildPeriodDaysSet() {
+  const set = new Set();
+  for (const c of (calState.cycles || [])) {
+    if (!c.period_start) continue;
+    const s = new Date(c.period_start + 'T12:00:00');
+    const e = c.period_end ? new Date(c.period_end + 'T12:00:00') : s;
+    for (let d = new Date(s); d <= e; d = new Date(d.getTime() + 864e5)) set.add(localDateStr(d));
+  }
+  return set;
+}
+
+function renderCycleYearGrid() {
+  const list  = document.getElementById('cycle-year-months-list');
+  const title = document.getElementById('cycle-yr-title');
+  if (!list || !title) return;
+  title.textContent = String(cycleYearShown);
+  const periodDays = buildPeriodDaysSet();
+  const today = localDateStr();
+
+  let html = '';
+  for (let m = 0; m < 12; m++) {
+    const daysInMonth  = new Date(cycleYearShown, m + 1, 0).getDate();
+    const firstWeekday = (new Date(cycleYearShown, m, 1).getDay() + 6) % 7; // 0 = lundi
+    const dayHeaders = DAY_FR.map(d => `<div class="intime-year-day-header">${d}</div>`).join('');
+    let cells = '';
+    for (let i = 0; i < firstWeekday; i++) cells += '<span class="yr-cell empty"></span>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${cycleYearShown}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      let cls = 'yr-cell';
+      if (periodDays.has(ds)) cls += ' period';
+      if (ds === today) cls += ' today';
+      cells += `<span class="${cls}"></span>`;
+    }
+    html += `<div class="intime-year-grid-item">
+      <div class="intime-year-month-title">${MONTH_FR[m]}</div>
+      <div class="intime-year-month-grid">${dayHeaders}${cells}</div>
+    </div>`;
+  }
+  list.innerHTML = html;
+}
+
+function openCycleYear() {
+  const o = document.getElementById('cycle-year-overlay');
+  if (o) { o.classList.add('open'); o.setAttribute('aria-hidden', 'false'); }
+  renderCycleYearGrid();
+}
+
+function closeCycleYear() {
+  const o = document.getElementById('cycle-year-overlay');
+  if (o) { o.classList.remove('open'); o.setAttribute('aria-hidden', 'true'); }
+  document.querySelectorAll('#toggle-cycle-view button').forEach(b =>
+    b.classList.toggle('on', b.dataset.view === 'month'));
+}
+
+function bindCycleYear() {
+  document.querySelectorAll('#toggle-cycle-view button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#toggle-cycle-view button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      if (btn.dataset.view === 'year') openCycleYear(); else closeCycleYear();
+    });
+  });
+  document.getElementById('btn-close-cycle-year')?.addEventListener('click', closeCycleYear);
+  document.getElementById('cycle-year-overlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'cycle-year-overlay') closeCycleYear();
+  });
+  document.getElementById('cycle-yr-prev')?.addEventListener('click', () => { cycleYearShown--; renderCycleYearGrid(); });
+  document.getElementById('cycle-yr-next')?.addEventListener('click', () => { cycleYearShown++; renderCycleYearGrid(); });
 }
 
 function hexAlpha(hex, alpha) {
