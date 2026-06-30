@@ -24,7 +24,20 @@ function attrSel(v) {
 
 const MOODS = { tender:'🥰', playful:'😄', passionate:'🔥', spontaneous:'⚡' };
 const MOOD_LABELS = { tender:'Tendre', playful:'Joueur·se', passionate:'Passionné·e', spontaneous:'Spontané·e' };
-const LOCATIONS   = { maison:'🏠 Maison', voyage:'✈️ Voyage', hotel:'🏨 Hôtel', autre:'📍 Autre' };
+// Lieux à deux niveaux : catégorie → endroits précis (révélés au clic).
+const LOCATIONS_TREE = [
+  ['maison', '🏠 Maison', [['chambre','🛏️ Chambre'],['lit','🛌 Lit'],['canape','🛋️ Canapé'],['salle_de_bain','🚿 Salle de bain'],['douche','💧 Douche'],['cuisine','🍳 Cuisine'],['autre_piece','🚪 Autre pièce']]],
+  ['voyage', '✈️ Voyage', [['hotel','🏨 Hôtel'],['location','🏡 Location'],['camping','⛺ Camping'],['public_voyage','👀 Lieu public']]],
+  ['voiture', '🚗 Voiture', []],
+  ['exterieur', '🌳 Extérieur', [['plage','🏖️ Plage'],['foret','🌲 Forêt / nature'],['piscine','🏊 Piscine'],['jardin','🌿 Jardin'],['public_ext','👀 Lieu public']]],
+  ['autre', '📍 Autre', []],
+];
+// Carte plate code → libellé (affichage des sessions enregistrées).
+const LOCATIONS = {};
+LOCATIONS_TREE.forEach(([code, label, subs]) => {
+  LOCATIONS[code] = label;
+  (subs || []).forEach(([sc, sl]) => { LOCATIONS[sc] = sl; });
+});
 
 // Protections proposées selon le genre (Elle ♀ = suit le cycle / Lui ♂).
 const PROTECTION_ELLE = [
@@ -39,43 +52,105 @@ const PROTECTION_LUI = [
 ];
 
 // Génère une grille de tags multi-select (act-tag-btn) dans un conteneur.
+// Un 3e élément optionnel [code, label, sous-options[]] crée une sous-grille
+// révélée quand le tag parent est sélectionné (data-tag enfant = "parent.enfant").
 function renderTagGrid(containerId, opts) {
   const c = document.getElementById(containerId);
   if (!c) return;
   c.innerHTML = opts.map(([tag, label]) =>
     `<button type="button" class="act-tag-btn" data-tag="${tag}">${label}</button>`).join('');
+
+  const withSub = opts.filter(o => o[2]?.length);
+  let host = document.getElementById(containerId + '-sub');
+  if (withSub.length) {
+    if (!host) {
+      host = document.createElement('div');
+      host.id = containerId + '-sub';
+      host.className = 'act-subhost';
+      c.after(host);
+    }
+    host.innerHTML = withSub.map(([tag, label, sub]) =>
+      `<div class="act-subgroup" data-parent="${tag}" hidden>
+         <div class="act-subgroup-label">${label}</div>
+         <div class="act-tags-grid">${sub.map(([st, sl]) =>
+           `<button type="button" class="act-tag-btn" data-tag="${tag}.${st}">${sl}</button>`).join('')}</div>
+       </div>`).join('');
+    host.querySelectorAll('.act-tag-btn').forEach(b =>
+      b.addEventListener('click', () => b.classList.toggle('sel')));
+  } else if (host) {
+    host.innerHTML = '';
+  }
+
   c.querySelectorAll('.act-tag-btn').forEach(b =>
-    b.addEventListener('click', () => b.classList.toggle('sel')));
+    b.addEventListener('click', () => {
+      b.classList.toggle('sel');
+      const grp = host?.querySelector(`.act-subgroup[data-parent="${b.dataset.tag}"]`);
+      if (grp) {
+        const on = b.classList.contains('sel');
+        grp.hidden = !on;
+        if (!on) grp.querySelectorAll('.act-tag-btn.sel').forEach(x => x.classList.remove('sel'));
+      }
+    }));
+}
+
+// Restaure une grille avec sous-options (tags « parent » et « parent.enfant »).
+function restoreCascade(sel, tags) {
+  const host = sel + '-sub';
+  (tags || []).forEach(t => {
+    if (t.includes('.')) {
+      document.querySelector(`${host} .act-tag-btn[data-tag="${attrSel(t)}"]`)?.classList.add('sel');
+      const parent = t.split('.')[0];
+      document.querySelector(`${sel} .act-tag-btn[data-tag="${attrSel(parent)}"]`)?.classList.add('sel');
+      const grp = document.querySelector(`${host} .act-subgroup[data-parent="${attrSel(parent)}"]`);
+      if (grp) grp.hidden = false;
+    } else {
+      document.querySelector(`${sel} .act-tag-btn[data-tag="${attrSel(t)}"]`)?.classList.add('sel');
+      const grp = document.querySelector(`${host} .act-subgroup[data-parent="${attrSel(t)}"]`);
+      if (grp) grp.hidden = false;
+    }
+  });
 }
 const renderProtectionGrid = (containerId, tracksCycle) =>
   renderTagGrid(containerId, tracksCycle ? PROTECTION_ELLE : PROTECTION_LUI);
 
 // Options solo par genre (Elle ♀ / Lui ♂) + tags de contexte communs.
+// Sous-options « support d'excitation » (communes Elle/Lui). Films olé olé porte
+// la grille d'exemples demandée ; le reste a ses propres déclinaisons.
+const EXCITATION = [
+  ['fantasme', '💭 Fantasme', [['souvenir','📷 Souvenir'],['imagine','✨ Scénario imaginé'],['partenaire','💑 Mon/ma partenaire']]],
+  ['films_ole_ole', '🎬 Films olé olé', [
+    ['amateur','🎥 Amateur'],['couple','💑 Couple'],['pov','👁️ POV'],['massage','💆 Massage'],
+    ['hentai','🌸 Hentai'],['vintage','📼 Vintage'],['romantique','💕 Romantique'],['scenario','🎭 Scénario'],['audio_asmr','🎙️ Audio / ASMR'],
+  ]],
+  ['audio', '🎧 Audio érotique', [['asmr','🎙️ ASMR'],['histoire','📖 Histoire audio'],['gemissements','🔊 Gémissements']]],
+  ['lecture', '📖 Lecture', [['roman','📕 Roman'],['fanfiction','✍️ Fanfiction'],['bd_manga','🗯️ BD / manga'],['forum','💬 Forum / récit']]],
+];
 const SOLO_ELLE = {
   practices: [
-    ['clitoridienne', '💧 Clitoridienne'], ['penetration_vaginale', '🍑 Pénétration vaginale'],
-    ['humping', '🛏️ Humping'], ['anal', '🍑 Anal'], ['mammaire', '🤱 Mammaire'], ['multi_zones', '✨ Multi-zones'],
+    ['clitoridienne', '💧 Clitoridienne', [['doigts','✋ Doigts'],['vibro','🔮 Vibromasseur'],['ondes_air','💨 Ondes d\'air'],['douche','🚿 Pommeau de douche']]],
+    ['penetration_vaginale', '🍑 Pénétration vaginale', [['doigts','✋ Doigts'],['sextoy','🍆 Sextoy / godemichet'],['objet','📦 Autre objet'],['fruit_legume','🥒 Fruit / légume']]],
+    ['humping', '🛏️ Humping', [['coussin','🛋️ Coussin'],['oreiller','🛌 Oreiller'],['objet','📦 Objet']]],
+    ['anal', '🍑 Anal', [['doigt','✋ Doigt'],['plug','🍑 Plug'],['sextoy','🍆 Sextoy']]],
+    ['mammaire', '🤱 Mammaire'], ['multi_zones', '✨ Multi-zones'],
   ],
   accessories: [
     ['vibromasseur', '🔮 Vibromasseur'], ['ondes_air', '💨 Ondes d\'air (Satisfyer…)'],
     ['dildo', '🍆 Godemichet'], ['plug_anal', '🍑 Plug anal'], ['huile_massage', '💧 Huile / Gel'],
   ],
-  excitation: [
-    ['fantasme', '💭 Fantasme'], ['video', '🎬 Vidéo'], ['audio', '🎧 Audio érotique'], ['lecture', '📖 Lecture'],
-  ],
+  excitation: EXCITATION,
 };
 const SOLO_LUI = {
   practices: [
-    ['masturbation_manuelle', '✋ Masturbation manuelle'], ['friction', '🛏️ Frottement'],
-    ['anal_prostatique', '🍑 Anal / Prostatique'], ['edging', '⏳ Edging'], ['oral_accessoire', '👄 Oral (accessoire)'],
+    ['masturbation_manuelle', '✋ Masturbation manuelle', [['main_seche','✋ Main sèche'],['lubrifiant','💧 Lubrifiant'],['gaine','🧴 Gaine']]],
+    ['friction', '🛏️ Frottement', [['coussin','🛋️ Coussin'],['oreiller','🛌 Oreiller'],['matelas','🛏️ Matelas / objet']]],
+    ['anal_prostatique', '🍑 Anal / Prostatique', [['doigt','✋ Doigt'],['plug','🍑 Plug'],['sextoy','🍆 Sextoy prostate']]],
+    ['edging', '⏳ Edging'], ['oral_accessoire', '👄 Oral (accessoire)'],
   ],
   accessories: [
     ['gaine', '🧴 Gaine (Fleshlight…)'], ['masturbateur_auto', '🔌 Masturbateur auto'],
     ['cockring', '💍 Anneau pénien'], ['plug_prostate', '🍑 Stim. prostate'], ['lubrifiant', '💧 Lubrifiant'],
   ],
-  excitation: [
-    ['fantasme', '💭 Fantasme'], ['video', '🎬 Vidéo'], ['audio', '🎧 Audio érotique'], ['lecture', '📖 Lecture / Images'],
-  ],
+  excitation: EXCITATION,
 };
 const CONTEXT_MOMENT   = [['reveil', '🌅 Au réveil'], ['journee', '☀️ En journée'], ['avant_dormir', '🌙 Avant de dormir'], ['nuit', '🌃 En pleine nuit']];
 const CONTEXT_AMBIANCE = [['douche', '🚿 Douche / Bain'], ['lit', '🛏️ Lit'], ['canape', '🛋️ Canapé'], ['voyage', '✈️ Voyage']];
@@ -92,9 +167,50 @@ function renderSoloGrids(tracksCycle) {
   renderTagGrid('session-context-rapidite', CONTEXT_RAPIDITE);
 }
 
-// Collecte les data-tag sélectionnés d'un conteneur.
-const collectTags = (sel) =>
-  [...document.querySelectorAll(`${sel} .act-tag-btn.sel`)].map(b => b.dataset.tag);
+// Lieux à deux niveaux : catégorie (sélection unique) → endroits précis révélés.
+function renderLocations() {
+  const parents = document.getElementById('loc-parents');
+  const subHost = document.getElementById('loc-sub');
+  if (!parents) return;
+  parents.innerHTML = LOCATIONS_TREE.map(([code, label]) =>
+    `<button type="button" class="loc-btn" data-loc="${code}">${label}</button>`).join('');
+  if (subHost) subHost.innerHTML = '';
+  const subMap = Object.fromEntries(LOCATIONS_TREE.filter(o => o[2]?.length).map(o => [o[0], o[2]]));
+
+  parents.querySelectorAll('.loc-btn').forEach(b => b.addEventListener('click', () => {
+    parents.querySelectorAll('.loc-btn').forEach(x => x.classList.remove('sel'));
+    b.classList.add('sel');
+    const subs = subMap[b.dataset.loc];
+    if (!subHost) return;
+    subHost.innerHTML = subs
+      ? `<div class="act-tags-grid">${subs.map(([sc, sl]) =>
+          `<button type="button" class="loc-btn loc-sub-btn" data-loc="${sc}">${sl}</button>`).join('')}</div>`
+      : '';
+    subHost.querySelectorAll('.loc-btn').forEach(sb => sb.addEventListener('click', () => {
+      subHost.querySelectorAll('.loc-btn').forEach(x => x.classList.remove('sel'));
+      sb.classList.add('sel');
+    }));
+  }));
+}
+
+// Restaure le lieu enregistré (code parent ou enfant) en révélant la sous-grille.
+function restoreLocation(code) {
+  if (!code) return;
+  const parents = document.getElementById('loc-parents');
+  const direct = parents?.querySelector(`.loc-btn[data-loc="${attrSel(code)}"]`);
+  if (direct) { direct.click(); return; }
+  const entry = LOCATIONS_TREE.find(([, , subs]) => (subs || []).some(s => s[0] === code));
+  if (entry) {
+    parents?.querySelector(`.loc-btn[data-loc="${entry[0]}"]`)?.click();
+    document.querySelector(`#loc-sub .loc-btn[data-loc="${attrSel(code)}"]`)?.click();
+  }
+}
+
+// Collecte les data-tag sélectionnés d'un conteneur + sa sous-grille éventuelle.
+const collectTags = (sel) => [
+  ...document.querySelectorAll(`${sel} .act-tag-btn.sel`),
+  ...document.querySelectorAll(`${sel}-sub .act-tag-btn.sel`),
+].map(b => b.dataset.tag);
 
 // Garde en mémoire la session en cours d'édition pour la sauvegarde.
 // `null` si c'est une nouvelle session.
@@ -293,7 +409,7 @@ export async function loadAndEditSession(sessionId, st) {
     // Remplit les champs avec les données de la session chargée
     document.getElementById('session-date-input').value = session.session_date;
     document.querySelector(`.mood-btn[data-mood="${session.mood}"]`)?.classList.add('sel');
-    document.querySelector(`.loc-btn[data-loc="${session.location}"]`)?.classList.add('sel');
+    restoreLocation(session.location);
     document.getElementById('session-duration').value = session.duration_min || '';
     document.getElementById('session-note-input').value = session.note || '';
 
@@ -349,19 +465,13 @@ export async function loadAndEditSession(sessionId, st) {
       document.querySelector(`#session-protection-partner .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
     });
     document.getElementById('session-ejaculation').value = details.ejaculation || 'inconnu';
-    const wp = document.getElementById('session-watched-porn'); if (wp) wp.checked = !!details.watched_porn;
-    (details.porn_examples || []).forEach(tag => {
-      document.querySelector(`#porn-examples .act-tag-btn[data-tag="${tag}"]`)?.classList.add('sel');
-    });
-    const pornField = document.getElementById('porn-examples-field');
-    if (pornField) pornField.style.display = details.watched_porn ? '' : 'none';
 
     // Restaurer les sélections solo + contexte (les grilles ont été rendues par openFullSessionSheet).
     const restoreTags = (sel, tags) => (tags || []).forEach(t =>
       document.querySelector(`${sel} .act-tag-btn[data-tag="${attrSel(t)}"]`)?.classList.add('sel'));
-    restoreTags('#session-solo-practices',   details.solo_practices);
+    restoreCascade('#session-solo-practices',   details.solo_practices);
+    restoreCascade('#session-solo-excitation',  details.solo_excitation);
     restoreTags('#session-solo-accessories', details.solo_accessories);
-    restoreTags('#session-solo-excitation',  details.solo_excitation);
     restoreTags('#session-context-moment',   details.context_moment);
     restoreTags('#session-context-ambiance', details.context_ambiance);
     restoreTags('#session-context-rapidite', details.context_rapidite);
@@ -440,19 +550,13 @@ export function openFullSessionSheet(st) {
   const orgMe = document.getElementById('orgasm-range-me'); if (orgMe) orgMe.value = 0;
   const orgMeVal = document.getElementById('orgasm-val-me'); if (orgMeVal) orgMeVal.textContent = '0';
 
-  // Réinitialiser les exemples « films olé olé » + masquer le bloc.
-  document.querySelectorAll('#porn-examples .act-tag-btn.sel').forEach(b => b.classList.remove('sel'));
-  const pornField = document.getElementById('porn-examples-field');
-  if (pornField) pornField.style.display = 'none';
-
-  // Réinitialiser le nouveau champ select
+  // Réinitialiser le champ select
   const ejacEl = document.getElementById('session-ejaculation');
   if (ejacEl) ejacEl.value = 'inconnu';
 
-  // Réinitialiser solo / films olé olé
-  ['session-solo', 'session-watched-porn'].forEach(id => {
-    const c = document.getElementById(id); if (c) c.checked = false;
-  });
+  // Réinitialiser le marqueur solo
+  const soloChk = document.getElementById('session-solo');
+  if (soloChk) soloChk.checked = false;
   sheet.classList.remove('is-solo');
 
 
@@ -466,6 +570,7 @@ export function openFullSessionSheet(st) {
   renderPositionPicker();
 
   // Protections adaptées au genre : « Moi » = mon rôle, « Partenaire » = l'autre.
+  renderLocations();
   renderProtectionGrid('session-protection-me', !!st?.me?.tracks_cycle);
   renderProtectionGrid('session-protection-partner', !!st?.partner?.tracks_cycle);
 
@@ -659,7 +764,10 @@ async function saveFullSession(st) {
 
   const date         = document.getElementById('session-date-input')?.value || localDateStr();
   const mood         = document.querySelector('.mood-btn.sel')?.dataset.mood || null;
-  const location     = document.querySelector('.loc-btn.sel')?.dataset.loc  || null;
+  // Lieu : on garde l'endroit précis (sous-option) s'il existe, sinon la catégorie.
+  const location     = document.querySelector('#loc-sub .loc-btn.sel')?.dataset.loc
+                    || document.querySelector('#loc-parents .loc-btn.sel')?.dataset.loc
+                    || null;
   const dur          = parseInt(document.getElementById('session-duration')?.value)      || null;
   const note         = document.getElementById('session-note-input')?.value?.trim() || null;
   const isSolo = document.getElementById('session-solo')?.checked ?? false;
@@ -675,8 +783,6 @@ async function saveFullSession(st) {
     protection_me:        [...document.querySelectorAll('#session-protection-me .sel')].map(b => b.dataset.tag),
     protection_partner:   [...document.querySelectorAll('#session-protection-partner .sel')].map(b => b.dataset.tag),
     ejaculation:          document.getElementById('session-ejaculation')?.value || 'inconnu',
-    watched_porn:         document.getElementById('session-watched-porn')?.checked ?? false,
-    porn_examples:        [...document.querySelectorAll('#porn-examples .act-tag-btn.sel')].map(b => b.dataset.tag),
     solo:                 isSolo,
     // Solo (par genre) + contexte commun
     solo_practices:       collectTags('#session-solo-practices'),
@@ -930,8 +1036,8 @@ async function saveFeedback(st) {
 // ─── Init du sheet ────────────────────────────────────────────────────────
 
 export function initSessionSheetListeners() {
-  // Sélection unique : mood, loc, ft-mood
-  ['mood-btn', 'loc-btn', 'ft-mood-btn'].forEach(cls => {
+  // Sélection unique : mood, ft-mood (les lieux sont gérés dans renderLocations).
+  ['mood-btn', 'ft-mood-btn'].forEach(cls => {
     document.querySelectorAll(`.${cls}`).forEach(b =>
       b.addEventListener('click', () => {
         document.querySelectorAll(`.${cls}`).forEach(x => x.classList.remove('sel'));
@@ -992,12 +1098,4 @@ export function initSessionSheetListeners() {
     }
   });
 
-  // Films olé olé : révèle les exemples (couple comme solo).
-  document.getElementById('session-watched-porn')?.addEventListener('change', (e) => {
-    const field = document.getElementById('porn-examples-field');
-    if (field) field.style.display = e.target.checked ? '' : 'none';
-    if (!e.target.checked) {
-      document.querySelectorAll('#porn-examples .act-tag-btn.sel').forEach(b => b.classList.remove('sel'));
-    }
-  });
 }

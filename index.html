@@ -993,22 +993,6 @@
             <div class="field" style="margin-bottom:0">
               <div class="chip-toggles">
                 <label class="chip-toggle"><input type="checkbox" id="session-solo"><span>🙋 Moment solo</span></label>
-                <label class="chip-toggle"><input type="checkbox" id="session-watched-porn"><span>🎬 Films olé olé</span></label>
-              </div>
-            </div>
-
-            <div class="field" id="porn-examples-field" style="display:none">
-              <label>Exemples regardés</label>
-              <div class="act-tags-grid" id="porn-examples">
-                <button type="button" class="act-tag-btn" data-tag="amateur">🎥 Amateur</button>
-                <button type="button" class="act-tag-btn" data-tag="couple">💑 Couple</button>
-                <button type="button" class="act-tag-btn" data-tag="pov">👁️ POV</button>
-                <button type="button" class="act-tag-btn" data-tag="massage">💆 Massage</button>
-                <button type="button" class="act-tag-btn" data-tag="hentai">🌸 Hentai</button>
-                <button type="button" class="act-tag-btn" data-tag="vintage">📼 Vintage</button>
-                <button type="button" class="act-tag-btn" data-tag="romantique">💕 Romantique</button>
-                <button type="button" class="act-tag-btn" data-tag="scenario">🎭 Scénario</button>
-                <button type="button" class="act-tag-btn" data-tag="audio">🎙️ Audio / ASMR</button>
               </div>
             </div>
 
@@ -1024,20 +1008,8 @@
 
             <div class="field">
               <label>Lieu</label>
-              <div class="loc-grid">
-                <!-- Contextes larges -->
-                <button type="button" class="loc-btn" data-loc="maison">🏠 Maison</button>
-                <button type="button" class="loc-btn" data-loc="hotel">🏨 Hôtel</button>
-                <button type="button" class="loc-btn" data-loc="voiture">🚗 Voiture</button>
-                <button type="button" class="loc-btn" data-loc="voyage">✈️ Voyage</button>
-                <button type="button" class="loc-btn" data-loc="autre">📍 Autre</button>
-                <!-- Pièces / endroits précis -->
-                <button type="button" class="loc-btn" data-loc="chambre">🛏️ Chambre</button>
-                <button type="button" class="loc-btn" data-loc="lit">🛌 Lit</button>
-                <button type="button" class="loc-btn" data-loc="canapé">🛋️ Canapé</button>
-                <button type="button" class="loc-btn" data-loc="salle de bain">🚿 Salle de bain</button>
-                <button type="button" class="loc-btn" data-loc="douche">💧 Douche</button>
-              </div>
+              <div class="loc-grid" id="loc-parents"></div>
+              <div class="act-subhost" id="loc-sub"></div>
             </div>
           </div>
 
@@ -1397,7 +1369,7 @@
         </div>
 
         <!-- Conteneur défilant verticalement pour les 12 mois -->
-        <div id="intime-year-months-list" style="flex: 1; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; gap: 24px;"></div>
+        <div id="intime-year-months-list" style="flex: 1; min-height: 0; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; gap: 24px;"></div>
       </div>
     </div>
 
@@ -1421,7 +1393,7 @@
         </div>
 
         <!-- Conteneur défilant verticalement pour les 12 mois -->
-        <div id="cycle-year-months-list" style="flex: 1; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; gap: 24px;"></div>
+        <div id="cycle-year-months-list" style="flex: 1; min-height: 0; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; gap: 24px;"></div>
       </div>
     </div>
   </template>
