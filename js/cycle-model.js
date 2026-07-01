@@ -446,7 +446,7 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
     }
   }
 
-  // ── Fenêtre fertile clinique standard (6 jours d'ovulation + 1 jour après pour sécurité) ──
+  // ── Fenêtre fertile clinique standard (6 jours fertiles + 1 jour après pour sécurité = 7 jours) ──
   const fertileStartDay = Math.max(1, ovulationDay - 5);
   const fertileEndDay = ovulationDay + 1;
 
