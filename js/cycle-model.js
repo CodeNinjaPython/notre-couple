@@ -353,27 +353,37 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
     if (length >= 15 && length <= 50) cycleLengths.push(length);
   }
 
-  const nSample = Math.min(12, cycleLengths.length); // Sensiplan recommande d'analyser jusqu'à 12 cycles
-  const recentLengths = cycleLengths.slice(0, nSample);
+  // ── Profil personnel : jusqu'à 24 cycles récents, cycles aberrants écartés ──
+  // Fenêtre élargie (vs 12) → longueur et variabilité plus stables et personnelles,
+  // et le profil s'affine à mesure que l'historique grandit.
+  const windowLengths = cycleLengths.slice(0, Math.min(24, cycleLengths.length));
 
   let avgCycleLength = 29;
   let minCycleLength = 28;
   let maxCycleLength = 30;
   let stdDev = 0;
+  let nSample = windowLengths.length;
 
-  if (nSample > 0) {
-    minCycleLength = Math.min(...recentLengths);
-    maxCycleLength = Math.max(...recentLengths);
+  if (windowLengths.length > 0) {
+    // Retrait des cycles aberrants : au-delà de médiane ± 8 j (maladie, oubli de saisie…),
+    // pour qu'un cycle isolé de 45 j ne fausse pas le profil. On garde l'ordre (récent → ancien).
+    const median = [...windowLengths].sort((a, b) => a - b)[Math.floor(windowLengths.length / 2)];
+    const inliers = windowLengths.filter(l => Math.abs(l - median) <= 8);
+    const base = inliers.length ? inliers : windowLengths;
+    nSample = base.length;
 
-    // WMA (Moyenne mobile pondérée)
+    minCycleLength = Math.min(...base);
+    maxCycleLength = Math.max(...base);
+
+    // WMA (moyenne mobile pondérée) : les cycles récents pèsent davantage.
     const weights = Array.from({ length: nSample }, (_, i) => nSample - i);
     const sumWeights = weights.reduce((a, b) => a + b, 0);
-    const weightedSum = recentLengths.reduce((sum, len, idx) => sum + (len * weights[idx]), 0);
+    const weightedSum = base.reduce((sum, len, idx) => sum + (len * weights[idx]), 0);
     avgCycleLength = Math.round(weightedSum / sumWeights);
 
-    // Écart-type (variabilité)
-    const mean = recentLengths.reduce((a, b) => a + b, 0) / nSample;
-    const variance = recentLengths.reduce((s, l) => s + (l - mean) ** 2, 0) / nSample;
+    // Écart-type (variabilité) sur les cycles retenus.
+    const mean = base.reduce((a, b) => a + b, 0) / nSample;
+    const variance = base.reduce((s, l) => s + (l - mean) ** 2, 0) / nSample;
     stdDev = Math.round(Math.sqrt(variance) * 10) / 10;
   }
 
@@ -435,17 +445,38 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
     }
   }
 
-  // B. Recalibrage LH / Glaire
+  // B. Recalibrage par signaux directs — priorité : Test LH > Glaire fertile.
+  //    La température (section A), si détectée, a déjà fixé ovulationDay + confirmé.
   if (cycleStart) {
     const positiveLHLog = logsList.find(log => log.log_date && log.value?.testOvulation === 'positif');
-    const peakMucusLog = logsList.filter(log => log.log_date && ['filantes', 'aqueuse'].includes(log.value?.glaireCervicale));
+
+    // Pic de glaire fertile = DERNIER jour de glaire filante/aqueuse ≈ jour d'ovulation (méthode Billings).
+    const fertileMucusDays = logsList
+      .filter(log => log.log_date && ['filantes', 'aqueuse'].includes(log.value?.glaireCervicale))
+      .map(log => diffDays(log.log_date, cycleStart) + 1)
+      .filter(d => d >= 1 && d <= 35)
+      .sort((a, b) => a - b);
+    const peakMucusDay = fertileMucusDays.length ? fertileMucusDays[fertileMucusDays.length - 1] : null;
+    // Garde anti-bruit : on ne retient la glaire que dans une zone d'ovulation plausible,
+    // pour qu'une saisie isolée en début de cycle ne recolle pas la fenêtre juste après les règles.
+    const mucusPlausible = peakMucusDay != null
+      && peakMucusDay >= 8 && peakMucusDay <= avgCycleLength - 8;
 
     if (positiveLHLog) {
       const lhDay = diffDays(positiveLHLog.log_date, cycleStart) + 1;
-      ovulationDay = lhDay + 1;
+      ovulationDay = lhDay + 1; // ovulation ~24-36 h après le pic de LH
       detectionMethod = isOvulationConfirmed ? 'Double contrôle (Température + LH)' : 'Test LH';
-    } else if (peakMucusLog.length > 0 && isOvulationConfirmed) {
-      detectionMethod = 'Double contrôle (Température + Glaire)';
+      isOvulationConfirmed = true;
+    } else if (mucusPlausible) {
+      if (isOvulationConfirmed) {
+        // Température déjà confirmée → la glaire sert de recoupement.
+        detectionMethod = 'Double contrôle (Température + Glaire)';
+      } else {
+        // Glaire seule : signal fertile autonome, sans température ni test LH.
+        ovulationDay = peakMucusDay;
+        detectionMethod = 'Glaire cervicale (pic fertile)';
+        isOvulationConfirmed = true;
+      }
     }
   }
 
