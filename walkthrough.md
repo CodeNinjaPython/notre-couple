@@ -14,6 +14,7 @@ L'algorithme de prédiction menstruelle a été mis à jour vers la version **v3
     *   **Double-contrôle biologique** : Recoupage automatique des données thermiques avec les tests d'ovulation (LH) et le pic de glaire cervicale fertile ("filante" ou "aqueuse").
     *   **Alerte Retard dynamique** : Remplacement des phases statiques par un état `Retard de règles (J+X)` si le cycle dépasse la prévision moyenne.
     *   **Score de Régularité** : Pourcentage basé sur l'écart-type des cycles.
+    *   **Fenêtre Fertile Clinique (6 jours)** : Remplacement de la règle Döring (qui calculait parfois des fenêtres de 16 jours démarrant à J1 si l'historique contenait des cycles courts aberrants) par la fenêtre fertile standard de 6 jours (5 jours avant l'ovulation et 1 jour après), scientifiquement validée et identique à Clue.
 *   **Ajout de `calculateHormones(day, cycleLength, ovulationDay)`** : Modélisation des variations physiologiques quotidiennes des taux d'œstrogènes, de progestérone, de LH et de FSH (0 à 100 %).
 
 ### 2. Couche API / Logique de cycle
