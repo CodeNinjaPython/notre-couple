@@ -396,7 +396,10 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
   let personalLutealPhase = 14;
 
   // ── Détection de l'ovulation (Double-contrôle Sympto-thermique) ───────
-  let ovulationDay = avgCycleLength - personalLutealPhase;
+  // Par défaut (calendaire) : phase lutéale ~constante → ovulation = règles suivantes − 14 j.
+  // Les règles suivantes tombent au jour de cycle (avgCycleLength + 1), car J1 = 1er jour des règles ;
+  // un cycle plus long (retard) repousse donc l'ovulation d'autant.
+  let ovulationDay = (avgCycleLength + 1) - personalLutealPhase;
   let isOvulationConfirmed = false;
   let detectionMethod = 'Calendaire (par défaut)';
 
@@ -567,7 +570,7 @@ export function predictNextPeriodAdvanced(cyclesHistory = [], dailyLogs = []) {
     ovulationDate: r.ovulationDate,
     fertileStart:  r.fertileStart,
     fertileEnd:    r.fertileEnd,
-    ovulationDay:  r.avgCycleLength - 14,
+    ovulationDay:  r.ovulationDay,
     hormones:      r.hormones,
     ovulationConfirmed: r.ovulationConfirmed,
     detectionMethod: r.detectionMethod,
