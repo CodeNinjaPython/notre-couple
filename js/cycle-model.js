@@ -394,9 +394,19 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
     : 5;
 
   // ── Cycle actuel ──────────────────────────────────────────────────────
+  // Sans cycle ouvert, on reste ancré sur le DERNIER début de règles : c'est encore
+  // le cycle courant tant que les règles suivantes ne sont pas arrivées. Les prochaines
+  // règles = ce début + longueur (pas un cycle plus loin), et un dépassement s'affiche
+  // en « retard ». Si le dernier cycle est très ancien (saisie oubliée sur plusieurs
+  // cycles), on avance par cycles entiers jusqu'au cycle courant.
   const openCycle = cyclesHistory.find(c => c.period_start && !c.period_end);
-  const cycleStart = openCycle?.period_start
-    ?? (completed[0] ? addDays(completed[0].startStr, avgCycleLength) : null);
+  let cycleStart = openCycle?.period_start ?? completed[0]?.startStr ?? null;
+  if (!openCycle && cycleStart && avgCycleLength > 0) {
+    const retardMax = avgCycleLength + Math.max(7, Math.round(avgCycleLength / 2));
+    while (diffDays(today, cycleStart) > retardMax) {
+      cycleStart = addDays(cycleStart, avgCycleLength);
+    }
+  }
 
   const jourDuCycleActuel = cycleStart
     ? Math.max(1, diffDays(today, cycleStart) + 1)
