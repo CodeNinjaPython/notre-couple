@@ -199,9 +199,10 @@ function renderMonthGrid() {
     } else if (pred === 'period') {
       // Prévision des règles : rouge clair.
       phaseBg = `style="background: rgba(229,57,53,.12); border-color: rgba(229,57,53,.30);" title="Règles prévues"`;
+    } else if (pred === 'ovulation') {
+      phaseBg = `style="background: rgba(124,92,252,.17); border-color: rgba(124,92,252,.45);" title="Ovulation prévue"`;
     } else if (pred === 'fertile') {
-      // Prévision de l'ovulation / fenêtre fertile : bleu clair.
-      phaseBg = `style="background: rgba(66,120,196,.12); border-color: rgba(66,120,196,.30);" title="Ovulation / fenêtre fertile probable"`;
+      phaseBg = `style="background: rgba(66,120,196,.12); border-color: rgba(66,120,196,.30);" title="Fenêtre fertile probable"`;
     }
 
     html += `<div class="${cls}" data-date="${dateStr}" ${phaseBg}>
@@ -291,6 +292,10 @@ function renderPredictionPanel() {
   }
   const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
   const margin = p.stdDev >= 1 ? ` ± ${Math.round(p.stdDev)} j` : '';
+  // Ovulation du PROCHAIN cycle (après les prochaines règles)
+  const avgCycle     = p.avgCycleLength || 28;
+  const nextOvOffset = Math.max(1, avgCycle - 14) - 1;
+  const nextOvDate   = localDateStr(new Date(new Date(p.nextPeriodDate + 'T12:00:00').getTime() + nextOvOffset * 864e5));
   panel.innerHTML = `
     <div class="pred-row">
       <div class="pred-item">
@@ -298,8 +303,8 @@ function renderPredictionPanel() {
         <div class="pred-val" style="color:var(--rose)">${fmt(p.nextPeriodDate)}${margin}</div>
       </div>
       <div class="pred-item">
-        <div class="pred-label">Ovulation estimée</div>
-        <div class="pred-val" style="color:var(--gold)">${fmt(p.ovulationDate)}</div>
+        <div class="pred-label">Ovulation prévue</div>
+        <div class="pred-val" style="color:var(--violet)">${fmt(nextOvDate)}</div>
       </div>
       <div class="pred-item">
         <div class="pred-label">Cycle moyen</div>
