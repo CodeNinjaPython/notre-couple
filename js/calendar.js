@@ -190,6 +190,17 @@ function renderMonthGrid() {
         journal.urineSymptomes?.length || journal.vieSociale?.length
       ));
       if (hasAutres) dots += '<span class="cal-dot cal-dot-symptomes" title="Autres symptômes"></span>';
+
+      // Libido (violet) — chip Today ou champ journal
+      const hasLibido = journal?.libidoScale != null || entry.libido != null;
+      if (hasLibido) dots += '<span class="cal-dot" style="background:var(--violet)" title="Libido"></span>';
+
+      // Catch-all : catégories individuelles non encore affichées (sommeil, BBT, note, sport, stress…)
+      const catHandled = new Set(['flow', 'cramps', 'mood', 'energy', 'libido', 'journal']);
+      const hasOtherCat = Object.keys(entry).some(
+        k => !catHandled.has(k) && entry[k] != null && entry[k] !== ''
+      );
+      if (hasOtherCat) dots += '<span class="cal-dot cal-dot-symptomes" title="Données saisies"></span>';
     }
 
     let phaseBg = '';
