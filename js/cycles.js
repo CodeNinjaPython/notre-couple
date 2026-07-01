@@ -51,6 +51,9 @@ export function predictNextPeriod(cycles, dailyLogs = []) {
   const r = computeCyclePrediction(cycles, dailyLogs);
   if (!r) return null;
   return {
+    cycleStart:      r.cycleStart,
+    jourDuCycleActuel: r.jourDuCycleActuel,
+    phaseDuCycle:    r.phaseDuCycle,
     nextPeriodDate:  r.dateDesProchainesRegles,
     ovulationDate:   r.ovulationDate,
     fertileStart:    r.fertileStart,

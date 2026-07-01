@@ -239,18 +239,20 @@ export async function reloadDataAndRenderToday() {
   ]);
   state.currentCycle = cycle;
 
+  const cycleLogs = logsResult?.data || [];
+  state.prediction = predictNextPeriod(history, cycleLogs);
+
   if (cycle) {
     // diffDays() compare en heure locale (T12:00) → pas de décalage d'un jour lié
     // au fuseau. On part de logDate pour refléter le jour consulté, pas seulement aujourd'hui.
     state.cycleDay = diffDays(state.logDate, cycle.period_start) + 1;
-    state.phaseName = getPhase(state.cycleDay);
   } else {
-    state.cycleDay = null;
-    state.phaseName = null;
+    // Fallback sur la prédiction (utile quand aucun cycle n'est "ouvert"
+    // mais qu'un cycle actuel est inféré depuis l'historique).
+    state.cycleDay = state.prediction?.jourDuCycleActuel ?? null;
   }
+  state.phaseName = state.cycleDay ? getPhase(state.cycleDay) : null;
 
-  const cycleLogs = logsResult?.data || [];
-  state.prediction = predictNextPeriod(history, cycleLogs);
   await loadEntriesForDate(state.logDate);
 
   renderHeader();

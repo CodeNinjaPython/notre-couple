@@ -534,6 +534,7 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
   const predictabilityScore = Math.max(0, Math.min(100, Math.round(100 - (stdDev / avgCycleLength) * 300)));
 
   return {
+    cycleStart,
     jourDuCycleActuel,
     phaseDuCycle,
     dateDesProchainesRegles,

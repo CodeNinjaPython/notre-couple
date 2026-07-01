@@ -95,7 +95,7 @@ export function renderTodayRingChart({
   const cycleObj = state.currentCycle ? new Cycle(state.currentCycle) : null;
 
   const p = state.prediction;
-  const day = cycleObj?.getDayInCycle(state.logDate) ?? 1;
+  const day = cycleObj?.getDayInCycle(state.logDate) ?? p?.jourDuCycleActuel ?? 1;
   const totalDays = p?.avgCycleLength ?? cycleObj?.dureeCycle ?? 28;
   const periodDays = p?.avgPeriodDuration ?? cycleObj?.dureeRegles ?? 5;
   const fertileStartDay = p?.fertileStartDay ?? cycleObj?.getFertileWindow().start ?? 9;
