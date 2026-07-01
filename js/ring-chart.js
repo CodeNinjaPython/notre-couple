@@ -40,6 +40,8 @@ export function renderCycleRing(container, params = {}) {
     ovulationDay = 14,
     phaseName    = '',
     loggedDays   = new Set(),
+    peripheralDots = [],
+    flowByDay    = {},
     // Contenu central (style « prédiction » comme l'app de référence).
     centerTop    = '',
     centerMain   = '',
@@ -88,9 +90,15 @@ export function renderCycleRing(container, params = {}) {
 
   // ─── Arcs colorés (règles + fenêtre fertile) sur le rail gris ─────────────
   const GAP = 2; // petit retrait pour des bouts arrondis nets
-  const periodArc = periodDays > 0
-    ? arc(dayStartDeg(1) + GAP, dayEndDeg(periodDays) - GAP, ARC_SW, COLORS.menstruelle, 1)
-    : '';
+  // Segmente les règles par jour pour refléter l'intensité du flux (teinte/opacité rouge).
+  let periodArc = '';
+  for (let d = 1; d <= periodDays; d++) {
+    const intensity = Number(flowByDay?.[d]);
+    const alpha = Number.isFinite(intensity)
+      ? Math.max(0.35, Math.min(1, intensity))
+      : 0.42;
+    periodArc += arc(dayStartDeg(d) + GAP, dayEndDeg(d) - GAP, ARC_SW, `rgba(220,38,38,${alpha.toFixed(2)})`, 1);
+  }
   const fertileArc = (fertileEnd >= fertileStart)
     ? arc(dayStartDeg(fertileStart) + GAP, dayEndDeg(fertileEnd) - GAP, ARC_SW, COLORS.fertile, 1)
     : '';
@@ -115,14 +123,24 @@ export function renderCycleRing(container, params = {}) {
     }
   }
 
-  const keyPoints = [
-    { day: Math.max(1, Math.min(totalDays, Math.min(periodDays || 2, 2))), color: '#E53935', label: 'Flux' },
-    { day: Math.max(1, Math.min(totalDays, fertileStart + Math.max(1, Math.round((fertileEnd - fertileStart) / 2)))), color: '#F5A623', label: 'Humeur' },
-    { day: Math.max(1, Math.min(totalDays, ovulationDay)), color: '#27AE60', label: 'Sexualité' },
-  ];
-  keyPoints.forEach(p => {
-    const [x, y] = pol(dayCenterDeg(p.day), R + ARC_SW * 0.9);
-    keyDots += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="4.8" fill="${p.color}" stroke="#fff" stroke-width="2" aria-label="${p.label}"/>`;
+  const pointColor = (type) => {
+    if (type === 'sexuality') return '#27AE60';
+    if (type === 'mood') return '#F5A623';
+    if (type === 'flow') return '#E53935';
+    return '#98A1B3';
+  };
+  const pointLabel = (type) => {
+    if (type === 'sexuality') return 'Sexualité';
+    if (type === 'mood') return 'Humeur';
+    if (type === 'flow') return 'Flux';
+    return 'Autre';
+  };
+  peripheralDots.forEach(dot => {
+    if (!dot || !dot.day) return;
+    const day = Number(dot.day);
+    if (day < 1 || day > totalDays) return;
+    const [x, y] = pol(dayCenterDeg(day), R + ARC_SW * 0.9);
+    keyDots += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="4.8" fill="${pointColor(dot.type)}" stroke="#fff" stroke-width="2" aria-label="${pointLabel(dot.type)}"/>`;
   });
 
   // ─── Poignée lumineuse au début des règles (jour 1) ───────────────────────

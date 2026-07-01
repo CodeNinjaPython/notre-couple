@@ -103,7 +103,43 @@ export function renderTodayRingChart({
   const ovulationDay = p?.ovulationDay ?? cycleObj?.getFertileWindow().ovulation ?? 14;
   const phaseName = p?.phaseDuCycle ?? (cycleObj ? Cycle.phaseName(day, totalDays, periodDays) : '');
 
-  const loggedSet = new Set(Object.keys(state.savedValues).length ? [day] : []);
+  const ringLogs = Array.isArray(state.ringEntries) ? state.ringEntries : [];
+  const ringUserId = state.me?.tracks_cycle ? state.me?.user_id : state.partner?.user_id;
+
+  const flowLevelFromValue = (v) => {
+    const s = String(v ?? '').toLowerCase();
+    if (s === '3' || s.includes('tres') || s.includes('très') || s.includes('abond')) return 1;
+    if (s === '2' || s.includes('mod')) return 0.78;
+    if (s === '1' || s.includes('leg') || s.includes('lég')) return 0.55;
+    if (s === '0' || s === '' || s === 'aucun') return 0.35;
+    return 0.7;
+  };
+
+  const daySignal = new Map();
+  let flowByDay = {};
+  for (const row of ringLogs) {
+    if (!row?.log_date || row?.user_id !== ringUserId) continue;
+    const d = cycleObj?.getDayInCycle(row.log_date);
+    if (!d || d < 1 || d > totalDays) continue;
+
+    const cat = row.category_id;
+    const raw = row.value?.v ?? row.value;
+
+    if (cat === 'flow') {
+      flowByDay[d] = Math.max(flowByDay[d] || 0, flowLevelFromValue(raw));
+      daySignal.set(d, 'flow');
+    } else if (cat === 'mood') {
+      if (!daySignal.has(d)) daySignal.set(d, 'mood');
+    } else if (cat === 'libido') {
+      if (!daySignal.has(d)) daySignal.set(d, 'sexuality');
+    } else if (!daySignal.has(d) && raw != null && raw !== '') {
+      daySignal.set(d, 'other');
+    }
+  }
+
+  const loggedSet = new Set(Array.from(daySignal.keys()));
+
+  const peripheralDots = Array.from(daySignal.entries()).map(([d, type]) => ({ day: d, type }));
 
   const fmtCourt = s => s
     ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
@@ -141,6 +177,8 @@ export function renderTodayRingChart({
     ovulationDay,
     phaseName,
     loggedDays: loggedSet,
+    peripheralDots,
+    flowByDay,
     centerTop,
     centerMain,
     centerToggleLabel,

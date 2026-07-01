@@ -115,6 +115,7 @@ let state = {
   cur: 'elle',
   currentCycle: null,
   cycleDay: null, phaseName: null,
+  ringEntries: [],
   savedValues: {},        // ma saisie (modifiable)
   partnerValues: {},      // ce que le partenaire a partagé (lecture seule)
   coupleId: null,
@@ -231,15 +232,15 @@ export async function reloadDataAndRenderToday() {
     getCycleHistory(),
     cycleUserId ? supabase
       .from('log_entries')
-      .select('*')
+      .select('log_date, category_id, value, user_id')
       .eq('user_id', cycleUserId)
-      .eq('category_id', 'journal')
       .gte('log_date', daysAgo(60))
       : Promise.resolve({ data: [] })
   ]);
   state.currentCycle = cycle;
 
-  const cycleLogs = logsResult?.data || [];
+  state.ringEntries = logsResult?.data || [];
+  const cycleLogs = state.ringEntries.filter(r => r.category_id === 'journal');
   state.prediction = predictNextPeriod(history, cycleLogs);
 
   if (cycle) {
@@ -251,7 +252,9 @@ export async function reloadDataAndRenderToday() {
     // mais qu'un cycle actuel est inféré depuis l'historique).
     state.cycleDay = state.prediction?.jourDuCycleActuel ?? null;
   }
-  state.phaseName = state.cycleDay ? getPhase(state.cycleDay) : null;
+  state.phaseName = state.prediction?.phaseDuCycle
+    ? normalizePhaseLabel(state.prediction.phaseDuCycle)
+    : (state.cycleDay ? getPhase(state.cycleDay) : null);
 
   await loadEntriesForDate(state.logDate);
 
@@ -275,6 +278,17 @@ export async function reloadDataAndRenderToday() {
 
 function getPhase(day) {
   return getPhaseFromDay(day, PHASES_DATA);
+}
+
+function normalizePhaseLabel(phaseRaw) {
+  const p = String(phaseRaw || '').toLowerCase();
+  if (!p) return null;
+  if (p.includes('menstru')) return 'Menstruelle';
+  if (p.includes('ovulation')) return 'Ovulation';
+  if (p.includes('lut')) return 'Lutéale';
+  if (p.includes('retard')) return 'Lutéale';
+  if (p.includes('follic')) return 'Folliculaire';
+  return 'Lutéale';
 }
 
 async function loadEntriesForDate(dateStr) {
@@ -843,10 +857,25 @@ async function saveEntry(categoryId, value) {
   );
   if (error) console.error('saveEntry:', error.message);
   else {
+    // Maintient la source locale des points/flux du ring sans re-fetch global.
+    if (state.me?.tracks_cycle) {
+      const idx = state.ringEntries.findIndex(e =>
+        e.user_id === state.me.user_id
+        && e.log_date === state.logDate
+        && e.category_id === categoryId
+      );
+      const entry = { user_id: state.me.user_id, log_date: state.logDate, category_id: categoryId, value: { v: value } };
+      if (idx >= 0) state.ringEntries[idx] = entry;
+      else state.ringEntries.push(entry);
+    }
+
     showToast('Sauvegardé ✓');
     invalidateCache(`log-entries-${state.logDate}`); // invalide le cache du jour
     // Saisie du jour → effacer le badge PWA immédiatement.
     if (state.logDate === localDateStr()) navigator.clearAppBadge?.();
+    if (state.me?.tracks_cycle && ['flow', 'mood', 'libido'].includes(categoryId)) {
+      renderRingChart();
+    }
     // Pas de reload complet ici : il reconstruirait #metrics (innerHTML) et
     // détruirait le textarea/BBT en cours de frappe (perte de focus), en plus
     // d'un re-fetch réseau à chaque tap de chip. Les mises à jour ciblées sont
