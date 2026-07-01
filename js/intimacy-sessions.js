@@ -9,6 +9,22 @@ import { POSITIONS, posThumb } from './intimacy-library.js';
 import { toast, confirmDialog, friendlyError } from './ui-feedback.js';
 import { syncSessionToDailyLog } from './session-bridge.js';
 import { formatTag } from './labels.js';
+import { bindSessionWizardNav, showSessionWizardStep } from './session-wizard.js';
+import { syncPositionRatings } from './intimacy-position-ratings.js';
+import { openFastTrackFlow } from './intimacy-fast-track.js';
+import { openFeedbackFlow, closeFeedbackFlow } from './intimacy-feedback.js';
+import {
+  CONTEXT_MOMENT,
+  CONTEXT_RAPIDITE,
+  LOCATIONS,
+  LOCATIONS_TREE,
+  MOOD_LABELS,
+  MOODS,
+  PROTECTION_ELLE,
+  PROTECTION_LUI,
+  SOLO_ELLE,
+  SOLO_LUI,
+} from './intimacy-session-options.js';
 
 // Échappe le texte saisi par l'utilisateur avant injection dans innerHTML / attributs.
 function escapeHtml(s) {
@@ -21,35 +37,6 @@ function attrSel(v) {
     ? CSS.escape(String(v))
     : String(v).replace(/["\\]/g, '\\$&');
 }
-
-const MOODS = { tender:'🥰', playful:'😄', passionate:'🔥', spontaneous:'⚡' };
-const MOOD_LABELS = { tender:'Tendre', playful:'Joueur·se', passionate:'Passionné·e', spontaneous:'Spontané·e' };
-// Lieux à deux niveaux : catégorie → endroits précis (révélés au clic).
-const LOCATIONS_TREE = [
-  ['maison', '🏠 Maison', [['chambre','🛏️ Chambre'],['lit','🛌 Lit'],['canape','🛋️ Canapé'],['salle_de_bain','🚿 Salle de bain'],['douche','💧 Douche'],['cuisine','🍳 Cuisine'],['autre_piece','🚪 Autre pièce']]],
-  ['voyage', '✈️ Voyage', [['hotel','🏨 Hôtel'],['location','🏡 Location'],['camping','⛺ Camping'],['public_voyage','👀 Lieu public']]],
-  ['voiture', '🚗 Voiture', []],
-  ['exterieur', '🌳 Extérieur', [['plage','🏖️ Plage'],['foret','🌲 Forêt / nature'],['piscine','🏊 Piscine'],['jardin','🌿 Jardin'],['public_ext','👀 Lieu public']]],
-  ['autre', '📍 Autre', []],
-];
-// Carte plate code → libellé (affichage des sessions enregistrées).
-const LOCATIONS = {};
-LOCATIONS_TREE.forEach(([code, label, subs]) => {
-  LOCATIONS[code] = label;
-  (subs || []).forEach(([sc, sl]) => { LOCATIONS[sc] = sl; });
-});
-
-// Protections proposées selon le genre (Elle ♀ = suit le cycle / Lui ♂).
-const PROTECTION_ELLE = [
-  ['pilule', '💊 Pilule'], ['diu', '⚓ Stérilet (DIU)'], ['implant', '💉 Implant'],
-  ['anneau_vaginal', '💍 Anneau vaginal'], ['patch', '🩹 Patch'],
-  ['preservatif_interne', '♀️ Préservatif interne'], ['ligature_trompes', '✂️ Ligature des trompes'],
-  ['menopause', '🌸 Ménopause'], ['retrait', '⬅️ Retrait'], ['sans_penetration', '🚫 Sans pénétration'],
-];
-const PROTECTION_LUI = [
-  ['preservatif', '🛡️ Préservatif'], ['prep', '💊 PrEP'], ['vasectomie', '✂️ Vasectomie'],
-  ['retrait', '⬅️ Retrait'], ['sans_penetration', '🚫 Sans pénétration'],
-];
 
 // Génère une grille de tags multi-select (act-tag-btn) dans un conteneur.
 // Un 3e élément optionnel [code, label, sous-options[]] crée une sous-grille
@@ -113,49 +100,6 @@ function restoreCascade(sel, tags) {
 const renderProtectionGrid = (containerId, tracksCycle) =>
   renderTagGrid(containerId, tracksCycle ? PROTECTION_ELLE : PROTECTION_LUI);
 
-// Options solo par genre (Elle ♀ / Lui ♂) + tags de contexte communs.
-// Sous-options « support d'excitation » (communes Elle/Lui). Films olé olé porte
-// la grille d'exemples demandée ; le reste a ses propres déclinaisons.
-const EXCITATION = [
-  ['fantasme', '💭 Fantasme', [['souvenir','📷 Souvenir'],['imagine','✨ Scénario imaginé'],['partenaire','💑 Mon/ma partenaire']]],
-  ['films_ole_ole', '🎬 Films olé olé', [
-    ['amateur','🎥 Amateur'],['couple','💑 Couple'],['pov','👁️ POV'],['massage','💆 Massage'],
-    ['hentai','🌸 Hentai'],['vintage','📼 Vintage'],['romantique','💕 Romantique'],['scenario','🎭 Scénario'],['audio_asmr','🎙️ Audio / ASMR'],
-  ]],
-  ['audio', '🎧 Audio érotique', [['asmr','🎙️ ASMR'],['histoire','📖 Histoire audio'],['gemissements','🔊 Gémissements']]],
-  ['lecture', '📖 Lecture', [['roman','📕 Roman'],['fanfiction','✍️ Fanfiction'],['bd_manga','🗯️ BD / manga'],['forum','💬 Forum / récit']]],
-];
-const SOLO_ELLE = {
-  practices: [
-    ['clitoridienne', '💧 Clitoridienne', [['doigts','✋ Doigts'],['vibro','🔮 Vibromasseur'],['ondes_air','💨 Ondes d\'air'],['douche','🚿 Pommeau de douche']]],
-    ['penetration_vaginale', '🍑 Pénétration vaginale', [['doigts','✋ Doigts'],['sextoy','🍆 Sextoy / godemichet'],['fruit_legume','🥒 Fruit / légume'],['objet','📦 Autre objet']]],
-    ['humping', '🛏️ Humping', [['traversin','🛋️ Traversin'],['peluche','🧸 Peluche'],['oreiller','🛌 Oreiller'],['objet','📦 Objet']]],
-    ['anal', '🍑 Anal', [['doigt','✋ Doigt'],['plug','🍑 Plug'],['sextoy','🍆 Sextoy']]],
-    ['mammaire', '🤱 Mammaire'], ['multi_zones', '✨ Multi-zones'],
-  ],
-  accessories: [
-    ['vibromasseur', '🔮 Vibromasseur'], ['ondes_air', '💨 Ondes d\'air (Satisfyer…)'],
-    ['dildo', '🍆 Godemichet'], ['plug_anal', '🍑 Plug anal'], ['huile_massage', '💧 Huile'], ['lubrifiant', '💧 Lubrifiant'],
-  ],
-  excitation: EXCITATION,
-};
-const SOLO_LUI = {
-  practices: [
-    ['masturbation_manuelle', '✋ Masturbation manuelle', [['main_seche','✋ Main sèche'],['lubrifiant','💧 Lubrifiant'],['gaine','🧴 Gaine']]],
-    ['friction', '🛏️ Frottement', [['coussin','🛋️ Coussin'],['oreiller','🛌 Oreiller'],['matelas','🛏️ Matelas / objet']]],
-    ['anal_prostatique', '🍑 Anal / Prostatique', [['doigt','✋ Doigt'],['plug','🍑 Plug'],['sextoy','🍆 Sextoy prostate']]],
-    ['edging', '⏳ Edging'], ['oral_accessoire', '👄 Oral (accessoire)'],
-  ],
-  accessories: [
-    ['gaine', '🧴 Gaine (Fleshlight…)'], ['masturbateur_auto', '🔌 Masturbateur auto'],
-    ['cockring', '💍 Anneau pénien'], ['plug_prostate', '🍑 Stim. prostate'], ['lubrifiant', '💧 Lubrifiant'],
-  ],
-  excitation: EXCITATION,
-};
-const CONTEXT_MOMENT   = [['reveil', '🌅 Au réveil'], ['journee', '☀️ En journée'], ['avant_dormir', '🌙 Avant de dormir'], ['nuit', '🌃 En pleine nuit']];
-// (Le lieu/ambiance solo est saisi via le sélecteur « Lieu » de l'étape 1 — pas de doublon ici.)
-const CONTEXT_RAPIDITE = [['quickie', '⚡ Quickie'], ['longue', '🕯️ Longue / Sensorielle']];
-
 // Remplit toutes les grilles solo + contexte selon le genre du membre courant.
 function renderSoloGrids(tracksCycle) {
   const set = tracksCycle ? SOLO_ELLE : SOLO_LUI;
@@ -215,27 +159,6 @@ const collectTags = (sel) => [
 // `null` si c'est une nouvelle session.
 let currentEditingSession = null;
 let sessionCustomPositions = [];
-
-// ─── Wizard (saisie en 4 étapes) ───────────────────────────────────────────
-const WIZARD_STEPS = 4;
-let wizardStep = 1;
-
-function showWizardStep(n) {
-  wizardStep = Math.max(1, Math.min(WIZARD_STEPS, n));
-  document.querySelectorAll('#session-wizard .wizard-step').forEach(s =>
-    s.classList.toggle('active', Number(s.dataset.step) === wizardStep));
-  document.querySelectorAll('#session-wizard-progress .wizard-dot').forEach(d =>
-    d.classList.toggle('active', Number(d.dataset.step) <= wizardStep));
-
-  const prev = document.getElementById('btn-wizard-prev');
-  const next = document.getElementById('btn-wizard-next');
-  const save = document.getElementById('btn-session-save');
-  if (prev) prev.style.display = wizardStep === 1 ? 'none' : '';
-  if (next) next.style.display = wizardStep === WIZARD_STEPS ? 'none' : '';
-  if (save) save.style.display = wizardStep === WIZARD_STEPS ? '' : 'none';
-
-  document.querySelector('#session-sheet .sheet')?.scrollTo({ top: 0, behavior: 'smooth' });
-}
 
 // ─── Erreur UI ─────────────────────────────────────────────────────────────
 
@@ -589,11 +512,8 @@ export function openFullSessionSheet(st) {
   sheet.onclick = (e) => { if (e.target === sheet) closeSessionSheet(); };
 
   // Wizard : navigation entre étapes (.onclick = idempotent à chaque ouverture)
-  const prevBtn = document.getElementById('btn-wizard-prev');
-  const nextBtn = document.getElementById('btn-wizard-next');
-  if (prevBtn) prevBtn.onclick = () => showWizardStep(wizardStep - 1);
-  if (nextBtn) nextBtn.onclick = () => showWizardStep(wizardStep + 1);
-  showWizardStep(1);
+  bindSessionWizardNav();
+  showSessionWizardStep(1);
 }
 
 export function prepareNewSession() {
@@ -705,55 +625,17 @@ function initCustomAdders() {
   }
 }
 
-// Critères de notation adaptés au type de pratique. Les valeurs sont
-// rétrocompatibles : le 1er drapeau est stocké dans `pain`, le 2e dans `too_deep`.
-function ratingFlags(pos, id) {
-  const hay = `${id} ${pos?.label || ''} ${pos?.category || ''}`.toLowerCase();
-  if (/massage/.test(hay))                              return { f1: 'Trop fort', f2: 'Détente' };
-  if (/oral|fellation|cunni|bouche|langue/.test(hay))  return { f1: 'Trop rapide', f2: 'Doux' };
-  return { f1: 'Douleur', f2: 'Trop profond' };
-}
-
 // Affiche une ligne de notation (/10 + 2 drapeaux adaptés) par position sélectionnée.
 function syncRatingRows() {
   const wrap = document.getElementById('position-ratings');
   if (!wrap) return;
   const selected = [...document.querySelectorAll('.pos-pick-btn.sel')].map(b => b.dataset.id);
-  Object.keys(ratingState).forEach(id => { if (!selected.includes(id)) delete ratingState[id]; });
-
-  wrap.innerHTML = selected.map(id => {
-    const pos = POSITIONS.find(p => p.id === id);
-    const r = ratingState[id] || (ratingState[id] = { score: 0, pain: false, too_deep: false });
-    const rawName = pos?.label || (id.startsWith('custom:') ? `✨ ${id.replace('custom:', '')}` : id);
-    const displayName = escapeHtml(rawName);
-    const flags = ratingFlags(pos, id);
-    return `<div class="pos-rate-row" data-id="${escapeHtml(id)}">
-      <div class="pos-rate-name">${displayName}</div>
-      <div class="pos-rate-controls">
-        <input type="range" class="pos-rate-score" min="0" max="10" value="${r.score}" aria-label="Note sur 10 — ${displayName}">
-        <span class="pos-rate-val">${r.score ? r.score + '/10' : '—'}</span>
-        <button type="button" class="pos-rate-flag ${r.pain ? 'on' : ''}" data-flag="pain" aria-pressed="${r.pain}">${flags.f1}</button>
-        <button type="button" class="pos-rate-flag ${r.too_deep ? 'on' : ''}" data-flag="too_deep" aria-pressed="${r.too_deep}">${flags.f2}</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  wrap.querySelectorAll('.pos-rate-row').forEach(row => {
-    const id = row.dataset.id;
-    const range = row.querySelector('.pos-rate-score');
-    const val = row.querySelector('.pos-rate-val');
-    range.addEventListener('input', () => {
-      ratingState[id].score = parseInt(range.value);
-      val.textContent = ratingState[id].score ? ratingState[id].score + '/10' : '—';
-    });
-    row.querySelectorAll('.pos-rate-flag').forEach(b => {
-      b.addEventListener('click', () => {
-        const f = b.dataset.flag;
-        ratingState[id][f] = !ratingState[id][f];
-        b.classList.toggle('on', ratingState[id][f]);
-        b.setAttribute('aria-pressed', String(ratingState[id][f]));
-      });
-    });
+  syncPositionRatings({
+    wrap,
+    selectedIds: selected,
+    positions: POSITIONS,
+    ratingState,
+    escapeHtml,
   });
 }
 
@@ -885,149 +767,30 @@ async function saveFullSession(st) {
 // ─── Fast-Track (4-5 taps) ─────────────────────────────────────────────────
 
 export function openFastTrack(st) {
-  closeSessionSheet();
-  const sheet = document.getElementById('fast-track-sheet');
-  if (!sheet) return;
-
-  // Reset
-  document.querySelectorAll('.ft-mood-btn').forEach(b => b.classList.remove('sel'));
-  const orgEl = document.getElementById('ft-orgasm');
-  if (orgEl) orgEl.checked = false;
-
-  sheet.classList.add('open');
-  sheet.removeAttribute('aria-hidden');
-
-  document.querySelectorAll('.ft-mood-btn').forEach(btn =>
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.ft-mood-btn').forEach(x => x.classList.remove('sel'));
-      btn.classList.add('sel');
-    })
-  );
-
-  document.getElementById('btn-ft-save')?.addEventListener('click', () => saveFastTrack(st), { once: true });
-  document.getElementById('btn-ft-cancel')?.addEventListener('click', closeFastTrack, { once: true });
-}
-
-function closeFastTrack() {
-  const sheet = document.getElementById('fast-track-sheet');
-  if (sheet) { sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
-}
-
-async function saveFastTrack(st) {
-  const mood    = document.querySelector('.ft-mood-btn.sel')?.dataset.mood || null;
-  const sat     = parseInt(document.querySelector('.ft-sat-btn.sel')?.dataset.sat) || null;
-  const orgasms = document.getElementById('ft-orgasm')?.checked ? 1 : 0;
-
-  const btn = document.getElementById('btn-ft-save');
-  if (btn) { btn.disabled = true; btn.textContent = 'Tap…'; }
-
-  try {
-    const { data: session, error } = await supabase.from('intimate_sessions').insert({
-      couple_id:    st.coupleId,
-      created_by:   st.me?.user_id,
-      session_date: localDateStr(),
-      mood,
-    }).select().single();
-
-    if (error) throw error;
-
-    if ((sat || orgasms) && session?.id) {
-      await supabase.from('session_feedback').insert({
-        session_id:   session.id,
-        user_id:      st.me?.user_id,
-        satisfaction: sat,
-        orgasms,
-        shared:       false,
-      });
-    }
-
-    // Liaison vers le journal du jour (DailyLog)
-    await syncSessionToDailyLog(localDateStr(), st.me?.user_id, { satisfaction: sat, orgasms });
-
-    closeFastTrack();
-    await renderRecentSessions(st);
-    notifySessionSaved();
-
-  } catch (e) {
-    showError('ft-error', 'Connexion perdue. Réessayez dans un moment.');
-    console.error('saveFastTrack:', e.message);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Valider'; }
-  }
+  openFastTrackFlow(st, {
+    closeSessionSheet,
+    supabase,
+    localDateStr,
+    syncSessionToDailyLog,
+    renderRecentSessions,
+    notifySessionSaved,
+    showError,
+  });
 }
 
 // ─── Feedback post-séance ──────────────────────────────────────────────────
 
-let _pendingFeedbackId = null;
-let _pendingFeedbackDate = null;
-
 export function openFeedbackSheet(sessionId, st, prefilledOrgasms = 0, sessionDate = null) {
-  _pendingFeedbackId = sessionId;
-  _pendingFeedbackDate = sessionDate || localDateStr();
-  const sheet = document.getElementById('feedback-sheet');
-  if (!sheet) return;
-
-  document.querySelectorAll('.fb-sat-btn').forEach(b => b.classList.remove('sel'));
-  const orgEl    = document.getElementById('fb-orgasm');
-  const lovedEl  = document.getElementById('fb-loved');
-  const improveEl = document.getElementById('fb-improve');
-  if (orgEl)     orgEl.checked  = prefilledOrgasms > 0;  // pré-coché si déclaré dans le formulaire
-  if (lovedEl)   lovedEl.value  = '';
-  if (improveEl) improveEl.value = '';
-
-  sheet.classList.add('open');
-  sheet.removeAttribute('aria-hidden');
-
-  document.querySelectorAll('.fb-sat-btn').forEach(btn =>
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.fb-sat-btn').forEach(x => x.classList.remove('sel'));
-      btn.classList.add('sel');
-    })
-  );
-
-  document.getElementById('btn-feedback-save')?.addEventListener('click', () => saveFeedback(st), { once: true });
-  document.getElementById('btn-feedback-skip')?.addEventListener('click', closeFeedbackSheet, { once: true });
+  openFeedbackFlow(sessionId, st, prefilledOrgasms, sessionDate, {
+    localDateStr,
+    supabase,
+    syncSessionToDailyLog,
+    notifySessionSaved,
+  });
 }
 
 export function closeFeedbackSheet() {
-  const sheet = document.getElementById('feedback-sheet');
-  if (sheet) { sheet.classList.remove('open'); sheet.setAttribute('aria-hidden', 'true'); }
-  _pendingFeedbackId = null;
-  _pendingFeedbackDate = null;
-}
-
-async function saveFeedback(st) {
-  if (!_pendingFeedbackId) { closeFeedbackSheet(); return; }
-
-  const sat     = parseInt(document.querySelector('.fb-sat-btn.sel')?.dataset.sat) || null;
-  const orgasms = document.getElementById('fb-orgasm')?.checked ? 1 : 0;
-  const loved   = document.getElementById('fb-loved')?.value.trim()    || null;
-  const improve = document.getElementById('fb-improve')?.value.trim()  || null;
-  const sessionDate = _pendingFeedbackDate || localDateStr();
-
-  try {
-    const { error } = await supabase.from('session_feedback').upsert({
-      session_id:   _pendingFeedbackId,
-      user_id:      st.me?.user_id,
-      satisfaction: sat,
-      orgasms,
-      loved_txt:    loved,
-      improve_txt:  improve,
-      shared:       false,
-    }, { onConflict: 'session_id,user_id' });
-
-    if (error) throw error;
-
-    // Liaison vers le journal du jour (DailyLog) avec les valeurs finales
-    await syncSessionToDailyLog(sessionDate, st.me?.user_id, { satisfaction: sat, orgasms });
-    notifySessionSaved();
-
-    closeFeedbackSheet();
-
-  } catch (e) {
-    console.error('saveFeedback:', e.message);
-    closeFeedbackSheet(); // fermer quand même
-  }
+  closeFeedbackFlow();
 }
 
 // ─── Init du sheet ────────────────────────────────────────────────────────

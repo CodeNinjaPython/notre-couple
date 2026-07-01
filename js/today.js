@@ -19,6 +19,10 @@ import { toast as showToast, confirmDialog, formDialog, friendlyError } from './
 import { getPregnancyMilestone } from './pregnancy-milestones.js';
 import { skeletonFill } from './skeleton.js';
 import { getCycleCoaching } from './cycle-coaching.js';
+import { getPhaseFromDay, renderTodayRingChart } from './today-ring-cycle.js';
+import { createTodayMetricsController } from './today-metrics.js';
+import { createTodayEventsController } from './today-events.js';
+import { renderPredictionCard } from './today-predictions.js';
 
 const PHASES_DATA = {
   Menstruelle: {
@@ -118,6 +122,26 @@ let state = {
   logDate: localDateStr(),
   logDateOffset: 0,          // 0 = aujourd'hui, -1 = hier, etc.
 };
+
+const metricsController = createTodayMetricsController({
+  getState: () => state,
+  metricsByPerson: METRICS,
+  isPartnerView,
+  faceFor,
+  escapeHtml: escapeHtmlToday,
+  saveEntry,
+  renderChart,
+});
+
+const eventsController = createTodayEventsController({
+  getState: () => state,
+  supabase,
+  localDateStr,
+  confirmDialog,
+  showToast,
+  friendlyError,
+  eventTypes: EVENT_TYPES,
+});
 
 export async function initToday() {
   const el = document.getElementById('today-date');
@@ -248,8 +272,7 @@ export async function reloadDataAndRenderToday() {
 }
 
 function getPhase(day) {
-  const phaseEntry = Object.entries(PHASES_DATA).find(([, data]) => day >= data.range[0] && day <= data.range[1]);
-  return phaseEntry ? phaseEntry[0] : 'Lutéale';
+  return getPhaseFromDay(day, PHASES_DATA);
 }
 
 async function loadEntriesForDate(dateStr) {
@@ -340,127 +363,18 @@ function computeFertilityStatus(prediction) {
   return { label: 'Hors fenêtre fertile', hot: false };
 }
 
-// --- Progression de grossesse (mode pregnancy) -----------------------------
-function renderPregnancyProgress(container) {
-  const dpa = localStorage.getItem('nc-dpa-date');
-  let weeks = null, tri = null, pct = 0, remaining = null;
-  if (dpa) {
-    const daysToDue = diffDays(dpa, localDateStr()); // jours avant terme
-    const elapsed   = 280 - daysToDue;               // 40 semaines = 280 j
-    weeks     = Math.max(0, Math.floor(elapsed / 7));
-    remaining = Math.max(0, 40 - weeks);
-    pct       = Math.min(100, Math.max(0, Math.round(elapsed / 280 * 100)));
-    tri       = weeks < 13 ? 1 : weeks < 27 ? 2 : 3;
-  }
-  container.innerHTML = `
-    <div class="preg-ring" style="--p:${pct}%" role="img"
-      aria-label="${weeks != null ? `Semaine ${weeks} de grossesse` : 'Grossesse'}">
-      <div class="preg-ring-inner">
-        <div class="preg-week">${weeks != null ? 'S' + weeks : '🤰'}</div>
-        <div class="preg-sub">${tri ? 'Trimestre ' + tri : 'Grossesse'}</div>
-        ${remaining != null ? `<div class="preg-rem">${remaining} sem. restantes</div>` : ''}
-      </div>
-    </div>`;
-}
-
-// --- Repère de grossesse semaine par semaine -------------------------------
-function pregnancyWeeks() {
-  const dpa = localStorage.getItem('nc-dpa-date');
-  if (!dpa) return null;
-  const daysToDue = diffDays(dpa, localDateStr());
-  return Math.max(0, Math.floor((280 - daysToDue) / 7));
-}
-
-function renderPregnancyMilestone() {
-  const card = document.getElementById('preg-milestone');
-  if (!card) return;
-  const weeks = pregnancyWeeks();
-  if (getCycleMode() !== 'pregnancy' || weeks == null) {
-    card.style.display = 'none';
-    card.innerHTML = '';
-    return;
-  }
-  const m = getPregnancyMilestone(weeks);
-  const appt = m.nextAppointment
-    ? `<div class="preg-appt">📅 ${m.nextAppointment.label} ${
-        m.nextAppointment.inWeeks <= 0 ? '· cette semaine'
-        : `· dans ~${m.nextAppointment.inWeeks} sem.`}</div>`
-    : '';
-  card.innerHTML = `
-    <div class="preg-ms-head">
-      <span class="preg-ms-fruit" aria-hidden="true">🍃</span>
-      <div>
-        <h2>Semaine ${m.week} · grand comme ${m.fruit}</h2>
-        <p class="preg-ms-note">${m.note}</p>
-      </div>
-    </div>
-    ${appt}`;
-  card.style.display = 'block';
-}
-
 // --- Anneau SVG du cycle ---------------------------------------------------
 function renderRingChart() {
-  const ring   = document.getElementById('cycle-ring');
-  const legend = document.getElementById('ring-legend');
-  if (!ring) return;
-
-  // Mode grossesse : l'anneau de cycle n'a pas de sens → progression de grossesse
-  if (getCycleMode() === 'pregnancy') {
-    renderPregnancyProgress(ring);
-    if (legend) legend.innerHTML = '';
-    renderPregnancyMilestone();
-    return;
-  }
-
-  renderPregnancyMilestone(); // masque la carte hors mode grossesse
-
-  const cycleObj = state.currentCycle
-    ? new Cycle(state.currentCycle)
-    : null;
-
-  const p = state.prediction;
-  const day             = cycleObj?.getDayInCycle(state.logDate) ?? 1;
-  const totalDays       = p?.avgCycleLength ?? cycleObj?.dureeCycle ?? 28;
-  const periodDays      = p?.avgPeriodDuration ?? cycleObj?.dureeRegles ?? 5;
-  const fertileStartDay = p?.fertileStartDay ?? cycleObj?.getFertileWindow().start ?? 9;
-  const fertileEndDay   = p?.fertileEndDay ?? cycleObj?.getFertileWindow().end ?? 15;
-  const ovulationDay    = p?.ovulationDay ?? cycleObj?.getFertileWindow().ovulation ?? 14;
-  const phaseName       = p?.phaseDuCycle ?? (cycleObj ? Cycle.phaseName(day, totalDays, periodDays) : '');
-
-  // Jours avec données saisies dans le cycle en cours
-  const loggedSet = new Set(
-    Object.keys(state.savedValues).length ? [day] : []
-  );
-
-  // Contenu central façon « prédiction » (date du jour + prochaines règles + bascule fertile).
-  const fmtCourt = (s) => s ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
-  const centerTop  = `Aujourd'hui, ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
-  let centerMain = phaseName ? (phaseName.startsWith('Retard') ? phaseName : `Vous êtes en phase ${phaseName.toLowerCase()}`) : `Jour ${day}`;
-  let centerToggleLabel = '', centerAlt = '';
-  if (p?.nextPeriodDate) {
-    centerMain = `Vos prochaines règles sont le ${fmtCourt(p.nextPeriodDate)}`;
-    if (p.fertileStart && p.ovulationDate) {
-      centerToggleLabel = 'Jour fertile probable';
-      centerAlt = `Fenêtre fertile : ${fmtCourt(p.fertileStart)} → ${fmtCourt(p.ovulationDate)}`;
-    }
-  }
-
-  renderCycleRing(ring, {
-    totalDays,
-    currentDay:   day,
-    periodDays,
-    fertileStart: fertileStartDay,
-    fertileEnd:   fertileEndDay,
-    ovulationDay,
-    phaseName,
-    loggedDays:   loggedSet,
-    centerTop,
-    centerMain,
-    centerToggleLabel,
-    centerAlt,
+  renderTodayRingChart({
+    state,
+    getCycleMode,
+    Cycle,
+    renderCycleRing,
+    renderRingLegend,
+    diffDays,
+    localDateStr,
+    getPregnancyMilestone,
   });
-
-  renderRingLegend(legend);
 }
 
 // --- État d'appairage : confirmation « lié » + bandeau solo ----------------
@@ -915,156 +829,8 @@ function drawChart(elleData, luiData, totalDays, todayIdx) {
 
 // --- Metrics ---------------------------------------------------------------
 
-/**
- * Gère le clic sur une "chip" de métrique via délégation d'événement.
- * @param {MouseEvent} event
- */
-async function handleMetricClick(event) {
-  if (isPartnerView()) return;   // la saisie du partenaire est en lecture seule
-  const chip = event.target.closest('.chip');
-  if (!chip) return;
-
-  const { id: metricId, v: value } = chip.dataset;
-  const metric = METRICS[state.cur].find(m => m.id === metricId);
-  if (!metric) return;
-
-  // 1. Mettre à jour l'UI de manière optimiste
-  chip.closest('.chips').querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
-  chip.classList.add('sel');
-
-  const face = faceFor(metric, value);
-  const displayValue = face ? face.e
-    : (metric.type === 'enum' || metric.type === 'boolean') ? (metric.opts[value] ?? value)
-    : value;
-  chip.closest('.metric').querySelector('.val').textContent = displayValue;
-
-  // 2. Sauvegarder la donnée et mettre à jour l'état local
-  await saveEntry(metricId, value);
-  state.savedValues[metricId] = { v: value };
-
-  // 3. Effet de bord : rafraîchir le graphique si l'énergie est modifiée
-  if (metricId === 'energy') {
-    await renderChart();
-  }
-}
-
-/**
- * Retourne la chaîne de caractères à afficher pour une valeur de métrique.
- * @param {object} metric
- * @param {string|number|null} value
- * @returns {string}
- */
-function getMetricDisplayValue(metric, value) {
-  if (value == null) return '—';
-  if (metric.faces) { const f = faceFor(metric, value); return f ? f.e : '—'; }
-  if (metric.type === 'enum' || metric.type === 'boolean') return metric.opts[value] ?? value;
-  if (metric.type === 'bbt')  return value ? `${value}°C` : '—';
-  if (metric.type === 'text') return value ? String(value).slice(0, 22) + (String(value).length > 22 ? '…' : '') : '—';
-  return value;
-}
-
-function getMetricChipsHTML(metric, savedValue, readonly = false) {
-  const ro = readonly ? ' disabled' : '';
-  if (metric.type === 'bbt') {
-    return `<div class="bbt-input-wrap">
-      <input type="number" class="bbt-input" data-id="${metric.id}"
-        min="35.0" max="38.5" step="0.1" placeholder="36.5"
-        value="${savedValue || ''}" aria-label="Température basale"${ro}>
-      <span class="bbt-unit">°C</span>
-    </div>`;
-  }
-  if (metric.type === 'text') {
-    return `<textarea class="note-input" data-id="${metric.id}"
-      placeholder="${readonly ? '—' : 'Écris quelque chose…'}" rows="2"${ro}>${savedValue || ''}</textarea>`;
-  }
-  const isSelected = (v) => String(savedValue) === String(v) ? ' sel' : '';
-  const options = (metric.type === 'enum' || metric.type === 'boolean')
-    ? metric.opts : Array.from({ length: 5 }, (_, i) => i + 1);
-  return options.map((opt, i) => {
-    const value = (metric.type === 'enum' || metric.type === 'boolean') ? i : opt;
-    // Boutons ronds emoji + label (humeur / énergie)
-    if (metric.faces) {
-      const f = metric.faces[i] || { e: opt, l: '' };
-      return `<button type="button" class="chip facechip${isSelected(value)}" data-id="${metric.id}" data-v="${value}">
-        <span class="facechip-e">${f.e}</span><span class="facechip-l">${f.l}</span></button>`;
-    }
-    const chipClass = metric.type === 'scale' ? 'chip scalechip' : 'chip';
-    return `<div class="${chipClass}${isSelected(value)}" data-id="${metric.id}" data-v="${value}">${opt}</div>`;
-  }).join('');
-}
-
 function renderMetrics() {
-  const wrap = document.getElementById('metrics');
-  if (!wrap) return;
-
-  const partnerView = isPartnerView();
-  const values = partnerView ? (state.partnerValues || {}) : state.savedValues;
-
-  // Vue partenaire sans partenaire relié → rien à afficher.
-  if (partnerView && !state.partner) {
-    wrap.removeAttribute('data-readonly');
-    wrap.innerHTML = `<div class="empty-state-inline"><div class="es-icon">🔗</div>
-      <p>Pas encore de partenaire relié.<br>Reliez-vous pour voir sa saisie.</p></div>`;
-    return;
-  }
-
-  if (partnerView) wrap.setAttribute('data-readonly', '1');
-  else wrap.removeAttribute('data-readonly');
-
-  const banner = partnerView
-    ? `<div class="metrics-readonly-note">👀 Lecture seule — ce que ${escapeHtmlToday(state.partner?.display_name || (state.cur === 'elle' ? 'Elle' : 'Lui'))} a partagé. Tu ne modifies que ta propre saisie.</div>`
-    : '';
-
-  wrap.innerHTML = banner + METRICS[state.cur].map(metric => {
-    const savedRaw   = values[metric.id];
-    const savedValue = savedRaw != null ? (savedRaw.v ?? savedRaw) : null;
-    return `
-      <div class="metric">
-        <div class="ml">
-          <span class="name">${metric.label}</span>
-          <span class="val" id="val-${metric.id}">${getMetricDisplayValue(metric, savedValue)}</span>
-        </div>
-        <div class="chips">${getMetricChipsHTML(metric, savedValue, partnerView)}</div>
-      </div>`;
-  }).join('');
-
-  // En lecture seule (vue partenaire) : aucun écouteur, pas de modification possible.
-  if (partnerView) return;
-
-  wrap.removeEventListener('click', handleMetricClick);
-  wrap.addEventListener('click', handleMetricClick);
-
-  // BBT — input number avec debounce
-  wrap.querySelectorAll('.bbt-input').forEach(input => {
-    let timer;
-    input.addEventListener('input', () => {
-      clearTimeout(timer);
-      timer = setTimeout(async () => {
-        const val = parseFloat(input.value);
-        if (isNaN(val) || val < 35 || val > 39) return;
-        const id = input.dataset.id;
-        document.getElementById(`val-${id}`).textContent = `${val.toFixed(1)}°C`;
-        await saveEntry(id, String(val.toFixed(1)));
-        state.savedValues[id] = { v: String(val.toFixed(1)) };
-      }, 800);
-    });
-  });
-
-  // Note libre — textarea avec debounce
-  wrap.querySelectorAll('.note-input').forEach(ta => {
-    let timer;
-    ta.addEventListener('input', () => {
-      clearTimeout(timer);
-      timer = setTimeout(async () => {
-        const id  = ta.dataset.id;
-        const val = ta.value.trim();
-        document.getElementById(`val-${id}`).textContent = val
-          ? val.slice(0, 22) + (val.length > 22 ? '…' : '') : '—';
-        await saveEntry(id, val);
-        state.savedValues[id] = { v: val };
-      }, 900);
-    });
-  });
+  metricsController.renderMetrics();
 }
 
 async function saveEntry(categoryId, value) {
@@ -1113,204 +879,24 @@ function renderTip() {
 
 // --- Prédiction ------------------------------------------------------------
 function renderPrediction() {
-  const card = document.getElementById('prediction-card');
-  if (!card) return;
-
-  // Mode grossesse : pas de prédiction de règles
-  if (getCycleMode() === 'pregnancy') {
-    card.style.display = 'none';
-    return;
-  }
-
-  const p = state.prediction;
-  const history = p?.cyclesUsed;
-
-  if (!p || !history || history < 2) {
-    card.style.display = 'none';
-    return;
-  }
-
-  card.style.display = 'block';
-  const nextDate = new Date(p.nextPeriodDate);
-  const oDate    = new Date(p.ovulationDate);
-  const today    = new Date();
-  const daysUntil = Math.round((nextDate - today) / 864e5);
-
-  const fmt = d => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-
-  document.getElementById('pred-next').textContent =
-    daysUntil > 0 ? `dans ${daysUntil} jour${daysUntil > 1 ? 's' : ''}` :
-    daysUntil === 0 ? "aujourd'hui" : `il y a ${-daysUntil} j`;
-  const margin = p.stdDev >= 1 ? ` ± ${Math.round(p.stdDev)} j` : '';
-  document.getElementById('pred-next-date').textContent = fmt(nextDate) + margin;
-
-  // Rendu avancé ovulation
-  const ovConfirmedIcon = p.ovulationConfirmed ? ' <span style="font-size:0.85em;color:var(--violet);cursor:help" title="Confirmé par biomarqueurs">✓</span>' : '';
-  const detectionTooltip = p.detectionMethod ? ` title="Méthode : ${p.detectionMethod}" style="cursor:help;border-bottom:1px dashed var(--violet)"` : '';
-  document.getElementById('pred-ovulation').innerHTML = `<span${detectionTooltip}>${fmt(oDate)}</span>${ovConfirmedIcon}`;
-
-  // Rendu avancé régularité
-  const regularityText = p.predictabilityScore != null ? `<br><span style="font-size:0.75em;opacity:0.7">${p.predictabilityScore}% régulier</span>` : '';
-  document.getElementById('pred-avg').innerHTML = `${p.avgCycleLength} j${regularityText}`;
+  renderPredictionCard({ prediction: state.prediction, getCycleMode });
 }
 
 // --- Toast in-app ----------------------------------------------------------
 // showToast est fourni par ui-feedback.js (import en tête de fichier).
 
 // --- Events ----------------------------------------------------------------
-const REACTION_EMOJIS = ['❤️', '✨', '😊', '💪'];
-
 async function renderEvents() {
-  const wrap = document.getElementById('events-list');
-  if (!wrap || !state.coupleId) return;
-
-  const { data } = await supabase
-    .from('couple_events')
-    .select('*')
-    .eq('couple_id', state.coupleId)
-    .order('event_date', { ascending: false })
-    .limit(7);
-
-  wrap.innerHTML = '';
-
-  if (!data?.length) {
-    wrap.innerHTML = `<div class="empty-state-inline">
-      <div class="es-icon">🌸</div>
-      <p>Aucun moment noté ensemble.<br>Commencez par en ajouter un !</p>
-    </div>`;
-  } else {
-    data.forEach(ev => {
-      const diff = Math.round((Date.now() - new Date(ev.event_date)) / 864e5);
-      const when = diff === 0 ? "Aujourd'hui" : diff === 1 ? 'Hier' : `Il y a ${diff} jours`;
-      const reactions = ev.reactions || {};
-      const myReaction = reactions[state.me?.user_id];
-      const allReactions = Object.values(reactions);
-      const reactionSummary = [...new Set(allReactions)].map(e => {
-        const count = allReactions.filter(x => x === e).length;
-        return `<span class="ev-reaction${e === myReaction ? ' mine' : ''}">${e}${count > 1 ? ` ${count}` : ''}</span>`;
-      }).join('');
-
-      const eventInfo = EVENT_TYPES[ev.event_type] || EVENT_TYPES.other;
-      const div = document.createElement('div');
-      div.className = 'ev';
-      div.dataset.id = ev.id;
-      div.innerHTML = `
-        <div class="ico">${eventInfo.icon}</div>
-        <div class="ev-body">
-          <div class="et">${ev.note || eventInfo.label}</div>
-          <div class="ed">${when}</div>
-          ${reactionSummary ? `<div class="ev-reactions">${reactionSummary}</div>` : ''}
-        </div>
-        <div class="ev-actions">
-          <button type="button" class="ev-react-btn" data-id="${ev.id}" aria-label="Réagir">${myReaction || '🫶'}</button>
-          <button type="button" class="ev-delete-btn" data-id="${ev.id}" aria-label="Supprimer">×</button>
-        </div>`;
-      wrap.appendChild(div);
-    });
-  }
-
-  // Listeners réactions + suppression
-  wrap.querySelectorAll('.ev-react-btn').forEach(btn => {
-    btn.addEventListener('click', () => openReactionPicker(btn.dataset.id, btn));
-  });
-  wrap.querySelectorAll('.ev-delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const ok = await confirmDialog({
-        title: 'Supprimer ce moment ?',
-        message: 'Il disparaîtra de votre journal partagé.',
-        confirmLabel: 'Supprimer',
-        danger: true,
-      });
-      if (!ok) return;
-      try {
-        const { error } = await supabase.from('couple_events').delete().eq('id', btn.dataset.id);
-        if (error) throw error;
-        await renderEvents();
-      } catch (e) {
-        showToast(friendlyError(e), 'error');
-      }
-    });
-  });
-
-  document.getElementById('btn-addev')?.addEventListener('click', openEventSheet);
+  await eventsController.renderEvents();
 }
-
-function openReactionPicker(eventId, anchorBtn) {
-  // Fermer tout picker existant
-  document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
-
-  const picker = document.createElement('div');
-  picker.className = 'reaction-picker';
-  picker.innerHTML = REACTION_EMOJIS.map(e =>
-    `<button class="reaction-opt" data-emoji="${e}">${e}</button>`
-  ).join('');
-  anchorBtn.insertAdjacentElement('afterend', picker);
-
-  picker.querySelectorAll('.reaction-opt').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      picker.remove();
-      await likeEvent(eventId, btn.dataset.emoji);
-    });
-  });
-
-  // Fermer au clic extérieur
-  const close = e => { if (!picker.contains(e.target) && e.target !== anchorBtn) { picker.remove(); document.removeEventListener('click', close, true); } };
-  setTimeout(() => document.addEventListener('click', close, true), 10);
-}
-
 async function likeEvent(eventId, emoji) {
-  const userId = state.me?.user_id;
-  if (!userId) return;
-
-  // Lire la réaction actuelle
-  const { data: ev } = await supabase
-    .from('couple_events').select('reactions').eq('id', eventId).single();
-  const current = ev?.reactions || {};
-
-  // Toggle : même emoji → retirer, sinon → mettre le nouveau
-  const newReactions = { ...current };
-  if (current[userId] === emoji) {
-    delete newReactions[userId];
-  } else {
-    newReactions[userId] = emoji;
-  }
-
-  await supabase.from('couple_events')
-    .update({ reactions: newReactions }).eq('id', eventId);
-  // Le realtime channel va déclencher renderEvents()
+  await eventsController.likeEvent(eventId, emoji);
 }
 
 function openEventSheet() {
-  const sheet = document.getElementById('event-sheet');
-  if (!sheet) return;
-  sheet.classList.add('open');
-  document.getElementById('event-note').value = '';
-  document.querySelectorAll('.ev-type-btn').forEach(b => b.classList.remove('sel'));
-
-  document.getElementById('btn-sheet-cancel')?.addEventListener('click', closeEventSheet, { once: true });
-  document.getElementById('btn-sheet-save')?.addEventListener('click', saveEvent, { once: true });
-  document.querySelectorAll('.ev-type-btn').forEach(b =>
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.ev-type-btn').forEach(x => x.classList.remove('sel'));
-      b.classList.add('sel');
-    })
-  );
+  eventsController.openEventSheet();
 }
 
 function closeEventSheet() {
-  document.getElementById('event-sheet')?.classList.remove('open');
-}
-
-async function saveEvent() {
-  const typeBtn = document.querySelector('.ev-type-btn.sel');
-  const type = typeBtn?.dataset.type || 'other';
-  const note = document.getElementById('event-note')?.value.trim() || null;
-  const today = localDateStr();
-  await supabase.from('couple_events').insert({
-    couple_id: state.coupleId, event_date: today, event_type: type, note,
-    created_by: state.me?.user_id,
-    reactions: {},
-  });
-  closeEventSheet();
-  await renderEvents();
+  eventsController.closeEventSheet();
 }
