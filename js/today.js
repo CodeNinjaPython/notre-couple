@@ -210,7 +210,7 @@ export async function reloadDataAndRenderToday() {
       .select('*')
       .eq('user_id', cycleUserId)
       .eq('category_id', 'journal')
-      .gte('log_date', daysAgo(40))
+      .gte('log_date', daysAgo(60))
       : Promise.resolve({ data: [] })
   ]);
   state.currentCycle = cycle;
@@ -435,7 +435,7 @@ function renderRingChart() {
   // Contenu central façon « prédiction » (date du jour + prochaines règles + bascule fertile).
   const fmtCourt = (s) => s ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
   const centerTop  = `Aujourd'hui, ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
-  let centerMain = phaseName ? `Vous êtes en phase ${phaseName.toLowerCase()}` : `Jour ${day}`;
+  let centerMain = phaseName ? (phaseName.startsWith('Retard') ? phaseName : `Vous êtes en phase ${phaseName.toLowerCase()}`) : `Jour ${day}`;
   let centerToggleLabel = '', centerAlt = '';
   if (p?.nextPeriodDate) {
     centerMain = `Vos prochaines règles sont le ${fmtCourt(p.nextPeriodDate)}`;

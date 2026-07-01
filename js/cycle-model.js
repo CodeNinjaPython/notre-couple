@@ -446,10 +446,9 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
     }
   }
 
-  // ── Fenêtre fertile Sensiplan (Règle Döring/Sensiplan) ────────────────
-  const sensiplanFertileStart = Math.max(1, minCycleLength - 20);
-  const fertileStartDay = isOvulationConfirmed ? Math.max(1, ovulationDay - 5) : sensiplanFertileStart;
-  const fertileEndDay = ovulationDay + 1 + (stdDev > 3 ? 1 : 0);
+  // ── Fenêtre fertile clinique standard (6 jours d'ovulation + 1 jour après pour sécurité) ──
+  const fertileStartDay = Math.max(1, ovulationDay - 5);
+  const fertileEndDay = ovulationDay + 1;
 
   const fertileStart = cycleStart ? addDays(cycleStart, fertileStartDay - 1) : null;
   const fertileEnd = cycleStart ? addDays(cycleStart, fertileEndDay - 1) : null;
