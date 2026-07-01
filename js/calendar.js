@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { getMyMembership } from './pairing.js';
+import { getMyMembership, getPartnerMembership } from './pairing.js';
 import { getCycleHistory, predictNextPeriod } from './cycles.js';
 import { localDateStr } from './date-utils.js';
 import { renderSymptomTracker } from './symptoms.js';
@@ -39,7 +39,23 @@ export async function initCalendar() {
   ]);
   calState.me = me;
   calState.cycles = cycles;
-  calState.prediction = predictNextPeriod(cycles);
+
+  let logs = [];
+  if (me && cycles && cycles.length > 0) {
+    try {
+      const cycleUserId = me.tracks_cycle ? me.user_id : (await getPartnerMembership(me.couple_id))?.user_id;
+      if (cycleUserId) {
+        const { data } = await supabase
+          .from('log_entries')
+          .select('*')
+          .eq('user_id', cycleUserId)
+          .eq('category_id', 'journal')
+          .gte('log_date', cycles[0].period_start);
+        if (data) logs = data;
+      }
+    } catch (_) {}
+  }
+  calState.prediction = predictNextPeriod(cycles, logs);
 
   document.getElementById('today-date').textContent =
     new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -351,7 +367,7 @@ async function showDayDetail(dateStr) {
   } catch (_) {}
 
   // Calculer le jour et la phase dans le cycle
-  const pred = computeCyclePrediction(calState.cycles || []);
+  const pred = computeCyclePrediction(calState.cycles || [], [], dateStr);
   const cycleDay   = pred?.jourDuCycleActuel ?? null;
   const phaseName  = pred?.phaseDuCycle     ?? null;
 

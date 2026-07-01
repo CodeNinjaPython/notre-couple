@@ -1,5 +1,6 @@
 import { supabase } from './supabase.js';
 import { localDateStr } from './date-utils.js';
+import { computeCyclePrediction } from './cycle-model.js';
 
 export async function getCurrentCycle() {
   const today = localDateStr();
@@ -45,41 +46,26 @@ export async function endPeriod(cycleId) {
   if (error) throw error;
 }
 
-// Moyenne glissante sur les cycles complétés — §5 prédiction
-export function predictNextPeriod(cycles) {
-  const completed = cycles.filter(c => c.period_start && c.period_end);
-  if (completed.length < 2) return null;
-
-  const lengths = [];
-  for (let i = 0; i < completed.length - 1; i++) {
-    // Forcer interprétation locale (T12:00 évite l'ambiguïté DST)
-    const curr = new Date(completed[i].period_start     + 'T12:00:00');
-    const prev = new Date(completed[i + 1].period_start + 'T12:00:00');
-    const days = Math.round((curr - prev) / 864e5);
-    if (days >= 15 && days <= 60) lengths.push(days);
-  }
-  if (!lengths.length) return null;
-
-  const avgExact  = lengths.reduce((a, b) => a + b, 0) / lengths.length;
-  const avg       = Math.round(avgExact);
-  // Régularité : écart-type des longueurs de cycle → intervalle de confiance.
-  const variance  = lengths.reduce((s, l) => s + (l - avgExact) ** 2, 0) / lengths.length;
-  const stdDev    = Math.round(Math.sqrt(variance));
-  const regular   = lengths.length >= 3 && stdDev <= 2;
-
-  const lastStart = new Date(completed[0].period_start + 'T12:00:00');
-  const nextPeriod  = new Date(lastStart.getTime() + avg         * 864e5);
-  const ovulation   = new Date(nextPeriod.getTime()  - 14        * 864e5);
-  const fertileStart = new Date(ovulation.getTime()  - 5         * 864e5);
-
+// Moyenne glissante sur les cycles complétés — §5 prédiction (délégué au cycle-model)
+export function predictNextPeriod(cycles, dailyLogs = []) {
+  const r = computeCyclePrediction(cycles, dailyLogs);
+  if (!r) return null;
   return {
-    nextPeriodDate:  localDateStr(nextPeriod),
-    ovulationDate:   localDateStr(ovulation),
-    fertileStart:    localDateStr(fertileStart),
-    avgCycleLength:  avg,
-    stdDev,
-    regular,
-    cyclesUsed:      completed.length,
+    nextPeriodDate:  r.dateDesProchainesRegles,
+    ovulationDate:   r.ovulationDate,
+    fertileStart:    r.fertileStart,
+    fertileEnd:      r.fertileEnd,
+    avgCycleLength:  r.avgCycleLength,
+    stdDev:          r.variabilite,
+    regular:         r.confidence === 'haute',
+    cyclesUsed:      r.cyclesAnalyzed,
+    hormones:        r.hormones,
+    ovulationConfirmed: r.ovulationConfirmed,
+    detectionMethod: r.detectionMethod,
+    predictabilityScore: r.predictabilityScore,
+    fertileStartDay: r.fertileStartDay,
+    fertileEndDay:   r.fertileEndDay,
+    ovulationDay:    r.ovulationDay
   };
 }
 

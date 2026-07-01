@@ -201,9 +201,17 @@ async function updateAppBadge() {
 }
 
 export async function reloadDataAndRenderToday() {
-  const [cycle, history] = await Promise.all([
+  const cycleUserId = state.me?.tracks_cycle ? state.me.user_id : state.partner?.user_id;
+  const [cycle, history, logsResult] = await Promise.all([
     getCurrentCycle(),
     getCycleHistory(),
+    cycleUserId ? supabase
+      .from('log_entries')
+      .select('*')
+      .eq('user_id', cycleUserId)
+      .eq('category_id', 'journal')
+      .gte('log_date', daysAgo(40))
+      : Promise.resolve({ data: [] })
   ]);
   state.currentCycle = cycle;
 
@@ -217,7 +225,8 @@ export async function reloadDataAndRenderToday() {
     state.phaseName = null;
   }
 
-  state.prediction = predictNextPeriod(history);
+  const cycleLogs = logsResult?.data || [];
+  state.prediction = predictNextPeriod(history, cycleLogs);
   await loadEntriesForDate(state.logDate);
 
   renderHeader();
@@ -409,10 +418,14 @@ function renderRingChart() {
     ? new Cycle(state.currentCycle)
     : null;
 
-  const day         = cycleObj?.getDayInCycle(state.logDate) ?? 1;
-  const totalDays   = cycleObj?.dureeCycle ?? 28;
-  const fertile     = cycleObj?.getFertileWindow() ?? { start:9, end:15, ovulation:14 };
-  const phaseName   = cycleObj ? Cycle.phaseName(day, totalDays) : '';
+  const p = state.prediction;
+  const day             = cycleObj?.getDayInCycle(state.logDate) ?? 1;
+  const totalDays       = p?.avgCycleLength ?? cycleObj?.dureeCycle ?? 28;
+  const periodDays      = p?.avgPeriodDuration ?? cycleObj?.dureeRegles ?? 5;
+  const fertileStartDay = p?.fertileStartDay ?? cycleObj?.getFertileWindow().start ?? 9;
+  const fertileEndDay   = p?.fertileEndDay ?? cycleObj?.getFertileWindow().end ?? 15;
+  const ovulationDay    = p?.ovulationDay ?? cycleObj?.getFertileWindow().ovulation ?? 14;
+  const phaseName       = p?.phaseDuCycle ?? (cycleObj ? Cycle.phaseName(day, totalDays, periodDays) : '');
 
   // Jours avec données saisies dans le cycle en cours
   const loggedSet = new Set(
@@ -421,7 +434,6 @@ function renderRingChart() {
 
   // Contenu central façon « prédiction » (date du jour + prochaines règles + bascule fertile).
   const fmtCourt = (s) => s ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
-  const p = state.prediction;
   const centerTop  = `Aujourd'hui, ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
   let centerMain = phaseName ? `Vous êtes en phase ${phaseName.toLowerCase()}` : `Jour ${day}`;
   let centerToggleLabel = '', centerAlt = '';
@@ -436,10 +448,10 @@ function renderRingChart() {
   renderCycleRing(ring, {
     totalDays,
     currentDay:   day,
-    periodDays:   cycleObj?.dureeRegles ?? 5,
-    fertileStart: fertile.start,
-    fertileEnd:   fertile.end,
-    ovulationDay: fertile.ovulation,
+    periodDays,
+    fertileStart: fertileStartDay,
+    fertileEnd:   fertileEndDay,
+    ovulationDay,
     phaseName,
     loggedDays:   loggedSet,
     centerTop,
@@ -1131,9 +1143,15 @@ function renderPrediction() {
     daysUntil === 0 ? "aujourd'hui" : `il y a ${-daysUntil} j`;
   const margin = p.stdDev >= 1 ? ` ± ${Math.round(p.stdDev)} j` : '';
   document.getElementById('pred-next-date').textContent = fmt(nextDate) + margin;
-  document.getElementById('pred-ovulation').textContent = fmt(oDate);
-  document.getElementById('pred-avg').textContent =
-    `${p.avgCycleLength} j${p.cyclesUsed >= 4 ? (p.regular ? ' · régulier' : ' · irrégulier') : ''}`;
+
+  // Rendu avancé ovulation
+  const ovConfirmedIcon = p.ovulationConfirmed ? ' <span style="font-size:0.85em;color:var(--violet);cursor:help" title="Confirmé par biomarqueurs">✓</span>' : '';
+  const detectionTooltip = p.detectionMethod ? ` title="Méthode : ${p.detectionMethod}" style="cursor:help;border-bottom:1px dashed var(--violet)"` : '';
+  document.getElementById('pred-ovulation').innerHTML = `<span${detectionTooltip}>${fmt(oDate)}</span>${ovConfirmedIcon}`;
+
+  // Rendu avancé régularité
+  const regularityText = p.predictabilityScore != null ? `<br><span style="font-size:0.75em;opacity:0.7">${p.predictabilityScore}% régulier</span>` : '';
+  document.getElementById('pred-avg').innerHTML = `${p.avgCycleLength} j${regularityText}`;
 }
 
 // --- Toast in-app ----------------------------------------------------------

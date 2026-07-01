@@ -1,61 +1,49 @@
-# Walkthrough des améliorations implémentées - Refontes Espace Intime
+# Walkthrough : Intégration du Super Algorithme Sympto-Thermique (v3.0)
 
-Toutes les tâches prévues pour la refonte de l'Espace Intime ont été implémentées et vérifiées avec succès. Voici le récapitulatif détaillé.
-
----
-
-## 1. Architecture & Mise en page
-
-### Calendrier intime en haut
-- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : La carte contenant le calendrier intime (`#intime-cal-card`) a été déplacée au tout début de la section Journal (`#intime-section-journal`), juste en dessous de l'en-tête de page, pour lui accorder la priorité visuelle absolue.
-
-### Deux boutons d'action : Moment à deux / Moment solo
-- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : L'ancienne zone "Quick Add" a été remplacée par deux boutons côte à côte :
-  - **💞 Moment à deux** : initie une saisie classique.
-  - **🙋 Moment solo** : initie une saisie solo (coche automatiquement la case solo).
-- **[intimacy.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/intimacy.js)** : Branchement des écouteurs sur ces nouveaux boutons. Ils appellent `openFullSessionSheet` et déclenchent le changement d'état du bouton solo de manière réactive.
-
-### Suppression de l'Aperçu de l'année indépendant
-- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : Retrait de l'ancienne carte rétractable "Aperçu de l'année" de l'onglet de suivi de cycle.
-- **[calendar.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/calendar.js)** : Suppression de la fonction obsolète `renderYearOverview()` et de ses appels/écouteurs.
+L'algorithme de prédiction menstruelle a été mis à jour vers la version **v3.0 clinique et sympto-thermique** (basée sur les règles européennes **Sensiplan**). 
 
 ---
 
-## 2. Refonte Design (UI/UX)
+## 🛠️ Modifications Effectuées
 
-### Sous-navigation en commutateur capsule (Pill nav)
-- **[app.css](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/css/app.css)** : Stylisation des boutons de navigation de l'espace intime (`#intime-sub-nav` et `.sub-nav-btn`) pour copier le style exact du commutateur `.who` de l'application (angles arrondis, bordures douces, arrière-plan et dégradé rose actif).
-- **Modernisation des boutons** : Les boutons Couple (`.btn-quick-add-couple`) et Solo (`.btn-quick-add-solo`) sont stylisés avec les codes couleurs de l'application pour offrir une distinction visuelle immédiate.
+### 1. Modèle de données & Algorithme pure
+#### [js/cycle-model.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/cycle-model.js)
+*   **Mise à niveau de `computeCyclePrediction`** :
+    *   **Moyenne mobile pondérée** : Les 12 derniers cycles max sont analysés, en donnant une importance croissante aux plus récents (WMA).
+    *   **Règle Thermique 3/6 Sensiplan** : Détection du décalage de température basale (BBT) d'au moins $0,2^\circ\text{C}$ pendant 3 jours consécutifs par rapport aux 6 jours précédents.
+    *   **Double-contrôle biologique** : Recoupage automatique des données thermiques avec les tests d'ovulation (LH) et le pic de glaire cervicale fertile ("filante" ou "aqueuse").
+    *   **Alerte Retard dynamique** : Remplacement des phases statiques par un état `Retard de règles (J+X)` si le cycle dépasse la prévision moyenne.
+    *   **Score de Régularité** : Pourcentage basé sur l'écart-type des cycles.
+*   **Ajout de `calculateHormones(day, cycleLength, ovulationDay)`** : Modélisation des variations physiologiques quotidiennes des taux d'œstrogènes, de progestérone, de LH et de FSH (0 à 100 %).
 
----
+### 2. Couche API / Logique de cycle
+#### [js/cycles.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/cycles.js)
+*   Refactorisation de `predictNextPeriod` pour déléguer les calculs à `computeCyclePrediction` de manière propre, assurant le transfert de la méthode de détection, du score de régularité, des indicateurs d'ovulation confirmée et des taux hormonaux.
 
-## 3. Évolution du Calendrier intime (Vue Année défilante)
+### 3. Vues et Rendu UI
+#### [js/today.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/today.js)
+*   **Récupération des données cliniques** : Requête asynchrone pour charger les journaux (`log_entries`) du cycle en cours pour l'utilisateur qui suit le cycle.
+*   **Enrichissement du Rendu** :
+    *   *Ovulation* : Affichage d'un crochet violet `✓` si l'ovulation a été biologiquement confirmée (par température/LH/glaire), et infobulle indiquant la méthode utilisée (ex: *Test LH*, *Thermique stricte*).
+    *   *Régularité* : Affichage du pourcentage de régularité du cycle calculé (ex: *91% régulier*).
 
-- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** :
-  - Intégration d'un bouton Toggle Mois/Année (au style `.who` avec dégradé rose) dans la carte du Calendrier intime.
-  - Ajout d'une feuille d'overlay plein écran `#intime-year-overlay` pour l'affichage annuel.
-- **[intimacy-calendar.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/intimacy-calendar.js)** :
-  - Gestion réactive du Toggle : l'affichage annuel ouvre l'overlay vertical défilant.
-  - Rendu des 12 mois de l'année de haut en bas.
-  - Représentation combinée : affiche les règles (en rouge) et les rapports intimes (en doré) avec un dégradé bi-colore (les deux) pour chaque jour de l'année.
-  - Boutons de navigation par année (`intime-yr-prev` / `intime-yr-next`) et bouton retour (`✕`) pour fermer et retourner à la vue mensuelle.
-
----
-
-## 4. Logique dynamique « Moment Solo »
-
-- **[intimacy-sessions.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/intimacy-sessions.js)** :
-  - Écoute du changement sur le checkbox `#session-solo` et application de la classe `.is-solo` sur le conteneur du formulaire `#session-sheet`.
-  - Intégration et sauvegarde du champ `solo_toys` (Sextoys / Accessoires solo) dans le payload JSON.
-- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** & **[app.css](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/css/app.css)** :
-  - Ajout des classes `.solo-only` (ex: films olé olé, sextoys) et `.couple-only` (ex: positions, pratiques reçues, protection partenaire, éjaculation).
-  - Les règles CSS masquent dynamiquement les sections non pertinentes selon que le mode solo est coché ou non à chaque étape.
+#### [js/calendar.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/calendar.js)
+*   **Prédictions à jour** : Récupération des logs du cycle en cours de la partenaire et transmission à `predictNextPeriod` pour que les couleurs et la fenêtre fertile du calendrier reflètent la réalité sympto-thermique.
+*   **Correction de bug** : Dans la vue de détail journalière, transmission du jour sélectionné (`dateStr`) à `computeCyclePrediction` au lieu de `today`, affichant ainsi le bon jour de cycle dans le résumé du calendrier.
 
 ---
 
-## 5. Fiche détaillée & Coche réversible de la Bibliothèque de Positions
+## 🚦 Validation & Tests
+Nous avons exécuté le script de validation de commit de l'application :
+```bash
+node scripts/validate.mjs
+```
+*   **Syntaxe (node --check)** : Validé sur 100% des fichiers JS.
+*   **Graphe import/export** : Vérifié sans imports non résolus.
+*   **Tests unitaires (pur Node)** : **17/17 tests passés** sans régression.
 
-- **[index.html](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/index.html)** : Ajout du slide-up overlay `#position-detail-sheet` contenant le descriptif complet de la position et les actions.
-- **[intimacy.js](file:///Users/jeremiefavre/Documents/GitHub/notre-couple/js/intimacy.js)** :
-  - Le clic sur une position de la bibliothèque ouvre le popup de détails avec son illustration SVG, sa description, sa difficulté et ses phases recommandées.
-  - Implémentation du bouton réversible « Noter pour aujourd'hui » / « Retirer d'aujourd'hui ». Le clic ajoute ou supprime instantanément la position du log journalier dans Supabase, avec une mise à jour visuelle réactive en temps réel sur la bibliothèque (`.pos-card--logged`).
+---
+
+## 🔍 Aide au repassage / Revue de code
+Pour faciliter le travail de re-vérification de Claude et économiser des tokens, un fichier patch contenant l'intégralité du diff Git des modifications est disponible ici :
+*   [git_diff.patch](file:///Users/jeremiefavre/.gemini/antigravity/brain/c1f2f4e0-2587-42e5-8e27-40cbe10a5ee0/git_diff.patch)

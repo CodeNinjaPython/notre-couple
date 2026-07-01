@@ -329,25 +329,56 @@ const FLUX_LABELS = {
  *   - avgPeriodDuration     Int (moyenne durée règles)
  *   - confidence            'haute' | 'moyenne' | 'faible'
  */
-export function computeCyclePrediction(cyclesHistory = []) {
-  const completed = cyclesHistory.filter(c => c.period_start && c.period_end);
-  const sample    = completed.slice(0, 6);
-  const today     = localDateStr();
+export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today = localDateStr()) {
+  const completed = cyclesHistory
+    .filter(c => c.period_start && c.period_end)
+    .map(c => {
+      const start = new Date(c.period_start + 'T12:00:00');
+      const end = new Date(c.period_end + 'T12:00:00');
+      return {
+        startStr: c.period_start,
+        duration: Math.max(1, Math.min(10, Math.round((end - start) / 864e5) + 1))
+      };
+    })
+    .sort((a, b) => b.startStr.localeCompare(a.startStr)); // Du plus récent au plus ancien
+
+  if (completed.length < 2) return null;
 
   // ── Durées de cycles (inter-débuts) ───────────────────────────────────
   const cycleLengths = [];
-  for (let i = 0; i < sample.length - 1; i++) {
-    const days = diffDays(sample[i].period_start, sample[i + 1].period_start);
-    if (days >= 15 && days <= 60) cycleLengths.push(days);
+  for (let i = 0; i < completed.length - 1; i++) {
+    const curr = new Date(completed[i].startStr + 'T12:00:00');
+    const prev = new Date(completed[i + 1].startStr + 'T12:00:00');
+    const length = Math.round((curr - prev) / 864e5);
+    if (length >= 15 && length <= 50) cycleLengths.push(length);
   }
-  const avgCycleLength = cycleLengths.length
-    ? Math.round(cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length)
-    : 28;
 
-  // ── Durées de règles (fin - début + 1) ───────────────────────────────
-  const periodDurations = sample.map(c =>
-    Math.max(1, Math.min(10, diffDays(c.period_end, c.period_start) + 1))
-  );
+  const nSample = Math.min(12, cycleLengths.length); // Sensiplan recommande d'analyser jusqu'à 12 cycles
+  const recentLengths = cycleLengths.slice(0, nSample);
+
+  let avgCycleLength = 29;
+  let minCycleLength = 28;
+  let maxCycleLength = 30;
+  let stdDev = 0;
+
+  if (nSample > 0) {
+    minCycleLength = Math.min(...recentLengths);
+    maxCycleLength = Math.max(...recentLengths);
+
+    // WMA (Moyenne mobile pondérée)
+    const weights = Array.from({ length: nSample }, (_, i) => nSample - i);
+    const sumWeights = weights.reduce((a, b) => a + b, 0);
+    const weightedSum = recentLengths.reduce((sum, len, idx) => sum + (len * weights[idx]), 0);
+    avgCycleLength = Math.round(weightedSum / sumWeights);
+
+    // Écart-type (variabilité)
+    const mean = recentLengths.reduce((a, b) => a + b, 0) / nSample;
+    const variance = recentLengths.reduce((s, l) => s + (l - mean) ** 2, 0) / nSample;
+    stdDev = Math.round(Math.sqrt(variance) * 10) / 10;
+  }
+
+  // ── Durées de règles ─────────────────────────────────────────────────
+  const periodDurations = completed.slice(0, 6).map(c => c.duration);
   const avgPeriodDuration = periodDurations.length
     ? Math.round(periodDurations.reduce((a, b) => a + b, 0) / periodDurations.length)
     : 5;
@@ -355,42 +386,107 @@ export function computeCyclePrediction(cyclesHistory = []) {
   // ── Cycle actuel ──────────────────────────────────────────────────────
   const openCycle = cyclesHistory.find(c => c.period_start && !c.period_end);
   const cycleStart = openCycle?.period_start
-    ?? (sample[0] ? addDays(sample[0].period_start, avgCycleLength) : null);
+    ?? (completed[0] ? addDays(completed[0].startStr, avgCycleLength) : null);
 
   const jourDuCycleActuel = cycleStart
     ? Math.max(1, diffDays(today, cycleStart) + 1)
     : null;
 
-  const phaseDuCycle = jourDuCycleActuel
-    ? Cycle.phaseName(jourDuCycleActuel, avgCycleLength, avgPeriodDuration)
-    : null;
+  // ── Estimation de la phase lutéale individuelle ────────────────────────
+  let personalLutealPhase = 14;
+
+  // ── Détection de l'ovulation (Double-contrôle Sympto-thermique) ───────
+  let ovulationDay = avgCycleLength - personalLutealPhase;
+  let isOvulationConfirmed = false;
+  let detectionMethod = 'Calendaire (par défaut)';
+
+  // Normalisation des logs de cycle
+  const logsList = Array.isArray(dailyLogs) ? dailyLogs : [];
+
+  // A. Décalage thermique (Règle 3 sur 6)
+  if (cycleStart) {
+    const temperatures = logsList
+      .filter(log => log.log_date && log.value?.temperatureBasale != null)
+      .map(log => ({
+        day: diffDays(log.log_date, cycleStart) + 1,
+        temp: parseFloat(log.value.temperatureBasale)
+      }))
+      .filter(t => t.day >= 1 && t.day <= 35)
+      .sort((a, b) => a.day - b.day);
+
+    if (temperatures.length >= 9) {
+      for (let i = 6; i < temperatures.length - 2; i++) {
+        const preceding6 = temperatures.slice(i - 6, i).map(t => t.temp);
+        const following3 = temperatures.slice(i, i + 3).map(t => t.temp);
+        const maxPreceding = Math.max(...preceding6);
+        const minFollowing = Math.min(...following3);
+
+        if (minFollowing > maxPreceding && (following3[2] - maxPreceding) >= 0.2) {
+          const thermalShiftDay = temperatures[i].day;
+          ovulationDay = thermalShiftDay - 1;
+          isOvulationConfirmed = true;
+          detectionMethod = 'Thermique stricte (Sensiplan 3/6)';
+          break;
+        }
+      }
+    }
+  }
+
+  // B. Recalibrage LH / Glaire
+  if (cycleStart) {
+    const positiveLHLog = logsList.find(log => log.log_date && log.value?.testOvulation === 'positif');
+    const peakMucusLog = logsList.filter(log => log.log_date && ['filantes', 'aqueuse'].includes(log.value?.glaireCervicale));
+
+    if (positiveLHLog) {
+      const lhDay = diffDays(positiveLHLog.log_date, cycleStart) + 1;
+      ovulationDay = lhDay + 1;
+      detectionMethod = isOvulationConfirmed ? 'Double contrôle (Température + LH)' : 'Test LH';
+    } else if (peakMucusLog.length > 0 && isOvulationConfirmed) {
+      detectionMethod = 'Double contrôle (Température + Glaire)';
+    }
+  }
+
+  // ── Fenêtre fertile Sensiplan (Règle Döring/Sensiplan) ────────────────
+  const sensiplanFertileStart = Math.max(1, minCycleLength - 20);
+  const fertileStartDay = isOvulationConfirmed ? Math.max(1, ovulationDay - 5) : sensiplanFertileStart;
+  const fertileEndDay = ovulationDay + 1 + (stdDev > 3 ? 1 : 0);
+
+  const fertileStart = cycleStart ? addDays(cycleStart, fertileStartDay - 1) : null;
+  const fertileEnd = cycleStart ? addDays(cycleStart, fertileEndDay - 1) : null;
+  const ovulationDate = cycleStart ? addDays(cycleStart, ovulationDay - 1) : null;
+
+  // ── Définition dynamique de la phase et gestion des anomalies (Retard) ──
+  let phaseDuCycle = 'Lutéale tardive';
+  if (jourDuCycleActuel) {
+    if (jourDuCycleActuel <= avgPeriodDuration) {
+      phaseDuCycle = 'Menstruelle';
+    } else if (jourDuCycleActuel >= avgCycleLength + 1) {
+      phaseDuCycle = `Retard de règles (J+${jourDuCycleActuel - avgCycleLength})`;
+    } else if (jourDuCycleActuel < fertileStartDay) {
+      phaseDuCycle = 'Folliculaire précoce';
+    } else if (jourDuCycleActuel >= fertileStartDay && jourDuCycleActuel < ovulationDay - 1) {
+      phaseDuCycle = 'Folliculaire tardive';
+    } else if (jourDuCycleActuel >= ovulationDay - 1 && jourDuCycleActuel <= ovulationDay + 1) {
+      phaseDuCycle = 'Ovulation';
+    } else if (jourDuCycleActuel > ovulationDay + 1 && jourDuCycleActuel <= avgCycleLength - 7) {
+      phaseDuCycle = 'Lutéale précoce';
+    }
+  } else {
+    phaseDuCycle = null;
+  }
 
   // ── Prochaines règles ─────────────────────────────────────────────────
   const dateDesProchainesRegles = cycleStart
     ? addDays(cycleStart, avgCycleLength)
     : null;
 
-  // ── Fenêtre fertile ───────────────────────────────────────────────────
-  let ovulationDate = null, fertileStart = null, fertileEnd = null;
-  if (dateDesProchainesRegles) {
-    const ov = new Date(dateDesProchainesRegles + 'T12:00:00');
-    ov.setDate(ov.getDate() - 14);
-    ovulationDate = localDateStr(ov);
-    fertileStart  = localDateStr(new Date(ov.getTime() - 5 * 864e5));
-    fertileEnd    = localDateStr(new Date(ov.getTime() + 864e5));
-  }
-
-  // Variabilité (écart-type des durées) ←── NOUVEAU
-  let variabilite = 0;
-  if (cycleLengths.length > 1) {
-    const mean2 = cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length;
-    const v2    = cycleLengths.reduce((s, l) => s + (l - mean2) ** 2, 0) / cycleLengths.length;
-    variabilite = Math.round(Math.sqrt(v2) * 10) / 10;
-  }
-
-  const confidence = cycleLengths.length >= 4 ? 'haute'
-                   : cycleLengths.length >= 2 ? 'moyenne'
+  const confidence = nSample >= 4 ? 'haute'
+                   : nSample >= 2 ? 'moyenne'
                    : 'faible';
+
+  // ── Modélisation Hormonale Théorique ──────────────────────────────────
+  const hormones = jourDuCycleActuel ? calculateHormones(jourDuCycleActuel, avgCycleLength, ovulationDay) : null;
+  const predictabilityScore = Math.max(0, Math.min(100, Math.round(100 - (stdDev / avgCycleLength) * 300)));
 
   return {
     jourDuCycleActuel,
@@ -398,18 +494,70 @@ export function computeCyclePrediction(cyclesHistory = []) {
     dateDesProchainesRegles,
     avgCycleLength,
     avgPeriodDuration,
-    variabilite,        // ← écart-type des durées de cycles (jours)
+    variabilite: stdDev, // rétrocompatibilité
     ovulationDate,
     fertileStart,
     fertileEnd,
     confidence,
-    cyclesAnalyzed: sample.length,
+    cyclesAnalyzed: completed.length,
+    hormones,
+    ovulationConfirmed: isOvulationConfirmed,
+    detectionMethod,
+    predictabilityScore,
+    fertileStartDay,
+    fertileEndDay,
+    ovulationDay
+  };
+}
+
+/** Modélisation mathématique des courbes d'hormones (niveaux en %) */
+function calculateHormones(day, cycleLength, ovulationDay) {
+  const d = parseFloat(day);
+  const l = parseFloat(cycleLength);
+  const ov = parseFloat(ovulationDay);
+
+  // Œstrogènes : pic à J-1 avant l'ovulation, et deuxième pic au milieu de la phase lutéale
+  let estrogen = 10;
+  if (d <= ov) {
+    estrogen = 10 + 80 * Math.exp(-Math.pow(d - (ov - 1), 2) / 12);
+  } else {
+    const lutealPeak = ov + 7;
+    const estrogenLuteal = 45 * Math.exp(-Math.pow(d - lutealPeak, 2) / 16);
+    const mensesDrop = 10 + 15 / (1 + Math.exp((d - (l - 2)) / 1));
+    estrogen = Math.max(10, estrogenLuteal + mensesDrop);
+  }
+
+  // Progestérone : très basse en phase folliculaire, monte après l'ovulation, pic à J+7 et chute brutale
+  let progesterone = 2;
+  if (d <= ov) {
+    progesterone = 2 + 3 * (d / ov);
+  } else {
+    const lutealPeak = ov + 7;
+    progesterone = 5 + 85 * Math.exp(-Math.pow(d - lutealPeak, 2) / 14);
+    if (d > l - 3) {
+      progesterone = 5 + (progesterone - 5) * Math.max(0, (l - d) / 3);
+    }
+  }
+
+  // LH : pic très court et intense 24-36h avant l'ovulation
+  const lh = 5 + 95 * Math.exp(-Math.pow(d - (ov - 1), 2) / 1.5);
+
+  // FSH : petit pic de recrutement au départ, pic à l'ovulation
+  const fshStart = 18 * Math.exp(-Math.pow(d - 2, 2) / 4);
+  const fshOv = 25 * Math.exp(-Math.pow(d - (ov - 1), 2) / 2);
+  const fsh = 5 + fshStart + fshOv;
+
+  return {
+    estrogen: Math.round(estrogen),
+    progesterone: Math.round(progesterone),
+    lh: Math.round(lh),
+    fsh: Math.round(fsh)
   };
 }
 
 // ── Les fonctions suivantes restent exportées pour compatibilité ───────────
-export function predictNextPeriodAdvanced(cyclesHistory = []) {
-  const r = computeCyclePrediction(cyclesHistory);
+export function predictNextPeriodAdvanced(cyclesHistory = [], dailyLogs = []) {
+  const r = computeCyclePrediction(cyclesHistory, dailyLogs);
   if (!r?.dateDesProchainesRegles) return null;
   return {
     nextPeriodDate: r.dateDesProchainesRegles,
@@ -421,6 +569,10 @@ export function predictNextPeriodAdvanced(cyclesHistory = []) {
     fertileStart:  r.fertileStart,
     fertileEnd:    r.fertileEnd,
     ovulationDay:  r.avgCycleLength - 14,
+    hormones:      r.hormones,
+    ovulationConfirmed: r.ovulationConfirmed,
+    detectionMethod: r.detectionMethod,
+    predictabilityScore: r.predictabilityScore
   };
 }
 
