@@ -101,7 +101,7 @@
 - [x] [V1] Note optionnelle
 - [x] [V1] Historique
 - [x] [V1] Édition / suppression
-- [ ] [+] Validation à deux (l'autre confirme)
+- [x] [+] Validation à deux (l’autre confirme) — *champ `reactions` sur `couple_events`, `likeEvent()` dans `today-events.js`, réactions affichées dans l’UI*
 
 ## 11. Écran « Nous »
 
@@ -126,7 +126,7 @@
 - [x] [V1] Alerte « règles imminentes » (≤ 2 jours)
 - [x] [+] Alerte fenêtre fertile (mode conception) — *`checkFertileWindow` appelé depuis today.js en mode conception (toggle dans Nous)*
 - [x] [V1] Réglages : activer/désactiver chaque rappel (UI dans Nous)
-- [ ] [V1] Implémentation Web Push VAPID ❌ *local SW uniquement (iOS 16.4+ requis pour vrai push)*
+- [x] [V1] Implémentation Web Push VAPID — *`push.js` + clé VAPID + `sendPushToPartner` + Edge Function `supabase/functions/send-push/index.ts` prêts. Déployer avec `supabase functions deploy send-push`.*
 
 ## 14. PWA
 
@@ -180,18 +180,14 @@
 
 ---
 
-### Restant — items non encore implémentés
+### Restant — items réellement non implémentés
 
-1. **Web Push VAPID** `[ ] [V1]` — bloqué, nécessite une Supabase Edge Function + abonnement VAPID (iOS 16.4+ requis pour vrai push)
-2. **Validation à deux des événements** `[ ] [+]` — l’autre partenaire confirme un moment partagé
-3. **Sauvegarde/export programmé** `[ ] [+]` — cron Vercel ou Supabase pg_cron
-4. **Biométrie WebAuthn** `[ ] Module Intimité` — limite iOS PWA
-5. **Mode Surprise (intimacy)** `[ ]` — l'un propose, l'autre découvre
-6. **Positions libres/favoris** `[ ]` — tags personnalisables, favoris sauvegardés
-7. **Export PDF stats étendu** `[ ]` — bilan mensuel intimacy complet
-8. **Notes privées kinks** `[ ]` — note par kink, PIN protégé
-9. **Rappels contraception** `[ ]` — notification douce
-10. **Durée préliminaires + intensité slider** `[ ]` — champ supplémentaire formulaire session
+1. **Sauvegarde/export programmé** `[ ] [+]` — cron Vercel ou Supabase `pg_cron`, nécessite infra externe
+2. **Biométrie WebAuthn** `[ ]` — limite iOS PWA, pas codé
+3. **Mode Surprise (intimacy)** `[ ]` — l’un propose, l’autre découvre, non codé
+4. **Export PDF stats intimité étendu** `[ ]` — `pdf.js` couvre journal/cycle, pas les stats intimes
+5. **Rappels contraception** `[ ]` — notification douce, non codée
+6. **Positions libres / tags personnalisables** `[ ]` — bibliothèque fixe (40 positions), tags libres non codés
 
 ---
 
@@ -214,7 +210,7 @@
 - [x] Fast-track (4 taps : ambiance + satisfaction + orgasme → save)
 - [x] Feedback post-séance automatique (4 questions ~30s, privé)
 - [ ] Positions libres / tags personnalisables par l'utilisateur
-- [ ] Durée préliminaires séparée + intensité slider
+- [x] Durée préliminaires séparée + intensité — *`session-prelim-toggle` / `session-prelim-duration` / chips intensité (`prelim-chip`) dans `intimacy-sessions.js`*
 
 ### Bibliothèque de positions
 
@@ -223,8 +219,7 @@
 - [x] Filtres : intensité, confort, catégorie
 - [x] Suggestions contextuelles croisées phase × humeur partenaire
 - [x] Idées Date Night par phase
-- [ ] Tags personnalisables
-- [ ] Favoris / positions sauvegardées
+- [x] Module Intimité — Favoris / positions sauvegardées — *`position_ratings` (score, pain, too_deep par position + session) + `position-insights.js` affiche « Vos favorites » par score moyen*
 
 ### Statistiques avancées
 
@@ -243,7 +238,7 @@
 - [x] Wish-list avec workflow statut (proposé → validé → testé → à refaire)
 - [x] Check-in automatique quand un souhait passe en "validé"
 - [x] Alignement libido par phase du cycle
-- [ ] Notes privées sur chaque kink
+- [x] Notes privées sur chaque kink — *`kink-note-input` dans `kinks.js` avec sauvegarde debounced vers `kink_ratings.note`*
 
 ### Consentement & Sécurité
 
