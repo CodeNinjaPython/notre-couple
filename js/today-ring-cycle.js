@@ -117,9 +117,17 @@ export function renderTodayRingChart({
 
   const daySignal = new Map();
   let flowByDay = {};
+  // Fallback : si pas de cycle ouvert, calculer le jour via cycleStart de la prédiction
+  const cycleStartStr = state.currentCycle?.period_start ?? p?.cycleStart ?? null;
+  const getDayForLog = (logDate) => {
+    if (cycleObj) return cycleObj.getDayInCycle(logDate);
+    if (!cycleStartStr) return null;
+    const delta = diffDays(logDate, cycleStartStr) + 1;
+    return (delta >= 1 && delta <= totalDays) ? delta : null;
+  };
   for (const row of ringLogs) {
     if (!row?.log_date || row?.user_id !== ringUserId) continue;
-    const d = cycleObj?.getDayInCycle(row.log_date);
+    const d = getDayForLog(row.log_date);
     if (!d || d < 1 || d > totalDays) continue;
 
     const cat = row.category_id;

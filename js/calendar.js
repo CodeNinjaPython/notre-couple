@@ -274,15 +274,13 @@ function buildPredictionMap() {
     map[localDateStr(d)] = 'period';
   }
 
-  // Fenêtre fertile du cycle EN COURS — seulement si l'ovulation est encore à venir
+  // Fenêtre fertile du cycle EN COURS (passée ou future — toujours affichée)
   if (p.fertileStart && p.ovulationDate) {
     const fertile = new Date(p.fertileStart + 'T12:00:00');
     const ovul    = new Date(p.ovulationDate + 'T12:00:00');
-    if (ovul >= today) {
-      for (let d = new Date(fertile); d <= ovul; d = new Date(d.getTime() + 864e5)) {
-        const s = localDateStr(d);
-        if (!map[s]) map[s] = (s === p.ovulationDate) ? 'ovulation' : 'fertile';
-      }
+    for (let d = new Date(fertile); d <= ovul; d = new Date(d.getTime() + 864e5)) {
+      const s = localDateStr(d);
+      if (!map[s]) map[s] = (s === p.ovulationDate) ? 'ovulation' : 'fertile';
     }
   }
 
