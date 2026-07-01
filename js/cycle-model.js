@@ -375,8 +375,10 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
     minCycleLength = Math.min(...base);
     maxCycleLength = Math.max(...base);
 
-    // WMA (moyenne mobile pondérée) : les cycles récents pèsent davantage.
-    const weights = Array.from({ length: nSample }, (_, i) => nSample - i);
+    // WMA (moyenne mobile pondérée) : poids quadratique → les cycles récents
+    // dominent, pour que la prévision suive le rythme actuel plutôt que d'anciens
+    // cycles plus courts/longs.
+    const weights = Array.from({ length: nSample }, (_, i) => (nSample - i) ** 2);
     const sumWeights = weights.reduce((a, b) => a + b, 0);
     const weightedSum = base.reduce((sum, len, idx) => sum + (len * weights[idx]), 0);
     avgCycleLength = Math.round(weightedSum / sumWeights);
