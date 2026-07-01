@@ -303,7 +303,7 @@ function renderPredictionPanel() {
       </div>
       <div class="pred-item">
         <div class="pred-label">Cycle moyen</div>
-        <div class="pred-val">${p.avgCycleLength} jours</div>
+        <div class="pred-val">${p.avgCycleLength} jours${p.predictabilityScore != null ? `<br><span style="font-size:0.7em;opacity:0.7">${p.predictabilityScore}% régulier</span>` : ''}</div>
       </div>
     </div>
     <div class="pred-disclaimer">Basé sur ${p.cyclesUsed} cycles · indicatif, pas un outil contraceptif.</div>`;
