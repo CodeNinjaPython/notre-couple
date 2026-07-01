@@ -1,9 +1,16 @@
-const CACHE = 'notre-rythme-v106';
+const APP_VERSION = '2026.07.01';
+const CACHE = `notre-rythme-shell-${APP_VERSION}`;
+const CACHE_PREFIX = 'notre-rythme-';
 const SHELL = [
   '/',
   '/index.html',
   '/css/app.css',
   '/js/app.js',
+  '/js/intimacy-session-options.js',
+  '/js/session-wizard.js',
+  '/js/intimacy-position-ratings.js',
+  '/js/intimacy-fast-track.js',
+  '/js/intimacy-feedback.js',
   '/js/config.js',
   '/js/supabase.js',
   '/js/auth.js',
@@ -33,7 +40,8 @@ const SHELL = [
   '/js/collapse.js',
   '/js/cycle-model.js',
   '/js/ring-chart.js',
-  '/js/daily-log-ui.js',  '/js/types.js',
+  '/js/daily-log-ui.js',
+  '/js/types.js',
   '/js/crypto-notes.js',
   '/js/insights.js',
   '/js/intimacy-heatmap.js',
@@ -49,6 +57,10 @@ const SHELL = [
   '/js/position-insights.js',
   '/js/cycle-coaching.js',
   '/js/labels.js',
+  '/js/today-ring-cycle.js',
+  '/js/today-metrics.js',
+  '/js/today-events.js',
+  '/js/today-predictions.js',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
@@ -57,7 +69,7 @@ const SHELL = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(SHELL))
+    precacheShell()
   );
   self.skipWaiting();
 });
@@ -65,7 +77,9 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys
+        .filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE)
+        .map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -98,27 +112,58 @@ self.addEventListener('notificationclick', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
+  if (e.request.method !== 'GET') {
+    return;
+  }
+
   // Supabase API — toujours réseau
   if (url.hostname.includes('supabase.co') || url.hostname === 'esm.sh') {
     return;
   }
 
-  // Navigation — retourner index.html depuis le cache (SPA)
+  // Navigation — réseau d'abord pour éviter de rester bloqué sur un vieux shell.
   if (e.request.mode === 'navigate') {
-    e.respondWith(
-      caches.match('/index.html').then(r => r || fetch(e.request))
-    );
+    e.respondWith(networkFirst(e.request, '/index.html'));
     return;
   }
 
-  // Assets shell — cache first
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-      if (res.ok && SHELL.includes(url.pathname)) {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-      }
-      return res;
-    }))
-  );
+  // Assets shell — réponse cache immédiate, mise à jour réseau en arrière-plan.
+  if (SHELL.includes(url.pathname)) {
+    e.respondWith(staleWhileRevalidate(e.request));
+  }
 });
+
+async function networkFirst(request, fallbackPath) {
+  const cache = await caches.open(CACHE);
+  try {
+    const fresh = await fetch(request);
+    if (fresh.ok) cache.put(fallbackPath, fresh.clone());
+    return fresh;
+  } catch (_) {
+    return (await caches.match(fallbackPath)) || caches.match('/index.html');
+  }
+}
+
+async function precacheShell() {
+  const cache = await caches.open(CACHE);
+  await Promise.all(SHELL.map(async path => {
+    try {
+      const res = await fetch(path, { cache: 'reload' });
+      if (res.ok) await cache.put(path, res);
+    } catch (_) {}
+  }));
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(request);
+  const fresh = fetch(request).then(res => {
+    if (res.ok) cache.put(request, res.clone());
+    return res;
+  });
+  if (cached) {
+    fresh.catch(() => {});
+    return cached;
+  }
+  return fresh;
+}
