@@ -94,9 +94,9 @@ export function renderCycleRing(container, params = {}) {
   let periodArc = '';
   for (let d = 1; d <= periodDays; d++) {
     const intensity = Number(flowByDay?.[d]);
-    const alpha = Number.isFinite(intensity)
-      ? Math.max(0.35, Math.min(1, intensity))
-      : 0.42;
+    const alpha = Number.isFinite(intensity) && intensity > 0
+      ? Math.max(0.55, Math.min(1, intensity))
+      : 0.88;
     periodArc += arc(dayStartDeg(d) + GAP, dayEndDeg(d) - GAP, ARC_SW, `rgba(220,38,38,${alpha.toFixed(2)})`, 1);
   }
   const fertileArc = (fertileEnd >= fertileStart)

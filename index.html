@@ -325,8 +325,15 @@
       <!-- ① Anneau de cycle SVG (pièce maîtresse) -->
       <div class="ring-wrap">
         <div id="cycle-ring" aria-live="polite"></div>
-        <div id="ring-legend"></div>
+        <div id="ring-legend" style="display:none" aria-hidden="true"></div>
       </div>
+
+      <!-- 💬 Prompt bien-être — raccourci vers le journal du jour -->
+      <button type="button" class="wellbeing-prompt" id="wellbeing-prompt" aria-label="Saisir votre journée">
+        <span class="wp-icon-wrap" aria-hidden="true">😊</span>
+        <span class="wp-text">Comment vous sentez-vous aujourd'hui&nbsp;?</span>
+        <svg class="wp-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
 
       <!-- Alerte : un besoin signalé par le partenaire (visible en grand pour le destinataire) -->
       <div id="partner-need-alert" class="partner-need-alert" style="display:none" role="alert" aria-live="assertive"></div>

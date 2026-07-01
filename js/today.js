@@ -178,6 +178,7 @@ export async function initToday() {
   initNeedButtons();
   initDateNav();
   initCopyHier();
+  initWellbeingPrompt();
 
   await reloadDataAndRenderToday();
 
@@ -673,6 +674,22 @@ async function renderStreak() {
   } else {
     streakEl.style.display = 'none';
   }
+}
+
+// --- Prompt bien-être (raccourci journal) ------------------------------------
+function initWellbeingPrompt() {
+  const prompt = document.getElementById('wellbeing-prompt');
+  if (!prompt) return;
+  prompt.addEventListener('click', () => {
+    const target = document.querySelector('.card-primary');
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Flash discret pour guider l’attention
+    target.style.transition = 'outline .12s';
+    target.style.outline = '2.5px solid var(--elle)';
+    target.style.outlineOffset = '3px';
+    setTimeout(() => { target.style.outline = ''; target.style.outlineOffset = ''; }, 650);
+  });
 }
 
 // --- Comme hier ------------------------------------------------------------
