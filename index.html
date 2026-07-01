@@ -601,6 +601,30 @@
         <button id="btn-detail-close" class="btn-secondary" style="margin-top:20px">Fermer</button>
       </div>
     </div>
+
+    <!-- Overlay : vue Année Cycle défilante -->
+    <div id="cycle-year-overlay" class="sheet-backdrop" aria-hidden="true" style="z-index: 100;">
+      <div class="sheet" style="max-height: 95vh; display: flex; flex-direction: column;">
+        <button type="button" class="sheet-close" id="btn-close-cycle-year" aria-label="Fermer">✕</button>
+        <div class="sheet-handle"></div>
+        <h3 class="sheet-title" style="text-align: center;">Aperçu de l'année (Cycle)</h3>
+        
+        <!-- Année de navigation -->
+        <div class="cal-nav" style="margin-bottom:15px; justify-content: center; gap: 20px;">
+          <button id="cycle-yr-prev" class="cal-nav-btn" aria-label="Année précédente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <span id="cycle-yr-title" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;letter-spacing:.1em"></span>
+          <button id="cycle-yr-next" class="cal-nav-btn" aria-label="Année suivante"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+
+        <!-- Légende annuelle -->
+        <div class="cal-legend" style="margin-bottom:15px; justify-content: center;">
+          <span><i class="cal-legend-dot" style="background:#E53935"></i>Règles</span>
+        </div>
+
+        <!-- Conteneur défilant verticalement pour les 12 mois -->
+        <div id="cycle-year-months-list" style="flex: 1; min-height: 0; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; gap: 24px;"></div>
+      </div>
+    </div>
   </template>
 
   <!-- ================================================================
@@ -1390,29 +1414,6 @@
       </div>
     </div>
 
-    <!-- Overlay : vue Année Cycle défilante -->
-    <div id="cycle-year-overlay" class="sheet-backdrop" aria-hidden="true" style="z-index: 100;">
-      <div class="sheet" style="max-height: 95vh; display: flex; flex-direction: column;">
-        <button type="button" class="sheet-close" id="btn-close-cycle-year" aria-label="Fermer">✕</button>
-        <div class="sheet-handle"></div>
-        <h3 class="sheet-title" style="text-align: center;">Aperçu de l'année (Cycle)</h3>
-        
-        <!-- Année de navigation -->
-        <div class="cal-nav" style="margin-bottom:15px; justify-content: center; gap: 20px;">
-          <button id="cycle-yr-prev" class="cal-nav-btn" aria-label="Année précédente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <span id="cycle-yr-title" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;letter-spacing:.1em"></span>
-          <button id="cycle-yr-next" class="cal-nav-btn" aria-label="Année suivante"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
-        </div>
-
-        <!-- Légende annuelle -->
-        <div class="cal-legend" style="margin-bottom:15px; justify-content: center;">
-          <span><i class="cal-legend-dot" style="background:#E53935"></i>Règles</span>
-        </div>
-
-        <!-- Conteneur défilant verticalement pour les 12 mois -->
-        <div id="cycle-year-months-list" style="flex: 1; min-height: 0; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; gap: 24px;"></div>
-      </div>
-    </div>
   </template>
 
 

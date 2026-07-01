@@ -1,0 +1,40 @@
+diff --git a/js/cycle-model.js b/js/cycle-model.js
+index 38bd28e..67146c1 100644
+--- a/js/cycle-model.js
++++ b/js/cycle-model.js
+@@ -446,10 +446,9 @@ export function computeCyclePrediction(cyclesHistory = [], dailyLogs = [], today
+     }
+   }
+ 
+-  // ── Fenêtre fertile Sensiplan (Règle Döring/Sensiplan) ────────────────
+-  const sensiplanFertileStart = Math.max(1, minCycleLength - 20);
+-  const fertileStartDay = isOvulationConfirmed ? Math.max(1, ovulationDay - 5) : sensiplanFertileStart;
+-  const fertileEndDay = ovulationDay + 1 + (stdDev > 3 ? 1 : 0);
++  // ── Fenêtre fertile clinique standard (6 jours d'ovulation + 1 jour après pour sécurité) ──
++  const fertileStartDay = Math.max(1, ovulationDay - 5);
++  const fertileEndDay = ovulationDay + 1;
+ 
+   const fertileStart = cycleStart ? addDays(cycleStart, fertileStartDay - 1) : null;
+   const fertileEnd = cycleStart ? addDays(cycleStart, fertileEndDay - 1) : null;
+diff --git a/js/today.js b/js/today.js
+index 0a67ce6..430a7d9 100644
+--- a/js/today.js
++++ b/js/today.js
+@@ -210,7 +210,7 @@ export async function reloadDataAndRenderToday() {
+       .select('*')
+       .eq('user_id', cycleUserId)
+       .eq('category_id', 'journal')
+-      .gte('log_date', daysAgo(40))
++      .gte('log_date', daysAgo(60))
+       : Promise.resolve({ data: [] })
+   ]);
+   state.currentCycle = cycle;
+@@ -435,7 +435,7 @@ function renderRingChart() {
+   // Contenu central façon « prédiction » (date du jour + prochaines règles + bascule fertile).
+   const fmtCourt = (s) => s ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
+   const centerTop  = `Aujourd'hui, ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+-  let centerMain = phaseName ? `Vous êtes en phase ${phaseName.toLowerCase()}` : `Jour ${day}`;
++  let centerMain = phaseName ? (phaseName.startsWith('Retard') ? phaseName : `Vous êtes en phase ${phaseName.toLowerCase()}`) : `Jour ${day}`;
+   let centerToggleLabel = '', centerAlt = '';
+   if (p?.nextPeriodDate) {
+     centerMain = `Vos prochaines règles sont le ${fmtCourt(p.nextPeriodDate)}`;
