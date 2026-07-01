@@ -263,8 +263,9 @@ function buildPredictionMap() {
   const map = {};
   const p = calState.prediction;
   if (!p) return map;
-  // Mode grossesse : aucune prédiction de règles / fertilité
   if (getCycleMode() === 'pregnancy') return map;
+
+  const today = new Date();
 
   // Règles prévues : 5 jours à partir de nextPeriodDate
   const nextPeriod = new Date(p.nextPeriodDate + 'T12:00:00');
@@ -272,13 +273,32 @@ function buildPredictionMap() {
     const d = new Date(nextPeriod.getTime() + i * 864e5);
     map[localDateStr(d)] = 'period';
   }
-  // Fenêtre fertile : 5 jours avant ovulation jusqu'à ovulation
-  const fertile = new Date(p.fertileStart + 'T12:00:00');
-  const ovul    = new Date(p.ovulationDate + 'T12:00:00');
-  for (let d = fertile; d <= ovul; d = new Date(d.getTime() + 864e5)) {
-    const s = localDateStr(d);
-    if (!map[s]) map[s] = 'fertile';
+
+  // Fenêtre fertile du cycle EN COURS — seulement si l'ovulation est encore à venir
+  if (p.fertileStart && p.ovulationDate) {
+    const fertile = new Date(p.fertileStart + 'T12:00:00');
+    const ovul    = new Date(p.ovulationDate + 'T12:00:00');
+    if (ovul >= today) {
+      for (let d = new Date(fertile); d <= ovul; d = new Date(d.getTime() + 864e5)) {
+        const s = localDateStr(d);
+        if (!map[s]) map[s] = (s === p.ovulationDate) ? 'ovulation' : 'fertile';
+      }
+    }
   }
+
+  // Fenêtre fertile du PROCHAIN cycle (toujours affichée)
+  // Ovulation ≈ nextPeriodDate + (avgCycleLength − 14) jours
+  const avgCycle      = p.avgCycleLength || 28;
+  const nextOvOffset  = Math.max(1, avgCycle - 14) - 1;
+  const nextOvulation = new Date(nextPeriod.getTime() + nextOvOffset * 864e5);
+  const nextOvStr     = localDateStr(nextOvulation);
+  const nextFertStart = new Date(nextOvulation.getTime() - 5 * 864e5);
+  const nextFertEnd   = new Date(nextOvulation.getTime() + 864e5);
+  for (let d = new Date(nextFertStart); d <= nextFertEnd; d = new Date(d.getTime() + 864e5)) {
+    const s = localDateStr(d);
+    if (!map[s]) map[s] = (s === nextOvStr) ? 'ovulation' : 'fertile';
+  }
+
   return map;
 }
 
