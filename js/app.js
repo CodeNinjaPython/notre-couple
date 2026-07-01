@@ -208,6 +208,7 @@ function initPairingView() {
       const { code } = await createCouple(name, tracksCycle);
       await persistOnboardingCycle();
       document.getElementById('generated-code').textContent = code;
+      showPairingQR(code);
       createSection.style.display = 'none';
       codeSection.style.display = 'block';
     } catch (e) {
@@ -227,6 +228,7 @@ function initPairingView() {
     if (!currentCoupleId) return;
     const newCode = await renewPairingCode(currentCoupleId);
     document.getElementById('generated-code').textContent = newCode;
+    showPairingQR(newCode);
   });
 
   document.getElementById('btn-done')?.addEventListener('click', () => navigate('today'));
@@ -269,6 +271,16 @@ function initPairingView() {
     } catch (e) { showMsg('join-error', e.message); }
     finally { btn.disabled = false; btn.textContent = 'Rejoindre'; }
   });
+}
+
+function showPairingQR(code) {
+  const img  = document.getElementById('pairing-qr');
+  const wrap = document.getElementById('qr-wrap');
+  if (!img || !code || code === '------') return;
+  // L'appairage ne se fait qu'en ligne (Supabase requis) → API externe acceptable.
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=144x144&format=svg&bgcolor=FFFFFF&color=1A1830&data=${encodeURIComponent(code)}`;
+  img.onerror = () => { if (wrap) wrap.style.display = 'none'; };
+  if (wrap) wrap.style.display = 'flex';
 }
 
 // ── Routing ────────────────────────────────────────────────────────────────

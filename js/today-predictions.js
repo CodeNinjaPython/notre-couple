@@ -41,4 +41,15 @@ export function renderPredictionCard({ prediction, getCycleMode }) {
     ? `<br><span style="font-size:0.75em;opacity:0.7">${p.predictabilityScore}% régulier</span>`
     : '';
   document.getElementById('pred-avg').innerHTML = `${p.avgCycleLength} j${regularityText}`;
+
+  // Badge de régularité visuel (badge-pills sous la carte)
+  const badgeEl = document.getElementById('pred-regularity-badge');
+  if (badgeEl && p.predictabilityScore != null) {
+    const score = p.predictabilityScore;
+    const cls   = score >= 75 ? 'reg-high' : score >= 45 ? 'reg-mid' : 'reg-low';
+    const label = score >= 75 ? `Cycle régulier • ${score} %` : score >= 45 ? `Cycle variable • ${score} %` : `Cycle irrégulier • ${score} %`;
+    badgeEl.className = `pred-regularity-badge ${cls}`;
+    badgeEl.textContent = label;
+    badgeEl.style.display = 'inline-block';
+  }
 }

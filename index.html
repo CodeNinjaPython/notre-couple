@@ -261,6 +261,11 @@
         <div class="card">
           <h2>Code d'invitation</h2>
           <div class="code-display" id="generated-code">------</div>
+          <!-- QR code généré à la volée (visuel alternatif au code texte) -->
+          <div class="qr-wrap" id="qr-wrap">
+            <img id="pairing-qr" src="" alt="QR Code — code d'invitation" width="144" height="144" loading="lazy">
+            <p class="qr-hint">Faites scanner ce QR par votre partenaire</p>
+          </div>
           <div class="code-actions">
             <button type="button" id="btn-copy-code" class="btn-code-action">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -460,6 +465,7 @@
             </div>
           </div>
           <div class="pred-disclaimer">Indicatif · pas un outil contraceptif</div>
+          <span id="pred-regularity-badge" class="pred-regularity-badge" style="display:none"></span>
         </div>
       </div>
 

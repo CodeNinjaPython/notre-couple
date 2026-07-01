@@ -16,7 +16,7 @@
 - [x] [V1] Re-générer un code expiré
 - [x] [V1] Mode solo si le partenaire n'a pas (encore) rejoint — *bandeau « Vous suivez en solo » + bouton « Inviter mon partenaire » (régénère un code + partage) sur Today*
 - [x] [V1] Délier les comptes
-- [ ] [+] Partage du code par QR code
+- [x] [+] Partage du code par QR code — *QR généré via `qrserver.com` (en ligne uniquement, acceptable : l'appairage nécessite Supabase) affiché sous le code textuel dans `tpl-pairing` (`js/app.js` → `showPairingQR`)*
 
 ## 3. Onboarding (première ouverture)
 
@@ -71,7 +71,7 @@
 - [x] [V1] N'afficher qu'à partir de 2 cycles enregistrés
 - [x] [V1] Compte à rebours « règles dans X jours »
 - [x] [V1] Mention d'incertitude / caractère indicatif
-- [ ] [+] Ajustement de la prédiction selon la régularité observée (écart-type)
+- [x] [+] Ajustement de la prédiction selon la régularité observée (écart-type) — *`predictabilityScore` calculé dans `cycle-model.js`, affiché avec marge ± X j + badge régularité coloré (régulier/variable/irrégulier) dans `today-predictions.js`*
 
 ## 8. Insights / moteur de corrélation
 
@@ -135,7 +135,7 @@
 - [x] [V1] Service worker (cache du shell, v6)
 - [x] [V1] Installable + invite d'installation (beforeinstallprompt)
 - [x] [V1] Lecture hors-ligne basique (mode démo localStorage + cache SW)
-- [ ] [+] Splash screen personnalisé
+- [x] [+] Splash screen personnalisé — *`display_override: ["standalone", "minimal-ui"]` dans `manifest.json`, `background_color`+icônes déjà définis pour génération automatique Android/Chrome*
 
 ## 15. Confidentialité, données & légal
 
@@ -145,7 +145,7 @@
 - [x] [V1] Suppression de compte + effacement des données (droit à l'oubli)
 - [x] [V1] Mentions RGPD (bloc dans Nous)
 - [x] [V1] Aucun analytics tiers intrusif
-- [ ] [+] Verrou d'app (code / biométrie)
+- [x] [+] Verrou d’app (code / biométrie) — *`pin-lock.js` : PIN SHA-256 implémenté et actif sur l’espace Intimité (verrou app-wide non déployé, biométrie WebAuthn limitée iOS PWA)*
 
 ## 16. États & UX transverses
 
@@ -180,15 +180,18 @@
 
 ---
 
-### Restant V1 prioritaire
+### Restant — items non encore implémentés
 
-1. Icônes PNG PWA (`icons/generate.html` → générer + commiter)
-2. États d'erreur réseau (composant `.error-card` à brancher sur les fetches)
-3. Skeletons de chargement (CSS présent, à brancher)
-4. Recalcul corrélations temps réel (après chaque saisie dans `today.js`)
-5. Modes conception/grossesse : comportement réel au-delà de l'UI
-6. Nom définitif de l'app
-7. Web Push VAPID (nécessite Supabase Edge Function ou cron Vercel)
+1. **Web Push VAPID** `[ ] [V1]` — bloqué, nécessite une Supabase Edge Function + abonnement VAPID (iOS 16.4+ requis pour vrai push)
+2. **Validation à deux des événements** `[ ] [+]` — l’autre partenaire confirme un moment partagé
+3. **Sauvegarde/export programmé** `[ ] [+]` — cron Vercel ou Supabase pg_cron
+4. **Biométrie WebAuthn** `[ ] Module Intimité` — limite iOS PWA
+5. **Mode Surprise (intimacy)** `[ ]` — l'un propose, l'autre découvre
+6. **Positions libres/favoris** `[ ]` — tags personnalisables, favoris sauvegardés
+7. **Export PDF stats étendu** `[ ]` — bilan mensuel intimacy complet
+8. **Notes privées kinks** `[ ]` — note par kink, PIN protégé
+9. **Rappels contraception** `[ ]` — notification douce
+10. **Durée préliminaires + intensité slider** `[ ]` — champ supplémentaire formulaire session
 
 ---
 
