@@ -91,9 +91,18 @@ export function renderCycleRing(container, params = {}) {
   // ─── Arcs colorés (règles + fenêtre fertile) sur le rail gris ─────────────
   const GAP = 2; // petit retrait pour des bouts arrondis nets
   // Segmente les règles par jour pour refléter l'intensité du flux (teinte/opacité rouge).
+  // Arc règles : couleur pleine (pas de transparence), du rose pâle (léger) au bordeaux (très abondant).
+  function flowColor(intensity) {
+    if (!Number.isFinite(intensity) || intensity <= 0) return COLORS.menstruelle; // fallback si pas de donnée
+    if (intensity < 0.45) return '#FFCDD2'; // aucun / spotting → rose très pâle
+    if (intensity < 0.65) return '#EF9A9A'; // léger → rouge rosé
+    if (intensity < 0.85) return COLORS.menstruelle; // modéré → rouge standard
+    return '#B71C1C'; // abondant / très abondant → bordeaux
+  }
   let periodArc = '';
   for (let d = 1; d <= periodDays; d++) {
-    periodArc += arc(dayStartDeg(d) + GAP, dayEndDeg(d) - GAP, ARC_SW, COLORS.menstruelle, 1);
+    const intensity = Number(flowByDay?.[d]);
+    periodArc += arc(dayStartDeg(d) + GAP, dayEndDeg(d) - GAP, ARC_SW, flowColor(intensity), 1);
   }
   const fertileArc = (fertileEnd >= fertileStart)
     ? arc(dayStartDeg(fertileStart) + GAP, dayEndDeg(fertileEnd) - GAP, ARC_SW, COLORS.fertile, 1)
