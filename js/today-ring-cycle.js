@@ -126,8 +126,23 @@ export function renderTodayRingChart({
     const raw = row.value?.v ?? row.value;
 
     if (cat === 'flow') {
+      // Chips individuelles de Today (valeur numérique '0'–'3')
       flowByDay[d] = Math.max(flowByDay[d] || 0, flowLevelFromValue(raw));
       daySignal.set(d, 'flow');
+    } else if (cat === 'journal') {
+      // DailyLog complet — sauvegardé par le Calendrier ou le formulaire journal
+      const journal = typeof raw === 'object' && raw !== null ? raw : {};
+      const flux = journal.fluxMenstruel;
+      if (flux && flux !== 'aucun') {
+        flowByDay[d] = Math.max(flowByDay[d] || 0, flowLevelFromValue(flux));
+        daySignal.set(d, 'flow');
+      }
+      // Points périphériques depuis le journal
+      if (!daySignal.has(d)) {
+        if (journal.libidoScale != null || journal.rapports) daySignal.set(d, 'sexuality');
+        else if (journal.emotions?.length || journal.niveauEnergie) daySignal.set(d, 'mood');
+        else if (Object.keys(journal).length > 0) daySignal.set(d, 'other');
+      }
     } else if (cat === 'mood') {
       if (!daySignal.has(d)) daySignal.set(d, 'mood');
     } else if (cat === 'libido') {
