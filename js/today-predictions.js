@@ -16,8 +16,8 @@ export function renderPredictionCard({ prediction, getCycleMode }) {
   }
 
   card.style.display = 'block';
-  const nextDate = new Date(p.nextPeriodDate);
-  const oDate = new Date(p.ovulationDate);
+  const nextDate = new Date(p.nextPeriodDate + 'T12:00:00');
+  const oDate = new Date(p.ovulationDate + 'T12:00:00');
   const today = new Date();
   const daysUntil = Math.round((nextDate - today) / 864e5);
 

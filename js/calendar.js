@@ -266,14 +266,14 @@ function buildPredictionMap() {
   if (getCycleMode() === 'pregnancy') return map;
 
   // Règles prévues : 5 jours à partir de nextPeriodDate
-  const nextPeriod = new Date(p.nextPeriodDate);
+  const nextPeriod = new Date(p.nextPeriodDate + 'T12:00:00');
   for (let i = 0; i < 5; i++) {
     const d = new Date(nextPeriod.getTime() + i * 864e5);
     map[localDateStr(d)] = 'period';
   }
   // Fenêtre fertile : 5 jours avant ovulation jusqu'à ovulation
-  const fertile = new Date(p.fertileStart);
-  const ovul    = new Date(p.ovulationDate);
+  const fertile = new Date(p.fertileStart + 'T12:00:00');
+  const ovul    = new Date(p.ovulationDate + 'T12:00:00');
   for (let d = fertile; d <= ovul; d = new Date(d.getTime() + 864e5)) {
     const s = localDateStr(d);
     if (!map[s]) map[s] = 'fertile';
@@ -289,7 +289,7 @@ function renderPredictionPanel() {
     panel.innerHTML = `<div class="msg info">Encore quelques cycles à enregistrer pour activer la prédiction.</div>`;
     return;
   }
-  const fmt = d => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+  const fmt = d => new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
   const margin = p.stdDev >= 1 ? ` ± ${Math.round(p.stdDev)} j` : '';
   panel.innerHTML = `
     <div class="pred-row">

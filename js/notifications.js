@@ -78,7 +78,7 @@ export function checkRulesImminentes(prediction) {
   if (!prediction || !notifGranted()) return;
   const settings = getSettings();
   if (!settings.rules) return;
-  const daysUntil = Math.round((new Date(prediction.nextPeriodDate) - new Date()) / 864e5);
+  const daysUntil = Math.round((new Date(prediction.nextPeriodDate + 'T12:00:00') - new Date()) / 864e5);
   if (daysUntil >= 0 && daysUntil <= 2) {
     const msg = daysUntil === 0
       ? 'Les règles sont prévues aujourd\'hui.'
@@ -93,7 +93,7 @@ export function checkFertileWindow(prediction) {
   const settings = getSettings();
   if (!settings.fertile) return;
   const daysUntilFertile = Math.round(
-    (new Date(prediction.fertileStart) - new Date()) / 864e5
+    (new Date(prediction.fertileStart + 'T12:00:00') - new Date()) / 864e5
   );
   if (daysUntilFertile === 2) {
     showNotification('Notre cycle · Conception', 'La fenêtre fertile commence dans 2 jours.', 'fertile');
