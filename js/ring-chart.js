@@ -47,11 +47,11 @@ export function renderCycleRing(container, params = {}) {
     centerAlt    = '',
   } = params;
 
-  const W = 300, H = 300;
-  const CX = 150, CY = 150;
-  const R  = 116;   // rayon de la ligne médiane de l'anneau
-  const TRACK_SW = 13;  // épaisseur du rail gris
-  const ARC_SW   = 19;  // épaisseur des arcs colorés
+  const W = 360, H = 360;
+  const CX = 180, CY = 180;
+  const R  = 136;   // rayon de la ligne médiane de l'anneau
+  const TRACK_SW = 18;  // épaisseur du rail gris
+  const ARC_SW   = 24;  // épaisseur des arcs colorés
 
   // Point sur le cercle à `deg` degrés (0 = haut/midi, sens horaire).
   const pol = (deg, r = R) => {
@@ -89,25 +89,41 @@ export function renderCycleRing(container, params = {}) {
   // ─── Arcs colorés (règles + fenêtre fertile) sur le rail gris ─────────────
   const GAP = 2; // petit retrait pour des bouts arrondis nets
   const periodArc = periodDays > 0
-    ? arc(dayStartDeg(1) + GAP, dayEndDeg(periodDays) - GAP, ARC_SW, 'url(#grad-period)', 1)
+    ? arc(dayStartDeg(1) + GAP, dayEndDeg(periodDays) - GAP, ARC_SW, COLORS.menstruelle, 1)
     : '';
   const fertileArc = (fertileEnd >= fertileStart)
-    ? arc(dayStartDeg(fertileStart) + GAP, dayEndDeg(fertileEnd) - GAP, ARC_SW, 'url(#grad-fertile)', 1)
+    ? arc(dayStartDeg(fertileStart) + GAP, dayEndDeg(fertileEnd) - GAP, ARC_SW, COLORS.fertile, 1)
+    : '';
+  const ovulationArc = (ovulationDay >= 1 && ovulationDay <= totalDays)
+    ? arc(dayStartDeg(ovulationDay) + (GAP + 1), dayEndDeg(ovulationDay) - (GAP + 1), ARC_SW, COLORS.ovulation, 1)
     : '';
 
   // ─── Points des jours (zones grises) + données saisies (couleurs) ─────────
   const inArc = (d) => (d <= periodDays) || (d >= fertileStart && d <= fertileEnd);
   let dayDots = '', dataDots = '';
-  const DATA_COLORS = ['#F5A623', '#4278C4', '#27AE60'];
+  let keyDots = '';
+  const DOT_RAIL = R + TRACK_SW * 0.72;
+  const DOT_LOGGED = R - TRACK_SW * 0.72;
   for (let d = 1; d <= totalDays; d++) {
-    const [x, y] = pol(dayCenterDeg(d));
+    const [x, y] = pol(dayCenterDeg(d), DOT_RAIL);
     if (loggedDays.has(d)) {
-      const c = DATA_COLORS[d % DATA_COLORS.length];
-      dataDots += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="3.2" fill="${c}"/>`;
+      const [lx, ly] = pol(dayCenterDeg(d), DOT_LOGGED);
+      const c = segmentColor(d);
+      dataDots += `<circle cx="${lx.toFixed(2)}" cy="${ly.toFixed(2)}" r="3.6" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
     } else if (!inArc(d)) {
-      dayDots += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="2.1" fill="var(--faint)" opacity=".5"/>`;
+      dayDots += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="2.3" fill="var(--faint)" opacity=".42"/>`;
     }
   }
+
+  const keyPoints = [
+    { day: Math.max(1, Math.min(totalDays, Math.min(periodDays || 2, 2))), color: '#E53935', label: 'Flux' },
+    { day: Math.max(1, Math.min(totalDays, fertileStart + Math.max(1, Math.round((fertileEnd - fertileStart) / 2)))), color: '#F5A623', label: 'Humeur' },
+    { day: Math.max(1, Math.min(totalDays, ovulationDay)), color: '#27AE60', label: 'Sexualité' },
+  ];
+  keyPoints.forEach(p => {
+    const [x, y] = pol(dayCenterDeg(p.day), R + ARC_SW * 0.9);
+    keyDots += `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="4.8" fill="${p.color}" stroke="#fff" stroke-width="2" aria-label="${p.label}"/>`;
+  });
 
   // ─── Poignée lumineuse au début des règles (jour 1) ───────────────────────
   const [hx, hy] = pol(dayCenterDeg(1));
@@ -120,15 +136,15 @@ export function renderCycleRing(container, params = {}) {
       stroke="#9A98B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
 
   // ─── Badge « Jour N » posé sur l'arc, au jour courant ─────────────────────
-  const [bx, by] = pol(dayCenterDeg(currentDay));
+  const [bx, by] = pol(180, R + 1);
   const badgeColor = segmentColor(currentDay);
   const badge = `
     <g transform="translate(${bx.toFixed(2)},${by.toFixed(2)})" class="ring-day-current">
-      <circle r="25" fill="var(--surface)" stroke="${badgeColor}" stroke-width="2.5"/>
+      <circle r="30" fill="var(--surface)" stroke="${badgeColor}" stroke-width="3" filter="url(#ring-badge-shadow)"/>
       <text y="-5" text-anchor="middle" font-family="'DM Sans',sans-serif"
-        font-size="9" font-weight="700" fill="var(--faint)" letter-spacing=".06em">Jour</text>
+        font-size="10" font-weight="700" fill="var(--faint)" letter-spacing=".06em">Jour</text>
       <text y="13" text-anchor="middle" font-family="'DM Mono',monospace"
-        font-size="18" font-weight="700" fill="var(--text)">${currentDay}</text>
+        font-size="22" font-weight="700" fill="var(--text)">${currentDay}</text>
     </g>`;
 
   // Segments invisibles cliquables (interaction tap/clavier conservée).
@@ -145,22 +161,21 @@ export function renderCycleRing(container, params = {}) {
         <feGaussianBlur stdDeviation="4" result="b"/>
         <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
-      <linearGradient id="grad-period" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#E53935"/><stop offset="100%" stop-color="#FF7A6E"/>
-      </linearGradient>
-      <linearGradient id="grad-fertile" x1="0%" y1="100%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#3A6FB5"/><stop offset="100%" stop-color="#6FB0FF"/>
-      </linearGradient>
+      <filter id="ring-badge-shadow" x="-80%" y="-80%" width="260%" height="260%">
+        <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#1A1830" flood-opacity=".26"/>
+      </filter>
     </defs>
 
     <!-- Rail gris -->
     <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="var(--line)"
-      stroke-width="${TRACK_SW}" opacity=".5"/>
+      stroke-width="${TRACK_SW}" opacity=".75"/>
 
     ${periodArc}
     ${fertileArc}
+    ${ovulationArc}
     ${dayDots}
     ${dataDots}
+    ${keyDots}
     ${hit}
     ${handle}
     ${badge}

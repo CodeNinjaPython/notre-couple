@@ -1782,14 +1782,14 @@ body.dark .card-primary { border-color: var(--elle); }
 
 .ring-wrap {
   display: flex; flex-direction: column; align-items: center;
-  margin: 12px 0 4px;
+  margin: 8px 0 4px;
 }
 
 .cycle-ring {
   display: block;
-  width: min(260px, 80vw);
-  height: min(260px, 80vw);
-  max-width: 260px;
+  width: min(360px, 86vw);
+  height: min(360px, 86vw);
+  max-width: 360px;
 }
 
 /* Pulsation du jour actuel */
@@ -1804,9 +1804,9 @@ body.dark .card-primary { border-color: var(--elle); }
 /* Scène de l'anneau : permet de superposer le contenu central HTML au SVG */
 .ring-stage {
   position: relative;
-  width: min(290px, 84vw);
+  width: min(372px, 88vw);
   aspect-ratio: 1 / 1;
-  margin: 6px auto 0;
+  margin: 2px auto 0;
 }
 .ring-stage .cycle-ring { width: 100%; height: 100%; max-width: none; }
 
@@ -1815,22 +1815,27 @@ body.dark .card-primary { border-color: var(--elle); }
   position: absolute; inset: 0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center; text-align: center;
-  padding: 0 19%;
+  padding: 0 16%;
   pointer-events: none;            /* on laisse les taps atteindre l'anneau… */
 }
 .ring-center-top {
-  font-size: 14px; color: var(--muted); margin-bottom: 8px;
+  font-size: clamp(13px, 2.9vw, 15px); color: var(--muted); margin-bottom: 10px;
 }
 .ring-center-top strong { color: var(--text); font-weight: 700; }
 .ring-center-main {
-  font-size: 21px; font-weight: 800; line-height: 1.18; color: var(--text);
+  font-size: clamp(22px, 5.8vw, 30px);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
   letter-spacing: -.01em;
 }
 .ring-center-toggle {
   pointer-events: auto;            /* …sauf le bouton de bascule */
-  margin-top: 12px; border: none; background: none; cursor: pointer;
+  margin-top: 14px; border: none; background: none; cursor: pointer;
   display: inline-flex; align-items: center; gap: 4px;
-  font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 600;
+  font-family: "DM Sans", sans-serif;
+  font-size: clamp(13px, 3vw, 15px);
+  font-weight: 700;
   color: var(--lui);
 }
 .ring-center-toggle svg { transition: transform .2s ease; }
@@ -1843,11 +1848,33 @@ body.dark .card-primary { border-color: var(--elle); }
 /* Légende dynamique sous l'anneau (jour sélectionné) */
 .ring-caption {
   text-align: center;
-  margin-top: 10px;
+  margin-top: 14px;
   font-family: "DM Mono", monospace;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   min-height: 1.2em;
+  max-width: min(360px, 88vw);
+}
+
+@media (max-width: 380px) {
+  .ring-stage { width: min(350px, 90vw); }
+  .cycle-ring { width: min(340px, 88vw); height: min(340px, 88vw); }
+  .ring-center { padding: 0 18%; }
+  .ring-center-main { font-size: clamp(20px, 6.2vw, 24px); }
+  .ring-center-toggle { margin-top: 10px; }
+}
+
+@media (max-width: 340px) {
+  .ring-stage { width: min(320px, 92vw); }
+  .cycle-ring { width: min(310px, 90vw); height: min(310px, 90vw); }
+  .ring-center { padding: 0 20%; }
+  .ring-center-top { margin-bottom: 8px; }
+}
+
+@media (min-width: 900px) {
+  .ring-stage { width: min(420px, 54vw); }
+  .cycle-ring { width: min(410px, 52vw); height: min(410px, 52vw); }
+  .ring-center { padding: 0 17%; }
 }
 
 /* Légende de l'anneau */

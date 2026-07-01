@@ -108,16 +108,26 @@ export function renderTodayRingChart({
   const fmtCourt = s => s
     ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
     : '';
-  const centerTop = `Aujourd'hui, ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+
+  const formatRelativeDelay = (targetDate) => {
+    if (!targetDate) return '';
+    const delta = Math.max(0, diffDays(targetDate, localDateStr()));
+    if (delta <= 1) return 'demain';
+    if (delta < 7) return `dans ${delta} jours`;
+    const weeks = Math.round(delta / 7);
+    return weeks <= 1 ? 'dans 1 semaine' : `dans ${weeks} semaines`;
+  };
+
+  const centerTop = `Aujourd'hui, ${new Date(localDateStr() + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
   let centerMain = phaseName
     ? (phaseName.startsWith('Retard') ? phaseName : `Vous êtes en phase ${phaseName.toLowerCase()}`)
     : `Jour ${day}`;
   let centerToggleLabel = '';
   let centerAlt = '';
   if (p?.nextPeriodDate) {
-    centerMain = `Vos prochaines règles sont le ${fmtCourt(p.nextPeriodDate)}`;
+    centerMain = `Prochaines règles ${formatRelativeDelay(p.nextPeriodDate)}`;
     if (p.fertileStart && p.ovulationDate) {
-      centerToggleLabel = 'Jour fertile probable';
+      centerToggleLabel = 'Jour d\'ovulation probable';
       centerAlt = `Fenêtre fertile : ${fmtCourt(p.fertileStart)} → ${fmtCourt(p.ovulationDate)}`;
     }
   }

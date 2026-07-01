@@ -37,6 +37,7 @@
 - [x] [V1] Moments partagés récents + bouton d'ajout rapide
 - [x] [V1] État vide (« rien noté aujourd'hui »)
 - [x] [V1] Feedback visuel à la sauvegarde d'une saisie (toast)
+- [x] [V1] Anneau Aujourd'hui grand format (style Clue) — *SVG agrandi + stroke épais + caps arrondis, badge « Jour N » ancré en bas, points périphériques colorés, centre prédictif renforcé, responsive mobile/desktop (`js/ring-chart.js`, `css/app.css`, `js/today-ring-cycle.js`)*
 
 ## 5. Saisie / journal
 

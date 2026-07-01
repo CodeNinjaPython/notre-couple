@@ -40,29 +40,6 @@ if (IS_DEMO) document.body.classList.add('demo-mode');
 window.__APP_VERSION__ = APP_VERSION;
 console.info(`[App] Version ${APP_VERSION}`);
 
-function mountVersionBadge() {
-  if (document.getElementById('app-version-chip')) return;
-  const chip = document.createElement('div');
-  chip.id = 'app-version-chip';
-  chip.textContent = `v${APP_VERSION}`;
-  chip.title = 'Version applicative';
-  chip.style.cssText = [
-    'position:fixed',
-    'left:10px',
-    'bottom:10px',
-    'z-index:9999',
-    'padding:4px 8px',
-    'border-radius:999px',
-    'font:600 11px/1.2 "DM Mono",monospace',
-    'background:rgba(26,24,48,.78)',
-    'color:#fff',
-    'letter-spacing:.04em',
-    'pointer-events:none',
-  ].join(';');
-  document.body.appendChild(chip);
-}
-mountVersionBadge();
-
 // Service worker (prod seulement — en démo le SW ne sert pas le réseau)
 if ('serviceWorker' in navigator && !IS_DEMO) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
