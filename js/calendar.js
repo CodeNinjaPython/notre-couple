@@ -227,20 +227,32 @@ function renderMonthGrid() {
 
 function buildPhaseMap() {
   const map = {};
-  calState.cycles.forEach(cycle => {
-    const start = new Date(cycle.period_start);
-    const end   = cycle.period_end
-      ? new Date(cycle.period_end)
-      : new Date(); // cycle ouvert → jusqu'à aujourd'hui
+  // On ne colore QUE les règles (rouge) et la fenêtre fertile / ovulation (violet).
+  // L'ovulation d'un cycle passé est déduite du cycle SUIVANT : phase lutéale ≈ 14 j,
+  // donc ovulation ≈ (début des règles suivantes) − 14 j. On évite ainsi le moignon
+  // « folliculaire » de 3 jours collé après les règles qui se lisait comme une ovulation.
+  const sorted = [...calState.cycles]
+    .filter(c => c.period_start)
+    .sort((a, b) => a.period_start.localeCompare(b.period_start));
 
-    // Jour 1 = period_start
-    for (let d = 0; d <= 90; d++) {
-      const date = new Date(start.getTime() + d * 864e5);
-      const dateStr = localDateStr(date);
-      if (date > end && d > 7) break; // au-delà de la fin des règles, pas de marqueur flow
-      const cycleDay = d + 1;
-      const phase = PHASES.find(([a,b]) => cycleDay >= a && cycleDay <= b);
-      if (phase && !map[dateStr]) map[dateStr] = phase[2];
+  sorted.forEach((cycle, i) => {
+    // 1. Jours de règles (rouge) — de period_start à period_end inclus.
+    const start = new Date(cycle.period_start + 'T12:00:00');
+    const end   = new Date((cycle.period_end || cycle.period_start) + 'T12:00:00');
+    for (let d = new Date(start); d <= end; d = new Date(d.getTime() + 864e5)) {
+      const s = localDateStr(d);
+      if (!map[s]) map[s] = 'Menstruelle';
+    }
+
+    // 2. Fenêtre fertile / ovulation (violet) — seulement si le cycle suivant est connu.
+    //    Le cycle en cours (sans suivant) est géré par buildPredictionMap.
+    const next = sorted[i + 1];
+    if (next?.period_start) {
+      const ov = new Date(new Date(next.period_start + 'T12:00:00').getTime() - 14 * 864e5);
+      for (let k = -5; k <= 1; k++) {
+        const s = localDateStr(new Date(ov.getTime() + k * 864e5));
+        if (!map[s]) map[s] = 'Ovulation';
+      }
     }
   });
   return map;
